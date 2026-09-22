@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import type { ItemStatus } from "@/template";
+import type { ProjectDates } from "@/lib/supabase/database.types";
 
 export interface ItemRecord {
   dbId: string;
@@ -22,20 +23,56 @@ export interface RoleRecord {
   sortOrder: number;
 }
 
+export interface MilestoneEntry {
+  id: string;
+  stepKey: string;
+  type: string;
+  date: string | null;
+  note: string;
+  sortOrder: number;
+}
+
+export interface ConsultantEntry {
+  id: string;
+  company: string;
+  roleId: string | null;
+  dateSigned: string | null;
+  note: string;
+  sortOrder: number;
+}
+
+export interface TimelinePlanEntry {
+  stepKey: string;
+  startDate: string | null;
+  endDate: string | null;
+}
+
 export interface ProjectChecklistData {
   project: {
     id: string;
     reference: string;
     title: string;
     address: string;
+    initialism: string;
+    bcaRef: string;
+    contractPeriodMonths: number | null;
+    contractSum: string;
+    currentStage: string;
     step_order: string[] | null;
     step_stage: Record<string, string>;
     assignments_locked: boolean;
+    projectDates: ProjectDates;
+    ppValidityMonths: string;
+    listPresets: Record<string, string[]>;
+    stageDurationWeeks: Record<string, number>;
   };
   itemsByKey: Record<string, ItemRecord>;
   subchecksByItem: Record<string, Record<number, boolean>>;
   responsibleByItem: Record<string, ResponsibleEntry[]>;
   roles: RoleRecord[];
+  milestonesByStep: Record<string, MilestoneEntry[]>;
+  consultants: ConsultantEntry[];
+  timelinePlanByStep: Record<string, TimelinePlanEntry>;
 }
 
 export function projectDataQueryKey(projectId: string) {
@@ -48,25 +85,31 @@ export function useProjectData(projectId: string) {
     queryFn: async (): Promise<ProjectChecklistData> => {
       const supabase = createClient();
 
-      const [projectRes, itemsRes, rolesRes] = await Promise.all([
+      const [projectRes, itemsRes, rolesRes, milestonesRes, consultantsRes, timelinePlanRes] = await Promise.all([
         supabase
           .from("projects")
-          .select("id, reference, title, address, step_order, step_stage, assignments_locked")
+          .select(
+            "id, reference, title, address, initialism, bca_ref, contract_period_months, contract_sum, current_stage, step_order, step_stage, assignments_locked, project_dates, pp_validity_months, list_presets, stage_duration_weeks"
+          )
           .eq("id", projectId)
           .single(),
         supabase.from("checklist_items").select("id, item_key, status, na").eq("project_id", projectId),
         supabase.from("project_roles").select("id, name, color, sort_order").eq("project_id", projectId).order("sort_order"),
+        supabase.from("milestones").select("id, step_key, type, date, note, sort_order").eq("project_id", projectId),
+        supabase.from("consultants").select("id, company, role_id, date_signed, note, sort_order").eq("project_id", projectId),
+        supabase.from("timeline_plan").select("step_key, start_date, end_date").eq("project_id", projectId),
       ]);
 
       if (projectRes.error) throw projectRes.error;
       if (itemsRes.error) throw itemsRes.error;
       if (rolesRes.error) throw rolesRes.error;
+      if (milestonesRes.error) throw milestonesRes.error;
+      if (consultantsRes.error) throw consultantsRes.error;
+      if (timelinePlanRes.error) throw timelinePlanRes.error;
 
       const itemsByKey: Record<string, ItemRecord> = {};
-      const dbIdToKey: Record<string, string> = {};
       (itemsRes.data ?? []).forEach((row) => {
         itemsByKey[row.item_key] = { dbId: row.id, status: row.status as ItemStatus, na: row.na };
-        dbIdToKey[row.id] = row.item_key;
       });
 
       const itemDbIds = (itemsRes.data ?? []).map((row) => row.id);
@@ -108,20 +151,65 @@ export function useProjectData(projectId: string) {
         sortOrder: r.sort_order,
       }));
 
+      const milestonesByStep: Record<string, MilestoneEntry[]> = {};
+      (milestonesRes.data ?? []).forEach((row) => {
+        (milestonesByStep[row.step_key] ||= []).push({
+          id: row.id,
+          stepKey: row.step_key,
+          type: row.type,
+          date: row.date,
+          note: row.note,
+          sortOrder: row.sort_order,
+        });
+      });
+      Object.values(milestonesByStep).forEach((list) => list.sort((a, b) => a.sortOrder - b.sortOrder));
+
+      const consultants: ConsultantEntry[] = (consultantsRes.data ?? [])
+        .map((c) => ({
+          id: c.id,
+          company: c.company,
+          roleId: c.role_id,
+          dateSigned: c.date_signed,
+          note: c.note,
+          sortOrder: c.sort_order,
+        }))
+        .sort((a, b) => a.sortOrder - b.sortOrder);
+
+      const timelinePlanByStep: Record<string, TimelinePlanEntry> = {};
+      (timelinePlanRes.data ?? []).forEach((row) => {
+        timelinePlanByStep[row.step_key] = {
+          stepKey: row.step_key,
+          startDate: row.start_date,
+          endDate: row.end_date,
+        };
+      });
+
       return {
         project: {
           id: projectRes.data.id,
           reference: projectRes.data.reference,
           title: projectRes.data.title,
           address: projectRes.data.address,
+          initialism: projectRes.data.initialism,
+          bcaRef: projectRes.data.bca_ref,
+          contractPeriodMonths: projectRes.data.contract_period_months,
+          contractSum: projectRes.data.contract_sum,
+          currentStage: projectRes.data.current_stage,
           step_order: projectRes.data.step_order,
           step_stage: (projectRes.data.step_stage as Record<string, string>) ?? {},
           assignments_locked: projectRes.data.assignments_locked,
+          projectDates: projectRes.data.project_dates,
+          ppValidityMonths: projectRes.data.pp_validity_months,
+          listPresets: (projectRes.data.list_presets as Record<string, string[]>) ?? {},
+          stageDurationWeeks: (projectRes.data.stage_duration_weeks as Record<string, number>) ?? {},
         },
         itemsByKey,
         subchecksByItem,
         responsibleByItem,
         roles,
+        milestonesByStep,
+        consultants,
+        timelinePlanByStep,
       };
     },
   });

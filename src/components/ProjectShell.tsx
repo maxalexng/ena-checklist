@@ -5,11 +5,13 @@ import Link from "next/link";
 import { useProjectData } from "@/hooks/useProjectData";
 import { SummaryStats } from "./SummaryStats";
 import { ChecklistTab } from "./checklist/ChecklistTab";
+import { OverviewTab } from "./overview/OverviewTab";
+import { TimelineTab } from "./timeline/TimelineTab";
 
 type Tab = "overview" | "checklist" | "timeline";
 
 export function ProjectShell({ projectId }: { projectId: string }) {
-  const [tab, setTab] = useState<Tab>("checklist");
+  const [tab, setTab] = useState<Tab>("overview");
   const { data, isLoading, error } = useProjectData(projectId);
 
   if (isLoading) {
@@ -56,8 +58,8 @@ export function ProjectShell({ projectId }: { projectId: string }) {
       </div>
 
       {tab === "checklist" && <ChecklistTab projectId={projectId} data={data} />}
-      {tab === "overview" && <div className="empty-state">Overview tab is built in the next phase.</div>}
-      {tab === "timeline" && <div className="empty-state">Timeline tab is built in the next phase.</div>}
+      {tab === "overview" && <OverviewTab projectId={projectId} data={data} />}
+      {tab === "timeline" && <TimelineTab projectId={projectId} data={data} />}
     </div>
   );
 }
