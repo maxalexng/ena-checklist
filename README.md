@@ -1,36 +1,30 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ENA Submissions Register
 
-## Getting Started
+A TypeScript/React (Next.js) app for tracking a building project's regulatory submissions
+checklist across government agencies (URA, BCA, SCDF, PUB, and others), replacing an
+earlier single-file HTML prototype (archived under `legacy-prototype/`).
 
-First, run the development server:
+## Stack
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Next.js (App Router) + TypeScript
+- Supabase (Postgres, Auth, Storage)
+- TanStack Query for data fetching/mutations
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Local development
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Copy `.env.local.example` to `.env.local` and fill in your Supabase project's URL and
+   anon key (Project Settings -> API Keys in the Supabase dashboard).
+2. `npm install`
+3. `npm run dev` and open http://localhost:3000
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Database schema
 
-## Learn More
+SQL migrations live in `supabase/migrations/`, applied via the Supabase SQL Editor or the
+Supabase CLI (`npm run gen-types` regenerates `src/lib/supabase/database.types.ts` once a
+project is linked).
 
-To learn more about Next.js, take a look at the following resources:
+## Checklist template
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The full set of agencies, submissions, and checklist items lives in `src/template/` as
+plain TypeScript (not the database) — see `src/template/agencies.ts`. Edit it and deploy
+to change the template; every project automatically uses the current version.
