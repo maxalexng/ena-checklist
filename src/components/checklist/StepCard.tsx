@@ -6,6 +6,7 @@ import { agencyColorFor, agencyLogoSrc } from "@/template";
 import type { ProjectChecklistData } from "@/hooks/useProjectData";
 import { useToggleStepNa } from "@/hooks/useChecklistMutations";
 import { ItemRow } from "./ItemRow";
+import { ConsultantsWidget } from "@/components/consultants/ConsultantsWidget";
 
 export function StepCard({
   projectId,
@@ -67,50 +68,58 @@ export function StepCard({
           <p className="agency-blurb">{step.blurb}</p>
         </div>
         <div className="agency-meta">
-          <span className="agency-progress-label">
-            {cleared}/{applicable}
-          </span>
-          <div className="agency-bar">
-            <span style={{ width: `${pct}%` }} />
-          </div>
-          <button
-            type="button"
-            className={`step-na-toggle${stepIsNa ? " active" : ""}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleStepNa.mutate({ stepKey: step.id, na: !stepIsNa });
-            }}
-          >
-            {stepIsNa ? "Not required" : "Mark N/A"}
-          </button>
+          {!step.isConsultantList && (
+            <>
+              <span className="agency-progress-label">
+                {cleared}/{applicable}
+              </span>
+              <div className="agency-bar">
+                <span style={{ width: `${pct}%` }} />
+              </div>
+              <button
+                type="button"
+                className={`step-na-toggle${stepIsNa ? " active" : ""}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleStepNa.mutate({ stepKey: step.id, na: !stepIsNa });
+                }}
+              >
+                {stepIsNa ? "Not required" : "Mark N/A"}
+              </button>
+            </>
+          )}
         </div>
         <span className="chevron">▾</span>
       </div>
 
       <div className="submissions">
-        <div className="submission">
-          <div className="submission-head">
-            <span className="code-badge">{step.submission.code}</span>
-            <h4>{step.submission.name}</h4>
+        {step.isConsultantList ? (
+          <ConsultantsWidget projectId={projectId} consultants={data.consultants} roles={data.roles} />
+        ) : (
+          <div className="submission">
+            <div className="submission-head">
+              <span className="code-badge">{step.submission.code}</span>
+              <h4>{step.submission.name}</h4>
+            </div>
+            {step.submission.when && <p className="when">{step.submission.when}</p>}
+            <div className="items">
+              {items.map((item, i) => (
+                <ItemRow
+                  key={item.id}
+                  projectId={projectId}
+                  item={item}
+                  record={data.itemsByKey[item.id]}
+                  index={i}
+                  stepCode={step.code}
+                  roles={data.roles}
+                  responsible={data.responsibleByItem[data.itemsByKey[item.id]?.dbId] ?? []}
+                  subchecks={data.subchecksByItem[data.itemsByKey[item.id]?.dbId] ?? {}}
+                  locked={data.project.assignments_locked}
+                />
+              ))}
+            </div>
           </div>
-          {step.submission.when && <p className="when">{step.submission.when}</p>}
-          <div className="items">
-            {items.map((item, i) => (
-              <ItemRow
-                key={item.id}
-                projectId={projectId}
-                item={item}
-                record={data.itemsByKey[item.id]}
-                index={i}
-                stepCode={step.code}
-                roles={data.roles}
-                responsible={data.responsibleByItem[data.itemsByKey[item.id]?.dbId] ?? []}
-                subchecks={data.subchecksByItem[data.itemsByKey[item.id]?.dbId] ?? {}}
-                locked={data.project.assignments_locked}
-              />
-            ))}
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );

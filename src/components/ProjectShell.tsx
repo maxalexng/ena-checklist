@@ -7,11 +7,13 @@ import { SummaryStats } from "./SummaryStats";
 import { ChecklistTab } from "./checklist/ChecklistTab";
 import { OverviewTab } from "./overview/OverviewTab";
 import { TimelineTab } from "./timeline/TimelineTab";
+import { RolesPanel } from "./roles/RolesPanel";
 
 type Tab = "overview" | "checklist" | "timeline";
 
 export function ProjectShell({ projectId }: { projectId: string }) {
   const [tab, setTab] = useState<Tab>("overview");
+  const [rolesOpen, setRolesOpen] = useState(false);
   const { data, isLoading, error } = useProjectData(projectId);
 
   if (isLoading) {
@@ -45,17 +47,24 @@ export function ProjectShell({ projectId }: { projectId: string }) {
 
       <SummaryStats data={data} />
 
-      <div className="seg-toggle" style={{ marginBottom: "18px" }}>
-        <button type="button" className={`seg-btn${tab === "overview" ? " active" : ""}`} onClick={() => setTab("overview")}>
-          Overview
-        </button>
-        <button type="button" className={`seg-btn${tab === "checklist" ? " active" : ""}`} onClick={() => setTab("checklist")}>
-          Checklist
-        </button>
-        <button type="button" className={`seg-btn${tab === "timeline" ? " active" : ""}`} onClick={() => setTab("timeline")}>
-          Timeline
+      <div className="summary-btn-row" style={{ marginBottom: "18px" }}>
+        <div className="seg-toggle">
+          <button type="button" className={`seg-btn${tab === "overview" ? " active" : ""}`} onClick={() => setTab("overview")}>
+            Overview
+          </button>
+          <button type="button" className={`seg-btn${tab === "checklist" ? " active" : ""}`} onClick={() => setTab("checklist")}>
+            Checklist
+          </button>
+          <button type="button" className={`seg-btn${tab === "timeline" ? " active" : ""}`} onClick={() => setTab("timeline")}>
+            Timeline
+          </button>
+        </div>
+        <button type="button" className="summary-btn" style={{ marginLeft: "auto" }} onClick={() => setRolesOpen((v) => !v)}>
+          Roles
         </button>
       </div>
+
+      {rolesOpen && <RolesPanel projectId={projectId} roles={data.roles} onClose={() => setRolesOpen(false)} />}
 
       {tab === "checklist" && <ChecklistTab projectId={projectId} data={data} />}
       {tab === "overview" && <OverviewTab projectId={projectId} data={data} />}
