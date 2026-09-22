@@ -8,6 +8,7 @@ import { ChecklistTab } from "./checklist/ChecklistTab";
 import { OverviewTab } from "./overview/OverviewTab";
 import { TimelineTab } from "./timeline/TimelineTab";
 import { RolesPanel } from "./roles/RolesPanel";
+import { LockFab } from "./LockFab";
 
 type Tab = "overview" | "checklist" | "timeline";
 
@@ -34,6 +35,7 @@ export function ProjectShell({ projectId }: { projectId: string }) {
 
   return (
     <div className="shell">
+      <LockFab projectId={projectId} locked={data.project.assignments_locked} />
       <div className="masthead">
         <div className="title-block">
           <span className="eyebrow">{data.project.reference}</span>
