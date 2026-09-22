@@ -1,69 +1,61 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
+import { signOut } from "./login/actions";
 
-export default function Home() {
+export default async function DashboardPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { data: projects } = await supabase
+    .from("projects")
+    .select("id, reference, title, address, current_stage, archived")
+    .eq("archived", false)
+    .order("created_at", { ascending: false });
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>
-            To get started, edit the{" "}
-            <code className={styles.code}>page.tsx</code> file.
-          </h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="shell">
+      <div className="masthead">
+        <div className="title-block">
+          <span className="eyebrow">ENA</span>
+          <h1>Submissions Register</h1>
+          <p className="subtitle">{user?.email}</p>
         </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+          <Link href="/new" className="roles-add-btn" style={{ display: "inline-flex", alignItems: "center" }}>
+            + New Project
+          </Link>
+          <form action={signOut}>
+            <button type="submit" className="summary-btn">
+              Sign out
+            </button>
+          </form>
         </div>
-      </main>
+      </div>
+
+      {!projects || projects.length === 0 ? (
+        <div className="empty-state">No projects yet. Create the first one.</div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          {projects.map((p) => (
+            <Link
+              key={p.id}
+              href={`/projects/${p.id}`}
+              className="agency"
+              style={{ display: "block", padding: "16px 18px", textDecoration: "none", color: "inherit" }}
+            >
+              <div style={{ display: "flex", alignItems: "baseline", gap: "12px", flexWrap: "wrap" }}>
+                <span className="code-badge">{p.reference}</span>
+                <h3 style={{ fontSize: "16px" }}>{p.title || "(untitled)"}</h3>
+              </div>
+              {p.address && (
+                <p style={{ color: "var(--ink-soft)", fontSize: "13px", marginTop: "4px" }}>{p.address}</p>
+              )}
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
