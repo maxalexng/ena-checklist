@@ -114,6 +114,7 @@ export function StepCard({
                   roles={data.roles}
                   responsible={data.responsibleByItem[data.itemsByKey[item.id]?.dbId] ?? []}
                   subchecks={data.subchecksByItem[data.itemsByKey[item.id]?.dbId] ?? {}}
+                  itemFile={data.itemFilesByItem[data.itemsByKey[item.id]?.dbId]}
                   locked={data.project.assignments_locked}
                 />
               ))}

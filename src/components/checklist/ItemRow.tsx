@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { STATUS_LABEL, nextStatus } from "@/template";
 import type { ItemStatus, TemplateItem } from "@/template";
-import type { ItemRecord, ResponsibleEntry, RoleRecord } from "@/hooks/useProjectData";
+import type { ItemFileEntry, ItemRecord, ResponsibleEntry, RoleRecord } from "@/hooks/useProjectData";
 import {
   useAssignRole,
   useRemoveAssign,
@@ -11,6 +11,8 @@ import {
   useToggleSubcheck,
   useUpdateItemStatus,
 } from "@/hooks/useChecklistMutations";
+import { ItemFileControl } from "./ItemFileControl";
+import { TemplateFileControl } from "./TemplateFileControl";
 
 function statusClass(status: ItemStatus, na: boolean) {
   if (na) return "status-chip status-na";
@@ -26,6 +28,7 @@ export function ItemRow({
   roles,
   responsible,
   subchecks,
+  itemFile,
   locked,
 }: {
   projectId: string;
@@ -36,6 +39,7 @@ export function ItemRow({
   roles: RoleRecord[];
   responsible: ResponsibleEntry[];
   subchecks: Record<number, boolean>;
+  itemFile: ItemFileEntry | undefined;
   locked: boolean;
 }) {
   const updateStatus = useUpdateItemStatus(projectId);
@@ -77,6 +81,9 @@ export function ItemRow({
       >
         N/A
       </button>
+
+      <ItemFileControl itemId={dbId} projectId={projectId} itemKey={item.id} record={itemFile} />
+      <TemplateFileControl itemKey={item.id} locked={locked} />
 
       <div className={`item-assign${locked ? " is-locked" : ""}`}>
         <div className="assign-chips">

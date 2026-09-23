@@ -47,6 +47,14 @@ export interface TimelinePlanEntry {
   endDate: string | null;
 }
 
+export interface ItemFileEntry {
+  link: string | null;
+  storagePath: string | null;
+  fileName: string | null;
+  fileType: string | null;
+  fileSize: number | null;
+}
+
 export interface ProjectChecklistData {
   project: {
     id: string;
@@ -73,6 +81,7 @@ export interface ProjectChecklistData {
   milestonesByStep: Record<string, MilestoneEntry[]>;
   consultants: ConsultantEntry[];
   timelinePlanByStep: Record<string, TimelinePlanEntry>;
+  itemFilesByItem: Record<string, ItemFileEntry>;
 }
 
 export function projectDataQueryKey(projectId: string) {
@@ -114,7 +123,7 @@ export function useProjectData(projectId: string) {
 
       const itemDbIds = (itemsRes.data ?? []).map((row) => row.id);
 
-      const [subchecksRes, responsibleRes] =
+      const [subchecksRes, responsibleRes, itemFilesRes] =
         itemDbIds.length > 0
           ? await Promise.all([
               supabase.from("item_subchecks").select("item_id, checklist_idx, checked").in("item_id", itemDbIds),
@@ -122,11 +131,17 @@ export function useProjectData(projectId: string) {
                 .from("item_responsible")
                 .select("id, item_id, role_id, note, sort_order")
                 .in("item_id", itemDbIds),
+              supabase.from("item_files").select("*").in("item_id", itemDbIds),
             ])
-          : [{ data: [], error: null } as const, { data: [], error: null } as const];
+          : [
+              { data: [], error: null } as const,
+              { data: [], error: null } as const,
+              { data: [], error: null } as const,
+            ];
 
       if (subchecksRes.error) throw subchecksRes.error;
       if (responsibleRes.error) throw responsibleRes.error;
+      if (itemFilesRes.error) throw itemFilesRes.error;
 
       const subchecksByItem: Record<string, Record<number, boolean>> = {};
       (subchecksRes.data ?? []).forEach((row) => {
@@ -175,6 +190,17 @@ export function useProjectData(projectId: string) {
         }))
         .sort((a, b) => a.sortOrder - b.sortOrder);
 
+      const itemFilesByItem: Record<string, ItemFileEntry> = {};
+      (itemFilesRes.data ?? []).forEach((row) => {
+        itemFilesByItem[row.item_id] = {
+          link: row.link,
+          storagePath: row.storage_path,
+          fileName: row.file_name,
+          fileType: row.file_type,
+          fileSize: row.file_size,
+        };
+      });
+
       const timelinePlanByStep: Record<string, TimelinePlanEntry> = {};
       (timelinePlanRes.data ?? []).forEach((row) => {
         timelinePlanByStep[row.step_key] = {
@@ -210,6 +236,7 @@ export function useProjectData(projectId: string) {
         milestonesByStep,
         consultants,
         timelinePlanByStep,
+        itemFilesByItem,
       };
     },
   });
