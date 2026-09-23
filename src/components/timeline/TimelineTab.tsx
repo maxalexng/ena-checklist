@@ -4,11 +4,11 @@ import { useState } from "react";
 import { STAGES, STEP_BY_ID } from "@/template";
 import { timelineKeys } from "@/template";
 import type { ProjectChecklistData } from "@/hooks/useProjectData";
-import { useUpdateStageDurationWeeks, useUpdateTimelinePlan } from "@/hooks/useTimelineMutations";
+import { useUpdateStageDurationWeeks, useUpdateTimelinePlanField } from "@/hooks/useTimelineMutations";
 import { aggregateStatus, projectSpan, pxForDate, stageBands, todayPx } from "@/lib/checklist/timeline";
 
 export function TimelineTab({ projectId, data }: { projectId: string; data: ProjectChecklistData }) {
-  const updateTimelinePlan = useUpdateTimelinePlan(projectId);
+  const updateTimelinePlanField = useUpdateTimelinePlanField(projectId);
   const updateStageDuration = useUpdateStageDurationWeeks(projectId);
   const [durationsOpen, setDurationsOpen] = useState(false);
 
@@ -118,10 +118,10 @@ export function TimelineTab({ projectId, data }: { projectId: string; data: Proj
                     type="date"
                     value={plan?.startDate ?? ""}
                     onChange={(e) =>
-                      updateTimelinePlan.mutate({
+                      updateTimelinePlanField.mutate({
                         stepKey: step.id,
-                        startDate: e.target.value || null,
-                        endDate: plan?.endDate ?? null,
+                        field: "start_date",
+                        value: e.target.value || null,
                       })
                     }
                   />
@@ -130,10 +130,10 @@ export function TimelineTab({ projectId, data }: { projectId: string; data: Proj
                     type="date"
                     value={plan?.endDate ?? ""}
                     onChange={(e) =>
-                      updateTimelinePlan.mutate({
+                      updateTimelinePlanField.mutate({
                         stepKey: step.id,
-                        startDate: plan?.startDate ?? null,
-                        endDate: e.target.value || null,
+                        field: "end_date",
+                        value: e.target.value || null,
                       })
                     }
                   />

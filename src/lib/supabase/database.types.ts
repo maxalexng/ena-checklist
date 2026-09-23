@@ -141,7 +141,10 @@ export interface Database {
           start_date: string | null;
           end_date: string | null;
         };
-        Insert: Database["public"]["Tables"]["timeline_plan"]["Row"];
+        Insert: Partial<Database["public"]["Tables"]["timeline_plan"]["Row"]> & {
+          project_id: string;
+          step_key: string;
+        };
         Update: Partial<Database["public"]["Tables"]["timeline_plan"]["Row"]>;
         Relationships: [];
       };
@@ -191,7 +194,20 @@ export interface Database {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      merge_project_dates: {
+        Args: { p_project_id: string; p_patch: Partial<ProjectDates> };
+        Returns: void;
+      };
+      merge_list_presets: {
+        Args: { p_project_id: string; p_patch: Record<string, string[]> };
+        Returns: void;
+      };
+      merge_stage_duration_weeks: {
+        Args: { p_project_id: string; p_patch: Record<string, number> };
+        Returns: void;
+      };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };

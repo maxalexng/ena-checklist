@@ -17,27 +17,17 @@ function currentData(queryClient: ReturnType<typeof useQueryClient>, projectId: 
   return queryClient.getQueryData<ProjectChecklistData>(projectDataQueryKey(projectId));
 }
 
-const EMPTY_PROJECT_DATES: ProjectDates = {
-  contractStart: "",
-  practicalCompletion: "",
-  practicalCompletionNote: "",
-  contractSigned: "",
-  loaSigned: "",
-  loaBasisType: "months",
-  loaBasisMonths: "3",
-  startAiRef: "",
-  eot: [],
-};
-
-/** project_dates is a single JSONB object edited as a whole — merges the given partial
- * fields onto whatever the client currently has cached and writes the full object back. */
+/** project_dates is a single JSONB object edited as a whole — merged atomically inside
+ * Postgres (see supabase/migrations/0003_jsonb_merge_functions.sql) rather than via a
+ * client-side read-merge-write. Two rapid edits to different fields of the same JSONB blob
+ * (e.g. setting a date, then immediately adding an EOT row) used to race under the
+ * client-side version: the second write could read a snapshot from before the first
+ * write had landed and silently revert it. An atomic `column = column || patch` UPDATE
+ * has no such window, regardless of how close together the two calls fire. */
 export function useUpdateProjectDates(projectId: string) {
   const supabase = createClient();
-  const queryClient = useQueryClient();
   return useProjectMutation<Partial<ProjectDates>>(projectId, async (patch) => {
-    const existing = currentData(queryClient, projectId)?.project.projectDates ?? EMPTY_PROJECT_DATES;
-    const merged: ProjectDates = { ...existing, ...patch };
-    const { error } = await supabase.from("projects").update({ project_dates: merged }).eq("id", projectId);
+    const { error } = await supabase.rpc("merge_project_dates", { p_project_id: projectId, p_patch: patch });
     if (error) throw error;
   });
 }
@@ -111,11 +101,11 @@ export function useMoveMilestone(projectId: string) {
 
 export function useUpdateListPresets(projectId: string) {
   const supabase = createClient();
-  const queryClient = useQueryClient();
   return useProjectMutation<{ stepKey: string; presets: string[] }>(projectId, async ({ stepKey, presets }) => {
-    const existing = currentData(queryClient, projectId)?.project.listPresets ?? {};
-    const merged = { ...existing, [stepKey]: presets };
-    const { error } = await supabase.from("projects").update({ list_presets: merged }).eq("id", projectId);
+    const { error } = await supabase.rpc("merge_list_presets", {
+      p_project_id: projectId,
+      p_patch: { [stepKey]: presets },
+    });
     if (error) throw error;
   });
 }

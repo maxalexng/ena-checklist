@@ -1,5 +1,6 @@
 import type { Page } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
+import { createProject, type NewProjectInput } from "../src/lib/projects/createProject";
 
 export async function login(page: Page) {
   const email = process.env.PLAYWRIGHT_TEST_EMAIL;
@@ -35,4 +36,19 @@ export function uniqueE2eReference(label: string) {
 export async function deleteProjectByReference(reference: string) {
   const supabase = adminClient();
   await supabase.from("projects").delete().eq("reference", reference);
+}
+
+/** Seeds a full project (183 checklist items + 11 default roles) the same way the app's
+ * own "New Project" flow does — reuses createProject() directly rather than duplicating
+ * its seeding logic, so a future change to that flow can't silently drift out of sync with
+ * what these tests set up. Runs with the service-role client, bypassing RLS (there's no
+ * logged-in user in this setup step — the test signs in separately via login()). */
+export async function createTestProject(input: NewProjectInput) {
+  return createProject(adminClient(), input, null);
+}
+
+export async function setProjectFields(projectId: string, fields: Record<string, unknown>) {
+  const supabase = adminClient();
+  const { error } = await supabase.from("projects").update(fields).eq("id", projectId);
+  if (error) throw error;
 }
