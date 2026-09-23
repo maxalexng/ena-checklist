@@ -4,16 +4,24 @@
 // that a library would add weight without adding clarity.
 import type { ProjectDates } from "@/lib/supabase/database.types";
 
+// These are civil/calendar dates (contract dates, EOT days), not timestamps — all
+// arithmetic below is done in UTC throughout (parse, mutate, and format) so the result
+// never shifts by a day depending on the browser's local timezone offset from UTC.
 function addMonths(dateStr: string, months: number): Date {
-  const d = new Date(dateStr + "T00:00:00");
-  d.setMonth(d.getMonth() + months);
+  const d = new Date(dateStr + "T00:00:00Z");
+  d.setUTCMonth(d.getUTCMonth() + months);
   return d;
 }
 
 function addDays(dateStr: string, days: number): Date {
-  const d = new Date(dateStr + "T00:00:00");
-  d.setDate(d.getDate() + days);
+  const d = new Date(dateStr + "T00:00:00Z");
+  d.setUTCDate(d.getUTCDate() + days);
   return d;
+}
+
+function todayUtcMidnight(): Date {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 }
 
 export function toIsoDate(d: Date): string {
@@ -70,9 +78,7 @@ export function ppExpiryInfo(
   if (dated.length === 0) return null;
   const latest = dated.reduce((a, b) => ((a.date as string) > (b.date as string) ? a : b));
   const expiry = addMonths(latest.date as string, months);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const daysRemaining = Math.round((expiry.getTime() - today.getTime()) / 86400000);
+  const daysRemaining = Math.round((expiry.getTime() - todayUtcMidnight().getTime()) / 86400000);
   const status: PpExpiryStatus = daysRemaining < 0 ? "expired" : daysRemaining <= 90 ? "soon" : "ok";
   return { date: toIsoDate(expiry), status, daysRemaining };
 }

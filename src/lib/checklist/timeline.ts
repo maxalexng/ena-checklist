@@ -21,7 +21,9 @@ export function projectSpan(
   const totalWeeks = STAGES.reduce((sum, s) => sum + (stageDurationWeeks[s.id] || 0), 0);
   if (totalWeeks <= 0) return null;
   return {
-    startDate: new Date(contractStart + "T00:00:00"),
+    // Civil/calendar date, not a timestamp — anchored to UTC midnight (not local midnight)
+    // so week-offset math below never shifts by a day depending on the browser's timezone.
+    startDate: new Date(contractStart + "T00:00:00Z"),
     totalWeeks,
     trackWidthPx: Math.max(TL_MIN_TRACK_WIDTH, totalWeeks * TL_PX_PER_WEEK),
   };
@@ -29,14 +31,13 @@ export function projectSpan(
 
 export function pxForDate(dateStr: string | null | undefined, span: ProjectSpan): number | null {
   if (!dateStr) return null;
-  const d = new Date(dateStr + "T00:00:00");
+  const d = new Date(dateStr + "T00:00:00Z");
   const weeks = (d.getTime() - span.startDate.getTime()) / (7 * 86400000);
   return weeks * TL_PX_PER_WEEK;
 }
 
 export function todayPx(span: ProjectSpan): number {
-  const today = new Date();
-  const iso = today.toISOString().slice(0, 10);
+  const iso = new Date().toISOString().slice(0, 10);
   return pxForDate(iso, span) ?? 0;
 }
 

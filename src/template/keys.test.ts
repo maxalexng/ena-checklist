@@ -1,0 +1,155 @@
+import { describe, expect, it } from "vitest";
+import {
+  STEPS,
+  STEP_BY_ID,
+  agencyColorFor,
+  agencyIdForStepKey,
+  agencyLogoSrc,
+  defaultStepOrder,
+  itemById,
+  parseItemId,
+  reconcileOrder,
+  stepKey,
+} from "./keys";
+
+describe("stepKey", () => {
+  it("joins agencyId and a sanitized code with a double underscore", () => {
+    expect(stepKey("bca", "ST")).toBe("bca__ST");
+  });
+
+  it("strips non-alphanumeric characters from the code", () => {
+    expect(stepKey("ura", "DC/DP")).toBe("ura__DCDP");
+    expect(stepKey("scdf", "FSC/TFP")).toBe("scdf__FSCTFP");
+  });
+});
+
+describe("parseItemId", () => {
+  it("splits a stable item id back into its step key and index", () => {
+    expect(parseItemId("bca__ST__0")).toEqual({ stepKey: "bca__ST", index: 0 });
+    expect(parseItemId("admin__TOPDOCS__47")).toEqual({ stepKey: "admin__TOPDOCS", index: 47 });
+  });
+
+  it("returns null for a string with no trailing index", () => {
+    expect(parseItemId("not-an-item-id")).toBeNull();
+    expect(parseItemId("bca__ST")).toBeNull();
+  });
+});
+
+describe("agencyIdForStepKey", () => {
+  it("resolves a step key to its owning agency id", () => {
+    expect(agencyIdForStepKey("bca__ST")).toBe("bca");
+    expect(agencyIdForStepKey("ura__PP")).toBe("ura");
+  });
+
+  it("returns undefined for an unknown step key", () => {
+    expect(agencyIdForStepKey("not__real")).toBeUndefined();
+  });
+});
+
+describe("reconcileOrder", () => {
+  const validIds = ["a", "b", "c"];
+
+  it("keeps saved order for ids that are still valid", () => {
+    expect(reconcileOrder(["c", "a", "b"], validIds)).toEqual(["c", "a", "b"]);
+  });
+
+  it("drops stale ids no longer in the valid set", () => {
+    expect(reconcileOrder(["a", "stale", "b"], validIds)).toEqual(["a", "b", "c"]);
+  });
+
+  it("appends new valid ids not present in the saved order, at the end", () => {
+    expect(reconcileOrder(["b"], validIds)).toEqual(["b", "a", "c"]);
+  });
+
+  it("de-duplicates repeated ids in the saved order", () => {
+    expect(reconcileOrder(["a", "a", "b"], validIds)).toEqual(["a", "b", "c"]);
+  });
+
+  it("falls back to the full valid list when saved is null, undefined, or empty", () => {
+    expect(reconcileOrder(null, validIds)).toEqual(validIds);
+    expect(reconcileOrder(undefined, validIds)).toEqual(validIds);
+    expect(reconcileOrder([], validIds)).toEqual(validIds);
+  });
+});
+
+describe("agencyColorFor", () => {
+  it("uses the fixed override colors for BCA, NParks, and PUB", () => {
+    expect(agencyColorFor("BCA")).toBe("red");
+    expect(agencyColorFor("NParks")).toBe("green");
+    expect(agencyColorFor("PUB")).toBe("blue");
+  });
+
+  it("falls back to slate for an unknown code", () => {
+    expect(agencyColorFor("NOT-A-REAL-CODE")).toBe("slate");
+  });
+
+  it("gives every real agency code some color, with no two overridden codes colliding", () => {
+    const codes = new Set(STEPS.map((s) => s.code));
+    codes.forEach((code) => {
+      expect(agencyColorFor(code)).toBeTruthy();
+    });
+  });
+});
+
+describe("agencyLogoSrc", () => {
+  it("returns a /logos path for agencies with a real-world logo", () => {
+    expect(agencyLogoSrc("bca")).toBe("/logos/bca.png");
+    expect(agencyLogoSrc("ura")).toBe("/logos/ura.png");
+  });
+
+  it("returns null for internal, non-governmental agencies", () => {
+    expect(agencyLogoSrc("admin")).toBeNull();
+    expect(agencyLogoSrc("site")).toBeNull();
+  });
+});
+
+describe("itemById", () => {
+  it("resolves a known item id to its template item", () => {
+    const item = itemById("bca__ST__0");
+    expect(item).toBeDefined();
+    expect(item?.id).toBe("bca__ST__0");
+  });
+
+  it("returns undefined for an unknown item id", () => {
+    expect(itemById("nope__NOPE__99")).toBeUndefined();
+  });
+});
+
+describe("defaultStepOrder", () => {
+  it("returns every step id in STEP_ORDER's canonical order", () => {
+    expect(defaultStepOrder()).toEqual(STEPS.map((s) => s.id));
+  });
+});
+
+// Guards the whole template build against silent drift — matches the counts verified
+// against the legacy prototype's real data (see scripts/migrate-html-import.ts's run for
+// "2 Astrid Hill": 183 items imported vs 183 in source).
+describe("template integrity", () => {
+  it("has exactly 39 steps", () => {
+    expect(STEPS.length).toBe(39);
+  });
+
+  it("has exactly 183 checklist items across all steps", () => {
+    const total = STEPS.reduce((sum, s) => sum + s.items.length, 0);
+    expect(total).toBe(183);
+  });
+
+  it("gives every step a unique id", () => {
+    const ids = STEPS.map((s) => s.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("gives every item within a step a unique, correctly-prefixed id", () => {
+    STEPS.forEach((step) => {
+      step.items.forEach((item, i) => {
+        expect(item.id).toBe(`${step.id}__${i}`);
+      });
+    });
+  });
+
+  it("indexes every step in STEP_BY_ID", () => {
+    STEPS.forEach((step) => {
+      expect(STEP_BY_ID[step.id]).toBe(step);
+    });
+  });
+});
