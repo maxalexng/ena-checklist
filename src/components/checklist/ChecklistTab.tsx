@@ -138,6 +138,7 @@ export function ChecklistTab({ projectId, data }: { projectId: string; data: Pro
                     key={step.id}
                     projectId={projectId}
                     step={step}
+                    stageName={group.stage.name}
                     data={data}
                     collapsed={!!collapsedSteps[step.id]}
                     onToggleCollapsed={() => toggleCollapsed(step.id)}

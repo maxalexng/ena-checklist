@@ -11,6 +11,7 @@ import { ConsultantsWidget } from "@/components/consultants/ConsultantsWidget";
 export function StepCard({
   projectId,
   step,
+  stageName,
   data,
   collapsed,
   onToggleCollapsed,
@@ -20,6 +21,7 @@ export function StepCard({
 }: {
   projectId: string;
   step: TemplateStep;
+  stageName: string;
   data: ProjectChecklistData;
   collapsed: boolean;
   onToggleCollapsed: () => void;
@@ -89,6 +91,7 @@ export function StepCard({
         <div className="agency-head-main">
           <div className="agency-head-top">
             <span className="agency-tag step-tag">Step {step.stepNo}</span>
+            <span className="agency-tag stage-tag">{stageName}</span>
             <h3>{step.name}</h3>
             {step.conditional && <span className="agency-tag">If applicable</span>}
             {stepIsNa && <span className="agency-tag step-na-badge">N/A</span>}

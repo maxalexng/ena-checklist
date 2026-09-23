@@ -42,4 +42,14 @@ test.describe("Checklist item labels and conditional badges", () => {
     const submissionHead = page.locator(".submission-head").filter({ hasText: "CORENET" }).first();
     await expect(submissionHead.getByText("If applicable")).toHaveCount(0);
   });
+
+  test("every step card shows which stage it's in", async ({ page }) => {
+    await page.getByPlaceholder("Search checklist…").fill("Client's contact particulars");
+    const stepCard = page.locator(".agency").filter({ hasText: "Practice Administration" }).first();
+    await expect(stepCard.locator(".stage-tag")).toHaveText("Pre-Design");
+
+    await page.getByPlaceholder("Search checklist…").fill("Concept site plan / masterplan layout");
+    const outlinePermissionCard = page.locator(".agency").filter({ hasText: "Outline Permission" }).first();
+    await expect(outlinePermissionCard.locator(".stage-tag")).toHaveText("Concept Design");
+  });
 });
