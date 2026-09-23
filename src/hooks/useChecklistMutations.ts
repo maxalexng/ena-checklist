@@ -86,3 +86,14 @@ export function useRemoveAssign(projectId: string) {
     if (error) throw error;
   });
 }
+
+/** step_order is a plain column (string[] JSONB, but always written whole) — no merge race
+ * here since the caller (ChecklistTab) always computes the new array from the full current
+ * order via moveStepInOrder(), not a partial patch. */
+export function useUpdateStepOrder(projectId: string) {
+  const supabase = createClient();
+  return useProjectMutation<string[]>(projectId, async (order) => {
+    const { error } = await supabase.from("projects").update({ step_order: order }).eq("id", projectId);
+    if (error) throw error;
+  });
+}

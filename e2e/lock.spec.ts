@@ -42,7 +42,9 @@ test.describe("Lock mechanism", () => {
     await page.getByRole("button", { name: "Checklist" }).click();
     await page.getByRole("button", { name: "+ Assign" }).first().click();
     await page.locator(".assign-role-select").first().selectOption({ index: 0 });
-    await page.getByRole("button", { name: "Add" }).first().click();
+    // Not getByRole("button", { name: "Add" }) — that's a substring match, and the rail
+    // now has a step named "...Member Addition" that sorts before this button in the DOM.
+    await page.locator(".assign-confirm").first().click();
     await expect(page.locator(".assign-chip")).toHaveCount(1);
     await expect(page.locator(".assign-remove")).toHaveCount(1);
 

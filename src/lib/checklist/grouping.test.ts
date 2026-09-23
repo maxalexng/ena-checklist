@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { STAGES, STEPS, defaultStepOrder } from "@/template";
-import { effectiveStepOrder, flattenSteps, orderedStageGroups, stageOfStep } from "./grouping";
+import { effectiveStepOrder, flattenSteps, moveStepInOrder, orderedStageGroups, stageOfStep } from "./grouping";
 
 describe("effectiveStepOrder", () => {
   it("returns the full template default order when nothing is saved", () => {
@@ -52,5 +52,70 @@ describe("orderedStageGroups", () => {
 
     const originalGroup = groups.find((g) => g.stage.id === step.defaultStage);
     expect(originalGroup?.steps.map((s) => s.id)).not.toContain(step.id);
+  });
+});
+
+describe("moveStepInOrder", () => {
+  const order = defaultStepOrder();
+  const groups = orderedStageGroups(null, {});
+  // Pre-Design's 5 steps, in template order.
+  const preDesignIds = groups.find((g) => g.stage.id === "pre-design")!.steps.map((s) => s.id);
+
+  it("swaps a step down with its next same-stage neighbor", () => {
+    const [first, second] = preDesignIds;
+    const next = moveStepInOrder(order, groups, first, 1)!;
+    const firstIdx = next.indexOf(first);
+    const secondIdx = next.indexOf(second);
+    expect(secondIdx).toBe(firstIdx - 1);
+  });
+
+  it("swaps a step up with its previous same-stage neighbor", () => {
+    const [first, second] = preDesignIds;
+    const next = moveStepInOrder(order, groups, second, -1)!;
+    const firstIdx = next.indexOf(first);
+    const secondIdx = next.indexOf(second);
+    expect(secondIdx).toBe(firstIdx - 1);
+  });
+
+  it("returns null when already first in its stage group and moving up", () => {
+    expect(moveStepInOrder(order, groups, preDesignIds[0], -1)).toBeNull();
+  });
+
+  it("returns null when already last in its stage group and moving down", () => {
+    const last = preDesignIds[preDesignIds.length - 1];
+    expect(moveStepInOrder(order, groups, last, 1)).toBeNull();
+  });
+
+  it("returns null for an unknown step id", () => {
+    expect(moveStepInOrder(order, groups, "not__a__step", 1)).toBeNull();
+  });
+
+  it("only touches the two swapped positions, leaving every other step's slot alone", () => {
+    const [first, second] = preDesignIds;
+    const next = moveStepInOrder(order, groups, first, 1)!;
+    order.forEach((id, i) => {
+      if (id !== first && id !== second) {
+        expect(next[i]).toBe(id);
+      }
+    });
+  });
+
+  it("does not disturb another stage's relative order when steps are interleaved by a stage override", () => {
+    // Force the second pre-design step ("moved") into "csc", so pre-design's remaining
+    // members are no longer contiguous in the flat array — the swap must still only swap
+    // the two same-stage steps' own positions, leaving "moved" (and everything else) put.
+    const moved = preDesignIds[1];
+    const overriddenGroups = orderedStageGroups(null, { [moved]: "csc" });
+    const preDesignNow = overriddenGroups.find((g) => g.stage.id === "pre-design")!.steps.map((s) => s.id);
+    const [a, b] = preDesignNow;
+
+    const aPos = order.indexOf(a);
+    const bPos = order.indexOf(b);
+    const movedPos = order.indexOf(moved);
+
+    const next = moveStepInOrder(order, overriddenGroups, a, 1)!;
+    expect(next[aPos]).toBe(b);
+    expect(next[bPos]).toBe(a);
+    expect(next[movedPos]).toBe(moved);
   });
 });

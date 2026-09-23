@@ -45,3 +45,33 @@ export function flattenSteps(groups: StageGroup[]): TemplateStep[] {
 }
 
 export const ALL_STEPS = STEPS;
+
+/** Moves a step one place up/down within its own stage group, returning the new full
+ * flat step_order array to persist (or null if there's no valid move — already at the
+ * edge of its group, or the step/neighbor isn't in `order`). Pure and stage-aware: two
+ * steps can be adjacent in `order` yet belong to different stage groups (once a step has
+ * been dragged to a different stage), so the swap target is found via the *grouped* view,
+ * not raw adjacency in the flat array — swapping their two positions in the flat array
+ * (wherever they happen to sit) reorders them within their shared stage without disturbing
+ * any other stage's relative order. */
+export function moveStepInOrder(
+  order: string[],
+  groups: StageGroup[],
+  stepId: string,
+  direction: -1 | 1
+): string[] | null {
+  const group = groups.find((g) => g.steps.some((s) => s.id === stepId));
+  if (!group) return null;
+  const idx = group.steps.findIndex((s) => s.id === stepId);
+  const neighborIdx = idx + direction;
+  if (neighborIdx < 0 || neighborIdx >= group.steps.length) return null;
+  const neighborId = group.steps[neighborIdx].id;
+
+  const a = order.indexOf(stepId);
+  const b = order.indexOf(neighborId);
+  if (a === -1 || b === -1) return null;
+
+  const next = [...order];
+  [next[a], next[b]] = [next[b], next[a]];
+  return next;
+}

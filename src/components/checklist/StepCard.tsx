@@ -14,12 +14,18 @@ export function StepCard({
   data,
   collapsed,
   onToggleCollapsed,
+  isFirstInStage,
+  isLastInStage,
+  onMove,
 }: {
   projectId: string;
   step: TemplateStep;
   data: ProjectChecklistData;
   collapsed: boolean;
   onToggleCollapsed: () => void;
+  isFirstInStage: boolean;
+  isLastInStage: boolean;
+  onMove: (direction: -1 | 1) => void;
 }) {
   const toggleStepNa = useToggleStepNa(projectId);
   const logoSrc = agencyLogoSrc(step.realId);
@@ -49,6 +55,28 @@ export function StepCard({
       data-search={searchBlob}
     >
       <div className="agency-head" onClick={onToggleCollapsed}>
+        <div className="step-order-controls" onClick={(e) => e.stopPropagation()}>
+          <div className="step-move-group">
+            <button
+              type="button"
+              className="step-move-btn"
+              disabled={isFirstInStage}
+              title="Move up"
+              onClick={() => onMove(-1)}
+            >
+              ▲
+            </button>
+            <button
+              type="button"
+              className="step-move-btn"
+              disabled={isLastInStage}
+              title="Move down"
+              onClick={() => onMove(1)}
+            >
+              ▼
+            </button>
+          </div>
+        </div>
         {logoSrc ? (
           <div className="agency-logo-wrap" style={{ position: "relative" }}>
             <Image src={logoSrc} alt={step.code} fill sizes="132px" style={{ objectFit: "contain" }} className="agency-logo" />
@@ -60,6 +88,7 @@ export function StepCard({
         )}
         <div className="agency-head-main">
           <div className="agency-head-top">
+            <span className="agency-tag step-tag">Step {step.stepNo}</span>
             <h3>{step.name}</h3>
             {step.conditional && <span className="agency-tag">If applicable</span>}
             {stepIsNa && <span className="agency-tag step-na-badge">N/A</span>}
