@@ -21,12 +21,14 @@ function ConsultantRow({
   roles,
   isFirst,
   isLast,
+  locked,
 }: {
   projectId: string;
   consultant: ConsultantEntry;
   roles: RoleRecord[];
   isFirst: boolean;
   isLast: boolean;
+  locked: boolean;
 }) {
   const updateConsultant = useUpdateConsultant(projectId);
   const deleteConsultant = useDeleteConsultant(projectId);
@@ -41,7 +43,7 @@ function ConsultantRow({
         <button
           type="button"
           className="row-move-btn"
-          disabled={isFirst}
+          disabled={locked || isFirst}
           onClick={() => moveConsultant.mutate({ id: consultant.id, direction: -1 })}
         >
           ▲
@@ -49,24 +51,16 @@ function ConsultantRow({
         <button
           type="button"
           className="row-move-btn"
-          disabled={isLast}
+          disabled={locked || isLast}
           onClick={() => moveConsultant.mutate({ id: consultant.id, direction: 1 })}
         >
           ▼
         </button>
       </div>
-      <input
-        className="eot-title-input"
-        placeholder="Company"
-        value={company}
-        onChange={(e) => setCompany(e.target.value)}
-        onBlur={() => {
-          if (company !== consultant.company) updateConsultant.mutate({ id: consultant.id, company });
-        }}
-      />
       <select
         className="consultant-role-select"
         value={consultant.roleId ?? ""}
+        disabled={locked}
         onChange={(e) => updateConsultant.mutate({ id: consultant.id, roleId: e.target.value || null })}
       >
         <option value="">(no role)</option>
@@ -77,18 +71,32 @@ function ConsultantRow({
         ))}
       </select>
       <input
+        className="eot-title-input"
+        placeholder="N/A"
+        value={company}
+        disabled={locked}
+        onChange={(e) => setCompany(e.target.value)}
+        onBlur={() => {
+          if (company !== consultant.company) updateConsultant.mutate({ id: consultant.id, company });
+        }}
+      />
+      <input
         type="date"
         className="ov-amend-date-input"
         value={consultant.dateSigned ?? ""}
+        disabled={locked}
         onChange={(e) => updateConsultant.mutate({ id: consultant.id, dateSigned: e.target.value || null })}
       />
-      <button type="button" className="ov-del" onClick={() => deleteConsultant.mutate({ id: consultant.id })}>
-        ×
-      </button>
+      {!locked && (
+        <button type="button" className="ov-del" onClick={() => deleteConsultant.mutate({ id: consultant.id })}>
+          ×
+        </button>
+      )}
       <input
         className="consultant-note-input"
         placeholder="Note (engineer replaced, appointed under main contractor, etc.)"
         value={note}
+        disabled={locked}
         onChange={(e) => setNote(e.target.value)}
         onBlur={() => {
           if (note !== consultant.note) updateConsultant.mutate({ id: consultant.id, note });
@@ -102,10 +110,12 @@ export function ConsultantsWidget({
   projectId,
   consultants,
   roles,
+  locked,
 }: {
   projectId: string;
   consultants: ConsultantEntry[];
   roles: RoleRecord[];
+  locked: boolean;
 }) {
   const addConsultant = useAddConsultant(projectId);
   const sorted = [...consultants].sort((a, b) => a.sortOrder - b.sortOrder);
@@ -121,17 +131,20 @@ export function ConsultantsWidget({
           roles={sortedRoles}
           isFirst={i === 0}
           isLast={i === sorted.length - 1}
+          locked={locked}
         />
       ))}
       {sorted.length === 0 && <span className="ov-empty">No consultants appointed yet.</span>}
-      <button
-        type="button"
-        className="roles-add-btn"
-        style={{ alignSelf: "flex-start", marginTop: "8px" }}
-        onClick={() => addConsultant.mutate()}
-      >
-        + Add consultant
-      </button>
+      {!locked && (
+        <button
+          type="button"
+          className="roles-add-btn"
+          style={{ alignSelf: "flex-start", marginTop: "8px" }}
+          onClick={() => addConsultant.mutate()}
+        >
+          + Add consultant
+        </button>
+      )}
     </div>
   );
 }

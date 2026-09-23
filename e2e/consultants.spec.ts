@@ -27,8 +27,8 @@ test.describe("Consultants widget", () => {
     await page.getByRole("button", { name: "+ Add consultant" }).click();
 
     const row = page.locator(".item").filter({ has: page.locator(".consultant-role-select") });
-    await row.getByPlaceholder("Company").fill("Edmund Ng Architects Pte Ltd");
-    await row.getByPlaceholder("Company").blur();
+    await row.locator(".eot-title-input").fill("Edmund Ng Architects Pte Ltd");
+    await row.locator(".eot-title-input").blur();
     await row.locator(".consultant-role-select").selectOption({ label: "Architect" });
     await row.locator("input[type=date]").fill("2023-04-14");
 
@@ -37,7 +37,7 @@ test.describe("Consultants widget", () => {
     await page.getByPlaceholder("Search checklist…").fill("Consultant Appointments");
 
     const reloadedRow = page.locator(".item").filter({ has: page.locator(".consultant-role-select") });
-    await expect(reloadedRow.getByPlaceholder("Company")).toHaveValue("Edmund Ng Architects Pte Ltd");
+    await expect(reloadedRow.locator(".eot-title-input")).toHaveValue("Edmund Ng Architects Pte Ltd");
     const selectedRoleText = await reloadedRow
       .locator(".consultant-role-select")
       .evaluate((el: HTMLSelectElement) => el.selectedOptions[0]?.textContent);
@@ -53,5 +53,26 @@ test.describe("Consultants widget", () => {
 
     await expect(page.locator(".item").filter({ has: page.locator(".consultant-role-select") })).toHaveCount(0);
     await expect(page.getByText("No consultants appointed yet.")).toBeVisible();
+  });
+
+  test("locking the project disables consultant editing, and unlocking restores it", async ({ page }) => {
+    await page.getByRole("button", { name: "+ Add consultant" }).click();
+    const row = page.locator(".item").filter({ has: page.locator(".consultant-role-select") });
+    await expect(row).toHaveCount(1);
+
+    await page.getByRole("button", { name: "🔓 Unlocked" }).click();
+    await expect(page.getByRole("button", { name: "🔒 Locked" })).toBeVisible();
+
+    await expect(page.getByRole("button", { name: "+ Add consultant" })).toHaveCount(0);
+    await expect(row.locator(".ov-del")).toHaveCount(0);
+    await expect(row.locator(".eot-title-input")).toBeDisabled();
+    await expect(row.locator(".consultant-role-select")).toBeDisabled();
+    await expect(row.locator("input[type=date]")).toBeDisabled();
+    await expect(row.locator(".row-move-btn").first()).toBeDisabled();
+
+    await page.getByRole("button", { name: "🔒 Locked" }).click();
+    await expect(page.getByRole("button", { name: "+ Add consultant" })).toBeVisible();
+    await expect(row.locator(".ov-del")).toHaveCount(1);
+    await expect(row.locator(".eot-title-input")).toBeEnabled();
   });
 });

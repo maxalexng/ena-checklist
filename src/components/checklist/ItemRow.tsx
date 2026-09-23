@@ -4,6 +4,7 @@ import { useState } from "react";
 import { STATUS_LABEL, nextStatus } from "@/template";
 import type { ItemStatus, TemplateItem } from "@/template";
 import type { ItemFileEntry, ItemRecord, ResponsibleEntry, RoleRecord } from "@/hooks/useProjectData";
+import { letterForIndex } from "@/lib/checklist/lettering";
 import {
   useAssignRole,
   useRemoveAssign,
@@ -24,6 +25,7 @@ export function ItemRow({
   item,
   record,
   index,
+  stepNo,
   stepCode,
   roles,
   responsible,
@@ -35,6 +37,7 @@ export function ItemRow({
   item: TemplateItem;
   record: ItemRecord | undefined;
   index: number;
+  stepNo: number;
   stepCode: string;
   roles: RoleRecord[];
   responsible: ResponsibleEntry[];
@@ -70,7 +73,10 @@ export function ItemRow({
         {na ? STATUS_LABEL.na : STATUS_LABEL[status]}
       </button>
 
-      <span className="item-label">{index + 1}.</span>
+      <span className="item-label">
+        {stepNo}
+        {letterForIndex(index)}.
+      </span>
       {showAgencyTag && <span className="item-agency-tag">{item.agencyCode}</span>}
       <span className="item-text">{item.text}</span>
 

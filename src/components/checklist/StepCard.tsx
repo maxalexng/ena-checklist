@@ -123,12 +123,18 @@ export function StepCard({
 
       <div className="submissions">
         {step.isConsultantList ? (
-          <ConsultantsWidget projectId={projectId} consultants={data.consultants} roles={data.roles} />
+          <ConsultantsWidget
+            projectId={projectId}
+            consultants={data.consultants}
+            roles={data.roles}
+            locked={data.project.assignments_locked}
+          />
         ) : (
           <div className="submission">
             <div className="submission-head">
               <span className="code-badge">{step.submission.code}</span>
               <h4>{step.submission.name}</h4>
+              {step.submission.conditional && <span className="agency-tag">If applicable</span>}
             </div>
             {step.submission.when && <p className="when">{step.submission.when}</p>}
             <div className="items">
@@ -139,6 +145,7 @@ export function StepCard({
                   item={item}
                   record={data.itemsByKey[item.id]}
                   index={i}
+                  stepNo={step.stepNo}
                   stepCode={step.code}
                   roles={data.roles}
                   responsible={data.responsibleByItem[data.itemsByKey[item.id]?.dbId] ?? []}
