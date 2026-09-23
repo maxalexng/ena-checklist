@@ -1,6 +1,5 @@
 "use client";
 
-import { STAGES } from "@/template";
 import type { TemplateStep } from "@/template";
 import type { ProjectChecklistData } from "@/hooks/useProjectData";
 import type { StageGroup } from "@/lib/checklist/grouping";
@@ -12,10 +11,14 @@ import type { StageGroup } from "@/lib/checklist/grouping";
 export function ChecklistRail({
   groups,
   data,
+  stepNoById,
+  stageOrdinalById,
   onJump,
 }: {
   groups: StageGroup[];
   data: ProjectChecklistData;
+  stepNoById: Record<string, number>;
+  stageOrdinalById: Record<string, number>;
   onJump: (stepId: string) => void;
 }) {
   function progress(step: TemplateStep) {
@@ -30,7 +33,7 @@ export function ChecklistRail({
       {groups.map((group) => (
         <div className="rail-stage-group" key={group.stage.id}>
           <div className="rail-stage-label">
-            <span className="rail-stage-no">Stage {STAGES.findIndex((s) => s.id === group.stage.id) + 1}</span>
+            <span className="rail-stage-no">Stage {stageOrdinalById[group.stage.id]}</span>
             <span className="rail-stage-name">{group.stage.name}</span>
           </div>
           {group.steps.map((step) => {
@@ -39,7 +42,7 @@ export function ChecklistRail({
               <button type="button" className="rail-item" key={step.id} onClick={() => onJump(step.id)}>
                 <div className="rail-top">
                   <span className="rail-code">
-                    {step.stepNo}. {step.code}
+                    {stepNoById[step.id] ?? step.stepNo}. {step.code}
                   </span>
                   <span className="rail-count">
                     {cleared}/{applicable}

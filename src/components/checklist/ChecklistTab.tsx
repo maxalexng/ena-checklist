@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { effectiveStepOrder, moveStepInOrder, orderedStageGroups } from "@/lib/checklist/grouping";
+import { effectiveStepOrder, flattenSteps, moveStepInOrder, orderedStageGroups } from "@/lib/checklist/grouping";
 import type { ProjectChecklistData } from "@/hooks/useProjectData";
+import { STAGES } from "@/template";
 import { useUpdateStepOrder } from "@/hooks/useChecklistMutations";
 import { StepCard } from "./StepCard";
 import { ChecklistRail } from "./ChecklistRail";
@@ -46,6 +47,23 @@ export function ChecklistTab({ projectId, data }: { projectId: string; data: Pro
     });
     return map;
   }, [groups]);
+
+  // "Step N" is a live position in the project's own current order, not the template's
+  // fixed default — a step dragged to a different stage renumbers along with everything
+  // around it, so the sequence always reads 1, 2, 3, ... with no gaps. Derived from the
+  // unfiltered groups so a search filter never renumbers what's on screen.
+  const stepNoById = useMemo(() => {
+    const map: Record<string, number> = {};
+    flattenSteps(groups).forEach((s, i) => {
+      map[s.id] = i + 1;
+    });
+    return map;
+  }, [groups]);
+
+  const stageOrdinalById = useMemo(
+    () => Object.fromEntries(STAGES.map((s, i) => [s.id, i + 1])),
+    []
+  );
 
   function expandAndScrollTo(stepId: string) {
     setCollapsedSteps((prev) => ({ ...prev, [stepId]: false }));
@@ -123,13 +141,19 @@ export function ChecklistTab({ projectId, data }: { projectId: string; data: Pro
       </div>
 
       <div className="shell-grid">
-        <ChecklistRail groups={visibleGroups} data={data} onJump={expandAndScrollTo} />
+        <ChecklistRail
+          groups={visibleGroups}
+          data={data}
+          stepNoById={stepNoById}
+          stageOrdinalById={stageOrdinalById}
+          onJump={expandAndScrollTo}
+        />
 
         <main className="content">
           {visibleGroups.map((group) => (
             <div className="stage" key={group.stage.id}>
               <div className="stage-head">
-                <span className="stage-label">{group.stage.id.toUpperCase()}</span>
+                <span className="stage-label">Stage {stageOrdinalById[group.stage.id]}</span>
                 <h2>{group.stage.name}</h2>
               </div>
               <div className="stage-steps">
@@ -138,6 +162,7 @@ export function ChecklistTab({ projectId, data }: { projectId: string; data: Pro
                     key={step.id}
                     projectId={projectId}
                     step={step}
+                    stepNo={stepNoById[step.id] ?? step.stepNo}
                     stageName={group.stage.name}
                     data={data}
                     collapsed={!!collapsedSteps[step.id]}

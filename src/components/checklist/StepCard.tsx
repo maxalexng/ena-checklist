@@ -11,6 +11,7 @@ import { ConsultantsWidget } from "@/components/consultants/ConsultantsWidget";
 export function StepCard({
   projectId,
   step,
+  stepNo,
   stageName,
   data,
   collapsed,
@@ -21,6 +22,7 @@ export function StepCard({
 }: {
   projectId: string;
   step: TemplateStep;
+  stepNo: number;
   stageName: string;
   data: ProjectChecklistData;
   collapsed: boolean;
@@ -90,7 +92,7 @@ export function StepCard({
         )}
         <div className="agency-head-main">
           <div className="agency-head-top">
-            <span className="agency-tag step-tag">Step {step.stepNo}</span>
+            <span className="agency-tag step-tag">Step {stepNo}</span>
             <span className="agency-tag stage-tag">{stageName}</span>
             <h3>{step.name}</h3>
             {step.conditional && <span className="agency-tag">If applicable</span>}
@@ -148,7 +150,7 @@ export function StepCard({
                   item={item}
                   record={data.itemsByKey[item.id]}
                   index={i}
-                  stepNo={step.stepNo}
+                  stepNo={stepNo}
                   stepCode={step.code}
                   roles={data.roles}
                   responsible={data.responsibleByItem[data.itemsByKey[item.id]?.dbId] ?? []}

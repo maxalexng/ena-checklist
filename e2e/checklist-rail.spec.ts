@@ -64,6 +64,32 @@ test.describe("Checklist rail navigation and step reordering", () => {
     await expect(reloadedGroup.locator(".rail-name").nth(1)).toHaveText(firstBefore);
   });
 
+  test("moving a step renumbers step N sequentially with no gaps", async ({ page }) => {
+    // INTAKE (step 1) moving down swaps with TEAM (step 2) — their "Step N" tags should
+    // swap along with them, so the sequence still reads 1, 2, 3, ... with no gaps or
+    // stale numbers left over from the template's fixed default order.
+    const firstCard = page.locator(".agency").first();
+    const secondCard = page.locator(".agency").nth(1);
+    await expect(firstCard.locator(".step-tag")).toHaveText("Step 1");
+    await expect(secondCard.locator(".step-tag")).toHaveText("Step 2");
+
+    await firstCard.locator(".step-move-btn").nth(1).click(); // ▼
+
+    await expect(page.locator(".agency").first().locator(".step-tag")).toHaveText("Step 1");
+    await expect(page.locator(".agency").nth(1).locator(".step-tag")).toHaveText("Step 2");
+    // The step that moved down (INTAKE) now carries "Step 2" — confirm it actually
+    // renumbered rather than just re-rendering the same two labels by coincidence.
+    await expect(page.locator(".agency").nth(1)).toContainText("Client Information");
+  });
+
+  test("stage headers read 'Stage N' followed by the stage name", async ({ page }) => {
+    const stageHeads = page.locator(".stage-head");
+    await expect(stageHeads.first()).toContainText("Stage 1");
+    await expect(stageHeads.first()).toContainText("Pre-Design");
+    await expect(stageHeads.nth(1)).toContainText("Stage 2");
+    await expect(stageHeads.nth(1)).toContainText("Concept Design");
+  });
+
   test("the first step in a stage can't move up, and the last can't move down", async ({ page }) => {
     const firstCard = page.locator(".agency").first();
     await expect(firstCard.locator(".step-move-btn").nth(0)).toBeDisabled(); // ▲
