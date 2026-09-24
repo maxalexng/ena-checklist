@@ -90,14 +90,71 @@ test.describe("Checklist rail navigation and step reordering", () => {
     await expect(stageHeads.nth(1)).toContainText("Concept Design");
   });
 
-  test("the first step in a stage can't move up, and the last can't move down", async ({ page }) => {
+  test("only the very first step overall can't move up, and only the very last can't move down", async ({
+    page,
+  }) => {
+    // A step at the edge of its own stage can now cross into the adjacent one, so the
+    // move buttons are only disabled at the true start/end of the whole checklist —
+    // Stage 1's first step and Stage 8's last, not every stage boundary in between.
     const firstCard = page.locator(".agency").first();
     await expect(firstCard.locator(".step-move-btn").nth(0)).toBeDisabled(); // ▲
+    await expect(firstCard.locator(".step-move-btn").nth(1)).toBeEnabled(); // ▼ — crosses into Stage 2
 
-    // Pre-Design's last step (excluding any moved to another stage) — find it via the rail.
-    const preDesignSteps = page.locator(".rail-stage-group").first().locator(".rail-name");
-    const lastPreDesignName = await preDesignSteps.last().textContent();
-    const lastCard = page.locator(".agency", { hasText: lastPreDesignName! }).last();
+    const lastCard = page.locator(".agency").last();
     await expect(lastCard.locator(".step-move-btn").nth(1)).toBeDisabled(); // ▼
+    await expect(lastCard.locator(".step-move-btn").nth(0)).toBeEnabled(); // ▲ — crosses into the prior stage
+  });
+
+  test("moving a step past the bottom of its stage crosses into the next stage, and persists across reload", async ({
+    page,
+  }) => {
+    // Pre-Design's last step (Singapore Land Authority) moving down should cross into
+    // Concept Design, landing as its new first step.
+    const preDesignGroup = page
+      .locator(".stage")
+      .filter({ has: page.locator(".stage-label", { hasText: "Stage 1" }) });
+    const lastPreDesignCard = preDesignGroup.locator(".agency").last();
+    await expect(lastPreDesignCard).toContainText("Singapore Land Authority");
+
+    await lastPreDesignCard.locator(".step-move-btn").nth(1).click(); // ▼
+
+    const conceptGroup = page.locator(".stage").filter({ has: page.locator(".stage-label", { hasText: "Stage 2" }) });
+    const firstConceptCard = conceptGroup.locator(".agency").first();
+    await expect(firstConceptCard).toContainText("Singapore Land Authority");
+    await expect(firstConceptCard.locator(".stage-tag")).toHaveText("Concept Design");
+
+    await page.reload();
+    await page.getByRole("button", { name: "Checklist" }).click();
+    const reloadedConceptGroup = page
+      .locator(".stage")
+      .filter({ has: page.locator(".stage-label", { hasText: "Stage 2" }) });
+    await expect(reloadedConceptGroup.locator(".agency").first()).toContainText("Singapore Land Authority");
+  });
+
+  test("moving a step past the top of its stage crosses into the previous stage", async ({ page }) => {
+    // Concept's first step (Subdivision / Amalgamation of Lots) moving up should cross
+    // into Pre-Design, landing as its new last step.
+    const conceptGroup = page.locator(".stage").filter({ has: page.locator(".stage-label", { hasText: "Stage 2" }) });
+    const firstConceptCard = conceptGroup.locator(".agency").first();
+    await expect(firstConceptCard).toContainText("Subdivision / Amalgamation of Lots");
+
+    await firstConceptCard.locator(".step-move-btn").nth(0).click(); // ▲
+
+    const preDesignGroup = page
+      .locator(".stage")
+      .filter({ has: page.locator(".stage-label", { hasText: "Stage 1" }) });
+    const lastPreDesignCard = preDesignGroup.locator(".agency").last();
+    await expect(lastPreDesignCard).toContainText("Subdivision / Amalgamation of Lots");
+    await expect(lastPreDesignCard.locator(".stage-tag")).toHaveText("Pre-Design");
+  });
+
+  test("the move buttons disappear entirely when the project is locked", async ({ page }) => {
+    const firstCard = page.locator(".agency").first();
+    await expect(firstCard.locator(".step-move-btn")).toHaveCount(2);
+
+    await page.getByRole("button", { name: "🔓 Unlocked" }).click();
+    await expect(page.getByRole("button", { name: "🔒 Locked" })).toBeVisible();
+
+    await expect(firstCard.locator(".step-move-btn")).toHaveCount(0);
   });
 });

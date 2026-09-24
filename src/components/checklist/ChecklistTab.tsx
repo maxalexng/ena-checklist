@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { effectiveStepOrder, flattenSteps, moveStepInOrder, orderedStageGroups } from "@/lib/checklist/grouping";
 import type { ProjectChecklistData } from "@/hooks/useProjectData";
 import { STAGES } from "@/template";
-import { useUpdateStepOrder } from "@/hooks/useChecklistMutations";
+import { useUpdateStepOrderAndStage } from "@/hooks/useChecklistMutations";
 import { StepCard } from "./StepCard";
 import { ChecklistRail } from "./ChecklistRail";
 
@@ -12,10 +12,18 @@ export function ChecklistTab({ projectId, data }: { projectId: string; data: Pro
   const [search, setSearch] = useState("");
   const [collapsedSteps, setCollapsedSteps] = useState<Record<string, boolean>>({});
   const [jumpMessage, setJumpMessage] = useState<string | null>(null);
-  const updateStepOrder = useUpdateStepOrder(projectId);
+  const updateStepOrderAndStage = useUpdateStepOrderAndStage(projectId);
 
   const groups = useMemo(
     () => orderedStageGroups(data.project.step_order, data.project.step_stage),
+    [data.project.step_order, data.project.step_stage]
+  );
+
+  // Includes stages a project has emptied out by moving every step elsewhere — moveStep
+  // needs those as valid crossing targets; the render below still uses `groups` (filtered)
+  // so an empty stage doesn't show a bare section header with nothing under it.
+  const allGroups = useMemo(
+    () => orderedStageGroups(data.project.step_order, data.project.step_stage, true),
     [data.project.step_order, data.project.step_stage]
   );
 
@@ -35,30 +43,26 @@ export function ChecklistTab({ projectId, data }: { projectId: string; data: Pro
     [groups, query]
   );
 
-  // First/last-in-stage must reflect the true (unfiltered) group boundaries, not the
-  // search-narrowed list — otherwise the ▲/▼ buttons could be wrongly enabled/disabled
-  // while a search filter happens to hide a step's real neighbor.
-  const stagePosition = useMemo(() => {
-    const map: Record<string, { isFirst: boolean; isLast: boolean }> = {};
-    groups.forEach((g) => {
-      g.steps.forEach((s, i) => {
-        map[s.id] = { isFirst: i === 0, isLast: i === g.steps.length - 1 };
-      });
-    });
-    return map;
-  }, [groups]);
-
   // "Step N" is a live position in the project's own current order, not the template's
   // fixed default — a step dragged to a different stage renumbers along with everything
   // around it, so the sequence always reads 1, 2, 3, ... with no gaps. Derived from the
   // unfiltered groups so a search filter never renumbers what's on screen.
+  const flatSteps = useMemo(() => flattenSteps(groups), [groups]);
   const stepNoById = useMemo(() => {
     const map: Record<string, number> = {};
-    flattenSteps(groups).forEach((s, i) => {
+    flatSteps.forEach((s, i) => {
       map[s.id] = i + 1;
     });
     return map;
-  }, [groups]);
+  }, [flatSteps]);
+
+  // A step can now move into an adjacent stage once it hits the top/bottom of its own — so
+  // the only real "can't move further" case left is the very first step overall (nothing
+  // before Stage 1) or the very last (nothing after the last stage). Reflects the true
+  // (unfiltered) order, not the search-narrowed list, so a search filter can't make the
+  // ▲/▼ buttons wrongly enabled/disabled.
+  const isGlobalFirst = flatSteps[0]?.id;
+  const isGlobalLast = flatSteps[flatSteps.length - 1]?.id;
 
   const stageOrdinalById = useMemo(
     () => Object.fromEntries(STAGES.map((s, i) => [s.id, i + 1])),
@@ -87,8 +91,12 @@ export function ChecklistTab({ projectId, data }: { projectId: string; data: Pro
 
   function moveStep(stepId: string, direction: -1 | 1) {
     const order = effectiveStepOrder(data.project.step_order);
-    const next = moveStepInOrder(order, groups, stepId, direction);
-    if (next) updateStepOrder.mutate(next);
+    const result = moveStepInOrder(order, allGroups, stepId, direction);
+    if (!result) return;
+    const stepStage = result.stageId
+      ? { ...data.project.step_stage, [stepId]: result.stageId }
+      : data.project.step_stage;
+    updateStepOrderAndStage.mutate({ order: result.order, stepStage });
   }
 
   function jumpToNextTodo() {
@@ -167,8 +175,8 @@ export function ChecklistTab({ projectId, data }: { projectId: string; data: Pro
                     data={data}
                     collapsed={!!collapsedSteps[step.id]}
                     onToggleCollapsed={() => toggleCollapsed(step.id)}
-                    isFirstInStage={stagePosition[step.id]?.isFirst ?? true}
-                    isLastInStage={stagePosition[step.id]?.isLast ?? true}
+                    canMoveUp={step.id !== isGlobalFirst}
+                    canMoveDown={step.id !== isGlobalLast}
                     onMove={(direction) => moveStep(step.id, direction)}
                   />
                 ))}

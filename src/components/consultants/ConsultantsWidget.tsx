@@ -39,24 +39,26 @@ function ConsultantRow({
 
   return (
     <div className="item" style={{ flexWrap: "wrap" }}>
-      <div className="row-move-group">
-        <button
-          type="button"
-          className="row-move-btn"
-          disabled={locked || isFirst}
-          onClick={() => moveConsultant.mutate({ id: consultant.id, direction: -1 })}
-        >
-          ▲
-        </button>
-        <button
-          type="button"
-          className="row-move-btn"
-          disabled={locked || isLast}
-          onClick={() => moveConsultant.mutate({ id: consultant.id, direction: 1 })}
-        >
-          ▼
-        </button>
-      </div>
+      {!locked && (
+        <div className="row-move-group">
+          <button
+            type="button"
+            className="row-move-btn"
+            disabled={isFirst}
+            onClick={() => moveConsultant.mutate({ id: consultant.id, direction: -1 })}
+          >
+            ▲
+          </button>
+          <button
+            type="button"
+            className="row-move-btn"
+            disabled={isLast}
+            onClick={() => moveConsultant.mutate({ id: consultant.id, direction: 1 })}
+          >
+            ▼
+          </button>
+        </div>
+      )}
       <select
         className="consultant-role-select"
         value={consultant.roleId ?? ""}

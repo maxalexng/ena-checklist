@@ -25,6 +25,20 @@ test.describe("Consultants widget", () => {
     await expect(page.getByText("No consultants appointed yet.")).toBeVisible();
   });
 
+  test("the step's own checklist item sits above the roster widget", async ({ page }) => {
+    const stepCard = page.locator(".agency").filter({ hasText: "Consultant Appointments" }).first();
+    // .submissions' direct children: the checklist item's .submission wrapper, then the
+    // ConsultantsWidget's own root .items div — in that order.
+    const childClasses = await stepCard.locator(".submissions > *").evaluateAll((els) =>
+      els.map((el) => el.className)
+    );
+    const submissionIdx = childClasses.findIndex((c) => c.includes("submission"));
+    const rosterIdx = childClasses.findIndex((c) => c === "items");
+    expect(submissionIdx).toBeGreaterThanOrEqual(0);
+    expect(rosterIdx).toBeGreaterThanOrEqual(0);
+    expect(submissionIdx).toBeLessThan(rosterIdx);
+  });
+
   test("adding a consultant with company, role, and date persists across reload", async ({ page }) => {
     await page.getByRole("button", { name: "+ Add consultant" }).click();
 
@@ -70,7 +84,7 @@ test.describe("Consultants widget", () => {
     await expect(row.locator(".eot-title-input")).toBeDisabled();
     await expect(row.locator(".consultant-role-select")).toBeDisabled();
     await expect(row.locator("input[type=date]")).toBeDisabled();
-    await expect(row.locator(".row-move-btn").first()).toBeDisabled();
+    await expect(row.locator(".row-move-btn")).toHaveCount(0);
 
     await page.getByRole("button", { name: "🔒 Locked" }).click();
     await expect(page.getByRole("button", { name: "+ Add consultant" })).toBeVisible();

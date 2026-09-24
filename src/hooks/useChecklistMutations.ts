@@ -154,15 +154,25 @@ export function useRemoveAssign(projectId: string) {
   });
 }
 
-/** step_order is a plain column (string[] JSONB, but always written whole) — no merge race
- * here since the caller (ChecklistTab) always computes the new array from the full current
- * order via moveStepInOrder(), not a partial patch. */
-export function useUpdateStepOrder(projectId: string) {
+/** step_order and step_stage are both plain columns (JSONB, but always written whole) — no
+ * merge race here since the caller (ChecklistTab) always computes both from the full current
+ * state via moveStepInOrder(), not a partial patch. Written together in one call: a step
+ * crossing into a different stage needs both updated atomically, or a mid-way failure could
+ * leave a step's order position out of sync with its stage. `stepStage` is the full override
+ * map either way (moveStepInOrder only returns a new stageId when the step actually crossed
+ * a stage boundary — ChecklistTab passes the existing map unchanged otherwise). */
+export function useUpdateStepOrderAndStage(projectId: string) {
   const supabase = createClient();
-  return useProjectMutation<string[]>(projectId, async (order) => {
-    const { error } = await supabase.from("projects").update({ step_order: order }).eq("id", projectId);
-    if (error) throw error;
-  });
+  return useProjectMutation<{ order: string[]; stepStage: Record<string, string> }>(
+    projectId,
+    async ({ order, stepStage }) => {
+      const { error } = await supabase
+        .from("projects")
+        .update({ step_order: order, step_stage: stepStage })
+        .eq("id", projectId);
+      if (error) throw error;
+    }
+  );
 }
 
 /** Same shape as useUpdateStepOrder, for item_order — the caller (StepCard) always computes

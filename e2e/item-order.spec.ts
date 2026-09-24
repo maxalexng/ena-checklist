@@ -46,16 +46,16 @@ test.describe("Reordering items within a step", () => {
     await expect(items.last().locator(".item-move-btn").nth(1)).toBeDisabled(); // ▼
   });
 
-  test("locking the project disables item move buttons", async ({ page }) => {
-    const firstItemUpBtn = page.locator(".item").nth(1).locator(".item-move-btn").nth(0);
-    await expect(firstItemUpBtn).toBeEnabled();
+  test("locking the project hides item move buttons entirely", async ({ page }) => {
+    const firstItem = page.locator(".item").nth(1);
+    await expect(firstItem.locator(".item-move-btn")).toHaveCount(2);
 
     await page.getByRole("button", { name: "🔓 Unlocked" }).click();
     await expect(page.getByRole("button", { name: "🔒 Locked" })).toBeVisible();
 
-    await expect(firstItemUpBtn).toBeDisabled();
+    await expect(firstItem.locator(".item-move-btn")).toHaveCount(0);
 
     await page.getByRole("button", { name: "🔒 Locked" }).click();
-    await expect(firstItemUpBtn).toBeEnabled();
+    await expect(firstItem.locator(".item-move-btn")).toHaveCount(2);
   });
 });

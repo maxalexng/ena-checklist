@@ -17,8 +17,8 @@ export function StepCard({
   data,
   collapsed,
   onToggleCollapsed,
-  isFirstInStage,
-  isLastInStage,
+  canMoveUp,
+  canMoveDown,
   onMove,
 }: {
   projectId: string;
@@ -28,8 +28,8 @@ export function StepCard({
   data: ProjectChecklistData;
   collapsed: boolean;
   onToggleCollapsed: () => void;
-  isFirstInStage: boolean;
-  isLastInStage: boolean;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
   onMove: (direction: -1 | 1) => void;
 }) {
   const toggleStepNa = useToggleStepNa(projectId);
@@ -68,28 +68,30 @@ export function StepCard({
       data-search={searchBlob}
     >
       <div className="agency-head" onClick={onToggleCollapsed}>
-        <div className="step-order-controls" onClick={(e) => e.stopPropagation()}>
-          <div className="step-move-group">
-            <button
-              type="button"
-              className="step-move-btn"
-              disabled={locked || isFirstInStage}
-              title="Move up"
-              onClick={() => onMove(-1)}
-            >
-              ▲
-            </button>
-            <button
-              type="button"
-              className="step-move-btn"
-              disabled={locked || isLastInStage}
-              title="Move down"
-              onClick={() => onMove(1)}
-            >
-              ▼
-            </button>
+        {!locked && (
+          <div className="step-order-controls" onClick={(e) => e.stopPropagation()}>
+            <div className="step-move-group">
+              <button
+                type="button"
+                className="step-move-btn"
+                disabled={!canMoveUp}
+                title="Move up — crosses into the previous stage at the top of this one"
+                onClick={() => onMove(-1)}
+              >
+                ▲
+              </button>
+              <button
+                type="button"
+                className="step-move-btn"
+                disabled={!canMoveDown}
+                title="Move down — crosses into the next stage at the bottom of this one"
+                onClick={() => onMove(1)}
+              >
+                ▼
+              </button>
+            </div>
           </div>
-        </div>
+        )}
         {logoSrc ? (
           <div className="agency-logo-wrap" style={{ position: "relative" }}>
             <Image src={logoSrc} alt={step.code} fill sizes="132px" style={{ objectFit: "contain" }} className="agency-logo" />
@@ -136,14 +138,6 @@ export function StepCard({
       </div>
 
       <div className="submissions">
-        {step.isConsultantList && (
-          <ConsultantsWidget
-            projectId={projectId}
-            consultants={data.consultants}
-            roles={data.roles}
-            locked={locked}
-          />
-        )}
         {items.length > 0 && (
           <div className="submission">
             <div className="submission-head">
@@ -174,6 +168,14 @@ export function StepCard({
               ))}
             </div>
           </div>
+        )}
+        {step.isConsultantList && (
+          <ConsultantsWidget
+            projectId={projectId}
+            consultants={data.consultants}
+            roles={data.roles}
+            locked={locked}
+          />
         )}
       </div>
     </div>
