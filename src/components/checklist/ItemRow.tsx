@@ -32,6 +32,9 @@ export function ItemRow({
   subchecks,
   itemFile,
   locked,
+  isFirst,
+  isLast,
+  onMove,
 }: {
   projectId: string;
   item: TemplateItem;
@@ -44,6 +47,9 @@ export function ItemRow({
   subchecks: Record<number, boolean>;
   itemFile: ItemFileEntry | undefined;
   locked: boolean;
+  isFirst: boolean;
+  isLast: boolean;
+  onMove: (direction: -1 | 1) => void;
 }) {
   const updateStatus = useUpdateItemStatus(projectId);
   const toggleNa = useToggleItemNa(projectId);
@@ -64,6 +70,26 @@ export function ItemRow({
 
   return (
     <div className={`item${na ? " is-na" : ""}`} data-search={item.text.toLowerCase()}>
+      <div className="item-move-group">
+        <button
+          type="button"
+          className="item-move-btn"
+          disabled={locked || isFirst}
+          title="Move up"
+          onClick={() => onMove(-1)}
+        >
+          ▲
+        </button>
+        <button
+          type="button"
+          className="item-move-btn"
+          disabled={locked || isLast}
+          title="Move down"
+          onClick={() => onMove(1)}
+        >
+          ▼
+        </button>
+      </div>
       <button
         type="button"
         className={statusClass(status, na)}

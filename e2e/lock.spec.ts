@@ -34,6 +34,10 @@ test.describe("Lock mechanism", () => {
 
     await page.getByRole("button", { name: "Checklist" }).click();
     await expect(page.getByRole("button", { name: "+ Assign" })).toHaveCount(0);
+
+    // The lock button's own label promises "step order can't be edited" while locked.
+    const firstStepMoveDown = page.locator(".agency").first().locator(".step-move-btn").nth(1);
+    await expect(firstStepMoveDown).toBeDisabled();
   });
 
   test("an already-assigned responsible party can't be removed while locked, and reappears when unlocked", async ({

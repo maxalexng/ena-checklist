@@ -97,3 +97,13 @@ export function useUpdateStepOrder(projectId: string) {
     if (error) throw error;
   });
 }
+
+/** Same shape as useUpdateStepOrder, for item_order — the caller (StepCard) always computes
+ * the new array from the full current order via moveItemInOrder(). */
+export function useUpdateItemOrder(projectId: string) {
+  const supabase = createClient();
+  return useProjectMutation<string[]>(projectId, async (order) => {
+    const { error } = await supabase.from("projects").update({ item_order: order }).eq("id", projectId);
+    if (error) throw error;
+  });
+}

@@ -33,6 +33,7 @@ export const AGENCIES: Agency[] = [
       {
         code: "PL",
         name: "Plan Lodgement — minor A&A to a landed house",
+        conditional: true,
         when: "Minor additions or alterations that do not trigger full Planning Permission.",
         items: [
           "PL checklist and application via CORENET e-service",
@@ -458,10 +459,11 @@ export const AGENCIES: Agency[] = [
         stepBlurb:
           "The office's own record of every specialist consultant appointed on the project — company, role, and the date they were signed on.",
         when: "Appointed progressively through Concept Design, as the design team is assembled ahead of Design Development.",
-        // Renders the dedicated Consultants widget instead of a normal items list — items
-        // stays empty purely so generic item-flattening logic has something to map over.
+        // Renders the dedicated Consultants widget above a normal (single-item) checklist —
+        // isConsultantList doesn't replace the items list, just adds the roster widget
+        // before it, so this step is still an actual clearable item like every other step.
         isConsultantList: true,
-        items: [],
+        items: ["All required consultants appointed and on record above"],
       },
     ],
   },

@@ -52,4 +52,34 @@ test.describe("Checklist item labels and conditional badges", () => {
     const outlinePermissionCard = page.locator(".agency").filter({ hasText: "Outline Permission" }).first();
     await expect(outlinePermissionCard.locator(".stage-tag")).toHaveText("Concept Design");
   });
+
+  test("Consultant Appointments has its own clearable item alongside the roster", async ({ page }) => {
+    await page.getByPlaceholder("Search checklist…").fill("Consultant Appointments");
+    const stepCard = page.locator(".agency").filter({ hasText: "Consultant Appointments" }).first();
+
+    // The roster widget is still there...
+    await expect(stepCard.getByText("No consultants appointed yet.")).toBeVisible();
+    // ...and now there's also a real, clearable checklist item and progress bar, where
+    // before this step contributed nothing to the project's overall completion count.
+    const item = stepCard.locator(".item").filter({ hasText: "All required consultants appointed" });
+    await expect(item).toBeVisible();
+    const statusBtn = item.locator(".status-chip");
+    await expect(statusBtn).toHaveText("Not started");
+    // Each click reads the current status from a prop, not a readback — firing the next
+    // click before the mutation's refetch lands would just repeat the same transition
+    // instead of advancing, so wait for each step before clicking again.
+    await statusBtn.click();
+    await expect(statusBtn).toHaveText("In progress");
+    await statusBtn.click();
+    await expect(statusBtn).toHaveText("Submitted");
+    await statusBtn.click();
+    await expect(statusBtn).toHaveText("Cleared");
+    await expect(stepCard.locator(".agency-progress-label")).toHaveText("1/1");
+  });
+
+  test("a conditional submission (Plan Lodgement) is tagged 'If applicable'", async ({ page }) => {
+    await page.getByPlaceholder("Search checklist…").fill("PL checklist and application via CORENET");
+    const submissionHead = page.locator(".submission-head").filter({ hasText: "Plan Lodgement" });
+    await expect(submissionHead.getByText("If applicable")).toBeVisible();
+  });
 });

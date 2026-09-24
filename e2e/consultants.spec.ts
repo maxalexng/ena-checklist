@@ -12,7 +12,9 @@ test.describe("Consultants widget", () => {
     await page.getByRole("button", { name: "Checklist" }).click();
     // Narrows the (large) checklist tree down to just the Consultant Appointments step.
     await page.getByPlaceholder("Search checklist…").fill("Consultant Appointments");
-    await expect(page.getByRole("heading", { name: "Consultant Appointments" })).toBeVisible();
+    // Two headings now match: the step's own h3 and the submission's h4 (this step also
+    // carries a normal clearable item alongside the roster widget, both titled the same).
+    await expect(page.getByRole("heading", { name: "Consultant Appointments" }).first()).toBeVisible();
   });
 
   test.afterEach(async () => {

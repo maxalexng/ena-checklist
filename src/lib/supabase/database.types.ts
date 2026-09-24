@@ -34,6 +34,7 @@ export interface Database {
           pp_validity_months: string;
           list_presets: Record<string, string[]>;
           step_order: string[] | null;
+          item_order: string[] | null;
           overview_section_order: string[] | null;
           step_stage: Record<string, string>;
           stage_duration_weeks: Record<string, number>;

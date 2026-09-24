@@ -4,7 +4,8 @@ import Image from "next/image";
 import type { TemplateStep } from "@/template";
 import { agencyColorFor, agencyLogoSrc } from "@/template";
 import type { ProjectChecklistData } from "@/hooks/useProjectData";
-import { useToggleStepNa } from "@/hooks/useChecklistMutations";
+import { effectiveItemOrder, moveItemInOrder, orderedStepItems } from "@/lib/checklist/itemOrder";
+import { useToggleStepNa, useUpdateItemOrder } from "@/hooks/useChecklistMutations";
 import { ItemRow } from "./ItemRow";
 import { ConsultantsWidget } from "@/components/consultants/ConsultantsWidget";
 
@@ -32,9 +33,12 @@ export function StepCard({
   onMove: (direction: -1 | 1) => void;
 }) {
   const toggleStepNa = useToggleStepNa(projectId);
+  const updateItemOrder = useUpdateItemOrder(projectId);
   const logoSrc = agencyLogoSrc(step.realId);
+  const locked = data.project.assignments_locked;
 
-  const items = step.items;
+  const itemOrder = effectiveItemOrder(data.project.item_order);
+  const items = orderedStepItems(step, itemOrder);
   const records = items.map((it) => data.itemsByKey[it.id]);
   const applicable = records.filter((r) => r && !r.na).length;
   const cleared = records.filter((r) => r && !r.na && r.status === "cleared").length;
@@ -52,6 +56,11 @@ export function StepCard({
     .join(" ")
     .toLowerCase();
 
+  function moveItem(itemId: string, direction: -1 | 1) {
+    const next = moveItemInOrder(itemOrder, items, itemId, direction);
+    if (next) updateItemOrder.mutate(next);
+  }
+
   return (
     <div
       id={`step-${step.id}`}
@@ -64,7 +73,7 @@ export function StepCard({
             <button
               type="button"
               className="step-move-btn"
-              disabled={isFirstInStage}
+              disabled={locked || isFirstInStage}
               title="Move up"
               onClick={() => onMove(-1)}
             >
@@ -73,7 +82,7 @@ export function StepCard({
             <button
               type="button"
               className="step-move-btn"
-              disabled={isLastInStage}
+              disabled={locked || isLastInStage}
               title="Move down"
               onClick={() => onMove(1)}
             >
@@ -102,7 +111,7 @@ export function StepCard({
           <p className="agency-blurb">{step.blurb}</p>
         </div>
         <div className="agency-meta">
-          {!step.isConsultantList && (
+          {items.length > 0 && (
             <>
               <span className="agency-progress-label">
                 {cleared}/{applicable}
@@ -127,14 +136,15 @@ export function StepCard({
       </div>
 
       <div className="submissions">
-        {step.isConsultantList ? (
+        {step.isConsultantList && (
           <ConsultantsWidget
             projectId={projectId}
             consultants={data.consultants}
             roles={data.roles}
-            locked={data.project.assignments_locked}
+            locked={locked}
           />
-        ) : (
+        )}
+        {items.length > 0 && (
           <div className="submission">
             <div className="submission-head">
               <span className="code-badge">{step.submission.code}</span>
@@ -156,7 +166,10 @@ export function StepCard({
                   responsible={data.responsibleByItem[data.itemsByKey[item.id]?.dbId] ?? []}
                   subchecks={data.subchecksByItem[data.itemsByKey[item.id]?.dbId] ?? {}}
                   itemFile={data.itemFilesByItem[data.itemsByKey[item.id]?.dbId]}
-                  locked={data.project.assignments_locked}
+                  locked={locked}
+                  isFirst={i === 0}
+                  isLast={i === items.length - 1}
+                  onMove={(direction) => moveItem(item.id, direction)}
                 />
               ))}
             </div>

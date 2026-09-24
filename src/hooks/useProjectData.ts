@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import type { ItemStatus } from "@/template";
 import type { ProjectDates } from "@/lib/supabase/database.types";
+import { missingItemRows } from "@/lib/checklist/reconcileItems";
 
 export interface ItemRecord {
   dbId: string;
@@ -67,6 +68,7 @@ export interface ProjectChecklistData {
     contractSum: string;
     currentStage: string;
     step_order: string[] | null;
+    item_order: string[] | null;
     step_stage: Record<string, string>;
     assignments_locked: boolean;
     projectDates: ProjectDates;
@@ -98,7 +100,7 @@ export function useProjectData(projectId: string) {
         supabase
           .from("projects")
           .select(
-            "id, reference, title, address, initialism, bca_ref, contract_period_months, contract_sum, current_stage, step_order, step_stage, assignments_locked, project_dates, pp_validity_months, list_presets, stage_duration_weeks"
+            "id, reference, title, address, initialism, bca_ref, contract_period_months, contract_sum, current_stage, step_order, item_order, step_stage, assignments_locked, project_dates, pp_validity_months, list_presets, stage_duration_weeks"
           )
           .eq("id", projectId)
           .single(),
@@ -121,7 +123,22 @@ export function useProjectData(projectId: string) {
         itemsByKey[row.item_key] = { dbId: row.id, status: row.status as ItemStatus, na: row.na };
       });
 
-      const itemDbIds = (itemsRes.data ?? []).map((row) => row.id);
+      // Backfill any template item this project doesn't have a row for yet — a project
+      // created before a step gained a new item never gets it automatically, since
+      // checklist_items are real DB rows, not derived from the template on read.
+      const missing = missingItemRows(projectId, Object.keys(itemsByKey));
+      if (missing.length > 0) {
+        const { data: inserted, error: insertError } = await supabase
+          .from("checklist_items")
+          .upsert(missing, { onConflict: "project_id,item_key", ignoreDuplicates: true })
+          .select("id, item_key, status, na");
+        if (insertError) throw insertError;
+        (inserted ?? []).forEach((row) => {
+          itemsByKey[row.item_key] = { dbId: row.id, status: row.status as ItemStatus, na: row.na };
+        });
+      }
+
+      const itemDbIds = Object.values(itemsByKey).map((row) => row.dbId);
 
       const [subchecksRes, responsibleRes, itemFilesRes] =
         itemDbIds.length > 0
@@ -222,6 +239,7 @@ export function useProjectData(projectId: string) {
           contractSum: projectRes.data.contract_sum,
           currentStage: projectRes.data.current_stage,
           step_order: projectRes.data.step_order,
+          item_order: projectRes.data.item_order,
           step_stage: (projectRes.data.step_stage as Record<string, string>) ?? {},
           assignments_locked: projectRes.data.assignments_locked,
           projectDates: projectRes.data.project_dates,

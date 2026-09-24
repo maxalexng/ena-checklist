@@ -129,9 +129,11 @@ describe("template integrity", () => {
     expect(STEPS.length).toBe(39);
   });
 
-  it("has exactly 183 checklist items across all steps", () => {
+  it("has exactly 184 checklist items across all steps", () => {
+    // 183 from the original prototype port, +1 for the Consultant Appointments step's own
+    // clearable item (it used to be an items-less widget-only step).
     const total = STEPS.reduce((sum, s) => sum + s.items.length, 0);
-    expect(total).toBe(183);
+    expect(total).toBe(184);
   });
 
   it("gives every step a unique id", () => {

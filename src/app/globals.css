@@ -379,8 +379,22 @@
   @media (pointer:coarse){
     .step-drag-handle, .step-move-group{ opacity:0.4; }
   }
-  #app.assignments-locked .step-drag-handle,
-  #app.assignments-locked .step-move-group{ display:none; }
+
+  .item-move-group{
+    display:flex; flex-direction:column; flex:none; opacity:0;
+    transition:opacity .12s ease;
+  }
+  .item:hover .item-move-group,
+  .item:focus-within .item-move-group{ opacity:1; }
+  .item-move-btn{
+    flex:none; background:transparent; border:none; color:var(--ink-faint); cursor:pointer;
+    font-size:8px; line-height:1.2; padding:0 2px;
+  }
+  .item-move-btn:hover:not(:disabled){ color:var(--ink-soft); }
+  .item-move-btn:disabled{ opacity:0.25; cursor:default; }
+  @media (pointer:coarse){
+    .item-move-group{ opacity:0.4; }
+  }
 
   .assign-lock-fab{
     position:fixed; top:14px; right:14px; z-index:50;
