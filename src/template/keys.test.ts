@@ -125,15 +125,15 @@ describe("defaultStepOrder", () => {
 // against the legacy prototype's real data (see scripts/migrate-html-import.ts's run for
 // "2 Astrid Hill": 183 items imported vs 183 in source).
 describe("template integrity", () => {
-  it("has exactly 39 steps", () => {
-    expect(STEPS.length).toBe(39);
+  it("has exactly 40 steps", () => {
+    expect(STEPS.length).toBe(40);
   });
 
-  it("has exactly 184 checklist items across all steps", () => {
+  it("has exactly 186 checklist items across all steps", () => {
     // 183 from the original prototype port, +1 for the Consultant Appointments step's own
-    // clearable item (it used to be an items-less widget-only step).
+    // clearable item, +2 for the new Asbestos Survey & Removal step.
     const total = STEPS.reduce((sum, s) => sum + s.items.length, 0);
-    expect(total).toBe(184);
+    expect(total).toBe(186);
   });
 
   it("gives every step a unique id", () => {

@@ -82,4 +82,19 @@ test.describe("Checklist item labels and conditional badges", () => {
     const submissionHead = page.locator(".submission-head").filter({ hasText: "Plan Lodgement" });
     await expect(submissionHead.getByText("If applicable")).toBeVisible();
   });
+
+  test("Asbestos Survey & Removal sits first in the Construction stage and is conditional", async ({
+    page,
+  }) => {
+    // Not hasText: "Construction" — "TOP Preparation & Post-Construction" (Stage 7) also
+    // contains that substring. "Stage 6" is unambiguous.
+    const constructionGroup = page
+      .locator(".stage")
+      .filter({ has: page.locator(".stage-label", { hasText: "Stage 6" }) });
+    const firstStepInConstruction = constructionGroup.locator(".agency").first();
+    await expect(firstStepInConstruction).toContainText("Asbestos Survey & Removal");
+
+    const submissionHead = firstStepInConstruction.locator(".submission-head");
+    await expect(submissionHead.getByText("If applicable")).toBeVisible();
+  });
 });

@@ -19,13 +19,13 @@ test.describe("Checklist rail navigation and step reordering", () => {
   test("the rail lists every stage and step, with step numbers and progress", async ({ page }) => {
     const rail = page.locator(".rail");
     await expect(rail.locator(".rail-stage-group")).toHaveCount(8);
-    await expect(rail.locator(".rail-item")).toHaveCount(39);
+    await expect(rail.locator(".rail-item")).toHaveCount(40);
     await expect(rail.locator(".rail-item").first()).toContainText("1.");
   });
 
   test("every step card shows its step number", async ({ page }) => {
     await expect(page.getByText("Step 1", { exact: true })).toBeVisible();
-    await expect(page.getByText("Step 39", { exact: true })).toBeVisible();
+    await expect(page.getByText("Step 40", { exact: true })).toBeVisible();
   });
 
   test("clicking a rail item expands and scrolls to that step", async ({ page }) => {

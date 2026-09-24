@@ -280,6 +280,16 @@ export const AGENCIES: Agency[] = [
           "Vector control (mosquito breeding prevention) site management plan",
         ],
       },
+      {
+        code: "ASBESTOS",
+        name: "Asbestos Survey & Removal",
+        conditional: true,
+        when: "Any existing structure built or added to before around 1991 — asbestos-containing materials were commonly used in Singapore construction until phased out around then.",
+        items: [
+          "Pre-demolition/pre-construction asbestos survey conducted for any part of the existing structure built or altered before ~1991",
+          "Where asbestos-containing material is found, removal carried out by an NEA-registered asbestos contractor and completed before affected works proceed",
+        ],
+      },
     ],
   },
   {
