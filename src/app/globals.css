@@ -632,7 +632,10 @@
   }
   .ms-expiry.ok{ background:var(--st-cleared-soft); color:var(--st-cleared); }
   .ms-expiry.soon{ background:var(--st-progress-soft); color:var(--st-progress); }
-  .ms-expiry.expired{ background:var(--danger-soft); color:var(--danger); }
+  .ms-expiry.urgent{ background:var(--danger-soft); color:var(--danger); }
+  /* The PP/WP Expiry row's own bubble wraps its label too (not just the date), so it reads
+     as one traffic-light indicator rather than a plain label next to a small colored date. */
+  .ms-expiry-wide{ font-size:12.5px; padding:5px 10px; border-radius:8px; font-weight:600; }
   .ms-note{ color:var(--ink-soft); flex:1 1 160px; min-width:0; }
   .ms-del{
     flex:none; background:transparent; border:none; color:var(--ink-faint); cursor:pointer;

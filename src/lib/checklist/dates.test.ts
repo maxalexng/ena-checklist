@@ -177,9 +177,56 @@ describe("ppWpExpiryInfo", () => {
     expect(info?.status).toBe("ok");
   });
 
-  it("flags a past expiry as expired", () => {
+  it("flags a past expiry as urgent (and reports negative days remaining)", () => {
     const info = ppWpExpiryInfo([{ type: "PP Cleared / Granted", date: "2000-01-01" }]);
-    expect(info?.status).toBe("expired");
+    expect(info?.status).toBe("urgent");
     expect(info?.daysRemaining).toBeLessThan(0);
+  });
+
+  // Anchored to "now" (via months-ago offsets) rather than fixed dates, so these don't
+  // silently start failing as the test suite ages — same approach as the far-future/past
+  // cases above, just landing inside each of the three traffic-light zones instead of at
+  // the extremes.
+  function monthsAgoIso(months: number): string {
+    const d = new Date();
+    d.setUTCDate(1); // avoid day-of-month/short-month edge cases — only the zone matters here
+    d.setUTCMonth(d.getUTCMonth() - months);
+    return d.toISOString().slice(0, 10);
+  }
+
+  describe("PP traffic-light zones (green >4mo remaining, yellow 2-4mo, red <=2mo)", () => {
+    it("is ok just after grant (6mo remaining)", () => {
+      const info = ppWpExpiryInfo([{ type: "PP Cleared / Granted", date: monthsAgoIso(0) }]);
+      expect(info?.status).toBe("ok");
+    });
+
+    it("is soon partway through (~3mo remaining)", () => {
+      const info = ppWpExpiryInfo([{ type: "PP Cleared / Granted", date: monthsAgoIso(3) }]);
+      expect(info?.status).toBe("soon");
+    });
+
+    it("is urgent in the final stretch, even before actually expiring (~1mo remaining)", () => {
+      const info = ppWpExpiryInfo([{ type: "PP Cleared / Granted", date: monthsAgoIso(5) }]);
+      expect(info?.status).toBe("urgent");
+      expect(info?.daysRemaining).toBeGreaterThan(0);
+    });
+  });
+
+  describe("WP traffic-light zones (green >18mo remaining, yellow 3-18mo, red <=3mo)", () => {
+    it("is ok just after grant (24mo remaining)", () => {
+      const info = ppWpExpiryInfo([{ type: "WP Granted", date: monthsAgoIso(0) }]);
+      expect(info?.status).toBe("ok");
+    });
+
+    it("is soon partway through (~14mo remaining)", () => {
+      const info = ppWpExpiryInfo([{ type: "WP Granted", date: monthsAgoIso(10) }]);
+      expect(info?.status).toBe("soon");
+    });
+
+    it("is urgent in the final stretch, even before actually expiring (~2mo remaining)", () => {
+      const info = ppWpExpiryInfo([{ type: "WP Granted", date: monthsAgoIso(22) }]);
+      expect(info?.status).toBe("urgent");
+      expect(info?.daysRemaining).toBeGreaterThan(0);
+    });
   });
 });

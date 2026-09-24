@@ -72,7 +72,11 @@ export function adjustedCompletionDate(dates: ProjectDates): string | null {
   return toIsoDate(addDays(dates.practicalCompletion, total));
 }
 
-export type PpExpiryStatus = "ok" | "soon" | "expired";
+// "urgent" covers both "in the final red window before expiry" and "actually past expiry"
+// — same red treatment for both, per how this is meant to read at a glance (see
+// ppWpExpiryInfo's warningDate/urgentDate). Whether it's literally overdue is a separate
+// check (daysRemaining < 0), used only for the accompanying "N days left" vs "expired" text.
+export type PpExpiryStatus = "ok" | "soon" | "urgent";
 export type PpWpKind = "pp" | "wp";
 
 export interface PpWpExpiryInfo {
@@ -93,6 +97,15 @@ export interface PpWpExpiryInfo {
 const PP_VALIDITY_MONTHS = 6;
 const WP_VALIDITY_MONTHS = 24;
 const EXTENSION_LEAD_MONTHS = 2;
+
+// Traffic-light thresholds, expressed as "months remaining until expiry" — the point the
+// indicator turns yellow, and the point it turns red (through expiry itself). PP: green
+// until 4 months remain, yellow until 2 remain, red for the final 2 months and beyond. WP:
+// green until 18 months remain, yellow until 3 remain, red for the final 3 and beyond.
+const PP_WARNING_MONTHS_REMAINING = 4;
+const PP_URGENT_MONTHS_REMAINING = 2;
+const WP_WARNING_MONTHS_REMAINING = 18;
+const WP_URGENT_MONTHS_REMAINING = 3;
 
 /** A milestone-log entry's free-text `type` only counts toward the expiry clock if it
  * actually reads as a grant/clearance (not a submission, query, or rejection) — validity
@@ -120,10 +133,17 @@ export function ppWpExpiryInfo(entries: { type: string; date: string | null }[])
   const latest = pool.reduce((a, b) => (a.date > b.date ? a : b));
 
   const months = latest.kind === "wp" ? WP_VALIDITY_MONTHS : PP_VALIDITY_MONTHS;
+  const warningMonthsRemaining = latest.kind === "wp" ? WP_WARNING_MONTHS_REMAINING : PP_WARNING_MONTHS_REMAINING;
+  const urgentMonthsRemaining = latest.kind === "wp" ? WP_URGENT_MONTHS_REMAINING : PP_URGENT_MONTHS_REMAINING;
+
   const expiry = addMonths(latest.date, months);
   const extensionDeadline = addMonths(latest.date, months - EXTENSION_LEAD_MONTHS);
-  const daysRemaining = Math.round((expiry.getTime() - todayUtcMidnight().getTime()) / 86400000);
-  const status: PpExpiryStatus = daysRemaining < 0 ? "expired" : daysRemaining <= 90 ? "soon" : "ok";
+  const warningDate = addMonths(latest.date, months - warningMonthsRemaining);
+  const urgentDate = addMonths(latest.date, months - urgentMonthsRemaining);
+
+  const today = todayUtcMidnight();
+  const daysRemaining = Math.round((expiry.getTime() - today.getTime()) / 86400000);
+  const status: PpExpiryStatus = today >= urgentDate ? "urgent" : today >= warningDate ? "soon" : "ok";
   return {
     kind: latest.kind,
     basisDate: latest.date,

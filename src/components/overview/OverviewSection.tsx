@@ -38,12 +38,11 @@ export function OverviewSection({
 
       {isUra && (
         <div className="ov-row">
-          <span className="ov-label">{expiry?.kind === "wp" ? "WP Expiry" : "PP Expiry"}</span>
           {expiry ? (
             <>
-              <span className={`ms-expiry ${expiry.status}`}>
-                <strong>{formatDateDMY(expiry.date)}</strong>
-                {" "}({expiry.daysRemaining >= 0 ? `${expiry.daysRemaining} days left` : "expired"})
+              <span className={`ms-expiry ms-expiry-wide ${expiry.status}`}>
+                {expiry.kind === "wp" ? "WP Expiry" : "PP Expiry"} — {formatDateDMY(expiry.date)}{" "}
+                ({expiry.daysRemaining >= 0 ? `${expiry.daysRemaining} days left` : "expired"})
               </span>
               <span className="ov-hint" style={{ flexBasis: "100%" }}>
                 Standard validity: 6 months from PP grant, or 2 years from WP grant (WP supersedes PP once
@@ -53,6 +52,7 @@ export function OverviewSection({
             </>
           ) : (
             <>
+              <span className="ov-label">PP / WP Expiry</span>
               <span className="ov-empty">Not enough data to calculate.</span>
               <span className="ov-hint" style={{ flexBasis: "100%" }}>
                 Standard validity: 6 months from PP grant, or 2 years from WP grant. Log a &quot;PP Cleared /

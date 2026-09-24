@@ -60,15 +60,18 @@ test.describe("Overview tab", () => {
     await expect(reloadedSection.locator(".sl-row")).toHaveCount(1);
   });
 
-  test("logging a PP grant shows a 6-month PP Expiry, bold, with an extension reminder", async ({ page }) => {
+  test("logging a PP grant shows a PP Expiry bubble with an extension reminder", async ({ page }) => {
     const uraSection = page.locator(".ov-section").filter({ hasText: "URA — Provisional Permission" });
     await uraSection.locator('[data-field="type"]').fill("PP Cleared / Granted");
     await uraSection.locator('[data-field="date"]').fill("2024-06-15");
     await uraSection.getByRole("button", { name: "+ Add" }).click();
 
-    const expiryRow = uraSection.locator(".ov-row").filter({ hasText: "PP Expiry" });
-    await expect(expiryRow.locator("strong").first()).toHaveText("15 12 2024");
-    await expect(expiryRow).toContainText("15 10 2024"); // extension deadline, 2 months before
+    // The label, date, and days-remaining are one combined coloured bubble now, not a plain
+    // label next to a small coloured date.
+    const bubble = uraSection.locator(".ms-expiry");
+    await expect(bubble).toContainText("PP Expiry");
+    await expect(bubble).toContainText("15 12 2024");
+    await expect(uraSection.locator(".ov-hint")).toContainText("15 10 2024"); // extension deadline
 
     // No manual validity input anymore — the standard periods are fixed.
     await expect(page.getByText("PP validity (months)")).toHaveCount(0);
@@ -85,9 +88,46 @@ test.describe("Overview tab", () => {
     await uraSection.locator('[data-field="date"]').fill("2024-09-01");
     await uraSection.getByRole("button", { name: "+ Add" }).click();
 
-    const expiryRow = uraSection.locator(".ov-row").filter({ hasText: "Expiry" });
-    await expect(expiryRow.locator(".ov-label")).toHaveText("WP Expiry");
-    await expect(expiryRow.locator("strong").first()).toHaveText("01 09 2026"); // +2 years
+    const bubble = uraSection.locator(".ms-expiry");
+    await expect(bubble).toContainText("WP Expiry");
+    await expect(bubble).toContainText("01 09 2026"); // +2 years
+  });
+
+  // Same months-ago-from-today approach as dates.test.ts's zone tests — anchored to "now"
+  // so these don't silently bit-rot as the calendar moves on. ppWpExpiryInfo always bases
+  // the expiry on whichever same-kind entry has the *latest* date, so each zone needs its
+  // own project (adding a second, older PP entry wouldn't override the first).
+  function monthsAgoIso(months: number): string {
+    const d = new Date();
+    d.setUTCDate(1);
+    d.setUTCMonth(d.getUTCMonth() - months);
+    return d.toISOString().slice(0, 10);
+  }
+
+  test("the PP Expiry bubble is green just after grant", async ({ page }) => {
+    const uraSection = page.locator(".ov-section").filter({ hasText: "URA — Provisional Permission" });
+    await uraSection.locator('[data-field="type"]').fill("PP Cleared / Granted");
+    await uraSection.locator('[data-field="date"]').fill(monthsAgoIso(0));
+    await uraSection.getByRole("button", { name: "+ Add" }).click();
+    await expect(uraSection.locator(".ms-expiry")).toHaveClass(/\bok\b/);
+  });
+
+  test("the PP Expiry bubble turns amber partway through validity", async ({ page }) => {
+    const uraSection = page.locator(".ov-section").filter({ hasText: "URA — Provisional Permission" });
+    await uraSection.locator('[data-field="type"]').fill("PP Cleared / Granted");
+    await uraSection.locator('[data-field="date"]').fill(monthsAgoIso(3));
+    await uraSection.getByRole("button", { name: "+ Add" }).click();
+    await expect(uraSection.locator(".ms-expiry")).toHaveClass(/\bsoon\b/);
+  });
+
+  test("the PP Expiry bubble turns red in the final stretch, before actually expiring", async ({ page }) => {
+    const uraSection = page.locator(".ov-section").filter({ hasText: "URA — Provisional Permission" });
+    await uraSection.locator('[data-field="type"]').fill("PP Cleared / Granted");
+    await uraSection.locator('[data-field="date"]').fill(monthsAgoIso(5));
+    await uraSection.getByRole("button", { name: "+ Add" }).click();
+    const bubble = uraSection.locator(".ms-expiry");
+    await expect(bubble).toHaveClass(/\burgent\b/);
+    await expect(bubble).not.toContainText("expired"); // still ~1 month left, not overdue
   });
 
   test("editing the project info bar (title/reference) saves and reflects in the masthead", async ({ page }) => {
