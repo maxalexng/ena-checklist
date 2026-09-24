@@ -97,4 +97,21 @@ test.describe("Checklist item labels and conditional badges", () => {
     const submissionHead = firstStepInConstruction.locator(".submission-head");
     await expect(submissionHead.getByText("If applicable")).toBeVisible();
   });
+
+  test("Planning Permission opens on a design-lock checkpoint, before lodging the application", async ({
+    page,
+  }) => {
+    await page.getByPlaceholder("Search checklist…").fill("Application lodged via CORENET X");
+    const ppCard = page.locator(".agency").filter({ hasText: "Planning Permission (Written Permission)" }).first();
+    const items = ppCard.locator(".item");
+    await expect(items.first()).toContainText("Design locked");
+    await expect(items.first().locator(".item-label")).toHaveText("13a.");
+  });
+
+  test("Building Plan submission opens on producing the construction drawing set", async ({ page }) => {
+    await page.getByPlaceholder("Search checklist…").fill("Prepare submission drawings");
+    const bpCard = page.locator(".agency").filter({ hasText: "Building Plan submission" }).first();
+    const items = bpCard.locator(".item");
+    await expect(items.first()).toContainText("Construction (working) drawing set");
+  });
 });

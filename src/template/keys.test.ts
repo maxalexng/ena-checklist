@@ -129,11 +129,12 @@ describe("template integrity", () => {
     expect(STEPS.length).toBe(40);
   });
 
-  it("has exactly 186 checklist items across all steps", () => {
+  it("has exactly 188 checklist items across all steps", () => {
     // 183 from the original prototype port, +1 for the Consultant Appointments step's own
-    // clearable item, +2 for the new Asbestos Survey & Removal step.
+    // clearable item, +2 for the new Asbestos Survey & Removal step, +2 for the design-lock
+    // and construction-drawings checkpoints added to PP/BP.
     const total = STEPS.reduce((sum, s) => sum + s.items.length, 0);
-    expect(total).toBe(186);
+    expect(total).toBe(188);
   });
 
   it("gives every step a unique id", () => {

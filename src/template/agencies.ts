@@ -23,6 +23,7 @@ export const AGENCIES: Agency[] = [
         name: "Planning Permission (Written Permission)",
         when: "New erection, reconstruction, or any addition/alteration that changes GFA, use, or the building envelope.",
         items: [
+          "Design locked — client and QP sign-off obtained before lodging PP (further changes go through a formal variation, not folded in quietly)",
           "Application lodged via CORENET X / CORENET 2.0",
           "QP declaration form",
           "Landowner's consent and title particulars",
@@ -98,6 +99,7 @@ export const AGENCIES: Agency[] = [
         name: "Building Plan submission",
         when: "After URA Written Permission is obtained, before works commence.",
         items: [
+          "Construction (working) drawing set developed and coordinated across all consultants — architectural, C&S, M&E",
           {
             text: "Prepare submission drawings",
             checklist: [
