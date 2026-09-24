@@ -29,6 +29,18 @@ export function toIsoDate(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
+/** Display formatting only — every date stays stored/computed as plain "YYYY-MM-DD" (and
+ * every <input type="date"> keeps that value, which is an HTML requirement); this just
+ * reformats a date for read-only text display. Pure string slicing, no Date object, so it
+ * can't be off by a day for any timezone reason. */
+export function formatDateDMY(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  if (!m) return iso;
+  const [, y, mo, d] = m;
+  return `${d} ${mo} ${y}`;
+}
+
 /** Suggested contract start date, derived from the LOA basis — never auto-applied, only
  * offered with a "Use this date" action. Returns null when there's nothing to suggest. */
 export function loaSuggestedStart(dates: ProjectDates): { date: string | null; note: string } {

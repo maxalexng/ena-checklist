@@ -46,7 +46,7 @@ test.describe("Timeline tab", () => {
     await page.goto(`/projects/${project.id}`);
     await page.getByRole("button", { name: "Timeline" }).click();
 
-    await expect(page.getByText("208 weeks from 2024-08-06")).toBeVisible();
+    await expect(page.getByText("208 weeks from 06 08 2024")).toBeVisible();
     await expect(page.locator(".tl-band")).toHaveCount(8);
 
     await page.getByRole("button", { name: "Edit stage durations" }).click();
@@ -55,11 +55,11 @@ test.describe("Timeline tab", () => {
     await preDesignRow.locator("input[type=number]").blur();
 
     // pre-design goes from 6 to 10 weeks -> total goes from 208 to 212.
-    await expect(page.getByText("212 weeks from 2024-08-06")).toBeVisible();
+    await expect(page.getByText("212 weeks from 06 08 2024")).toBeVisible();
 
     await page.reload();
     await page.getByRole("button", { name: "Timeline" }).click();
-    await expect(page.getByText("212 weeks from 2024-08-06")).toBeVisible();
+    await expect(page.getByText("212 weeks from 06 08 2024")).toBeVisible();
   });
 
   test("setting a per-step planned date range persists", async ({ page }) => {

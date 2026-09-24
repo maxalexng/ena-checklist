@@ -6,6 +6,7 @@ import { timelineKeys } from "@/template";
 import type { ProjectChecklistData } from "@/hooks/useProjectData";
 import { useUpdateStageDurationWeeks, useUpdateTimelinePlanField } from "@/hooks/useTimelineMutations";
 import { aggregateStatus, projectSpan, pxForDate, stageBands, todayPx } from "@/lib/checklist/timeline";
+import { formatDateDMY } from "@/lib/checklist/dates";
 
 export function TimelineTab({ projectId, data }: { projectId: string; data: ProjectChecklistData }) {
   const updateTimelinePlanField = useUpdateTimelinePlanField(projectId);
@@ -33,7 +34,7 @@ export function TimelineTab({ projectId, data }: { projectId: string; data: Proj
     <div className="timeline-app">
       <div className="tl-toolbar">
         <span className="tl-toolbar-range">
-          <strong>{span.totalWeeks}</strong> weeks from {data.project.projectDates.contractStart}
+          <strong>{span.totalWeeks}</strong> weeks from {formatDateDMY(data.project.projectDates.contractStart)}
         </span>
         <button
           type="button"
@@ -97,7 +98,9 @@ export function TimelineTab({ projectId, data }: { projectId: string; data: Proj
             const milestones = data.milestonesByStep[step.id] ?? [];
             const left = pxForDate(plan?.startDate, span);
             const right = pxForDate(plan?.endDate, span);
-            const tooltip = milestones.map((m) => `${m.type}${m.date ? ` — ${m.date}` : ""}`).join("\n");
+            const tooltip = milestones
+              .map((m) => `${m.type}${m.date ? ` — ${formatDateDMY(m.date)}` : ""}`)
+              .join("\n");
 
             return (
               <div className="tl-row" key={step.id}>

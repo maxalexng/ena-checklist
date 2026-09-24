@@ -2,7 +2,7 @@
 
 import type { OverviewSectionDef } from "@/template";
 import type { ProjectChecklistData } from "@/hooks/useProjectData";
-import { ppWpExpiryInfo } from "@/lib/checklist/dates";
+import { formatDateDMY, ppWpExpiryInfo } from "@/lib/checklist/dates";
 import { MilestoneLog } from "./MilestoneLog";
 
 export function OverviewSection({
@@ -42,13 +42,13 @@ export function OverviewSection({
           {expiry ? (
             <>
               <span className={`ms-expiry ${expiry.status}`}>
-                <strong>{expiry.date}</strong>
+                <strong>{formatDateDMY(expiry.date)}</strong>
                 {" "}({expiry.daysRemaining >= 0 ? `${expiry.daysRemaining} days left` : "expired"})
               </span>
               <span className="ov-hint" style={{ flexBasis: "100%" }}>
                 Standard validity: 6 months from PP grant, or 2 years from WP grant (WP supersedes PP once
                 granted) — not editable per project. Apply for an extension by{" "}
-                <strong>{expiry.extensionDeadline}</strong>, 2 months before expiry.
+                <strong>{formatDateDMY(expiry.extensionDeadline)}</strong>, 2 months before expiry.
               </span>
             </>
           ) : (

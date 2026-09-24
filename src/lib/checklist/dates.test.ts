@@ -1,6 +1,29 @@
 import { describe, expect, it } from "vitest";
-import { adjustedCompletionDate, eotTotalDays, loaSuggestedStart, ppWpExpiryInfo, tpcSuggestedDate } from "./dates";
+import {
+  adjustedCompletionDate,
+  eotTotalDays,
+  formatDateDMY,
+  loaSuggestedStart,
+  ppWpExpiryInfo,
+  tpcSuggestedDate,
+} from "./dates";
 import type { ProjectDates } from "@/lib/supabase/database.types";
+
+describe("formatDateDMY", () => {
+  it("reformats an ISO date to 'DD MM YYYY'", () => {
+    expect(formatDateDMY("2024-06-05")).toBe("05 06 2024");
+  });
+
+  it("returns an empty string for null/undefined/blank", () => {
+    expect(formatDateDMY(null)).toBe("");
+    expect(formatDateDMY(undefined)).toBe("");
+    expect(formatDateDMY("")).toBe("");
+  });
+
+  it("returns the input unchanged if it doesn't look like an ISO date", () => {
+    expect(formatDateDMY("not-a-date")).toBe("not-a-date");
+  });
+});
 
 function baseDates(overrides: Partial<ProjectDates> = {}): ProjectDates {
   return {

@@ -3,7 +3,13 @@
 import { useState } from "react";
 import type { ProjectChecklistData } from "@/hooks/useProjectData";
 import { useUpdateProjectDates } from "@/hooks/useOverviewMutations";
-import { adjustedCompletionDate, eotTotalDays, loaSuggestedStart, tpcSuggestedDate } from "@/lib/checklist/dates";
+import {
+  adjustedCompletionDate,
+  eotTotalDays,
+  formatDateDMY,
+  loaSuggestedStart,
+  tpcSuggestedDate,
+} from "@/lib/checklist/dates";
 
 export function ProjectDatesCard({ data }: { data: ProjectChecklistData }) {
   const updateDates = useUpdateProjectDates(data.project.id);
@@ -52,7 +58,7 @@ export function ProjectDatesCard({ data }: { data: ProjectChecklistData }) {
         {loaSuggestion.date && dates.contractStart !== loaSuggestion.date && (
           <>
             <span className="ov-calc-note">
-              Suggested: {loaSuggestion.date} ({loaSuggestion.note})
+              Suggested: {formatDateDMY(loaSuggestion.date)} ({loaSuggestion.note})
             </span>
             <button
               type="button"
@@ -86,7 +92,9 @@ export function ProjectDatesCard({ data }: { data: ProjectChecklistData }) {
         />
         {tpcSuggestion && dates.practicalCompletion !== tpcSuggestion && (
           <>
-            <span className="ov-calc-note">Suggested: {tpcSuggestion} (contract start + contract period)</span>
+            <span className="ov-calc-note">
+              Suggested: {formatDateDMY(tpcSuggestion)} (contract start + contract period)
+            </span>
             <button type="button" className="ov-jump" onClick={() => updateDates.mutate({ practicalCompletion: tpcSuggestion })}>
               Use this date →
             </button>
@@ -106,7 +114,7 @@ export function ProjectDatesCard({ data }: { data: ProjectChecklistData }) {
         <div className="ov-row">
           <span className="ov-label">Adjusted Completion</span>
           <span className="ov-date">
-            {adjusted} (+{totalEotDays} day{totalEotDays === 1 ? "" : "s"} EOT)
+            {formatDateDMY(adjusted)} (+{totalEotDays} day{totalEotDays === 1 ? "" : "s"} EOT)
           </span>
         </div>
       )}

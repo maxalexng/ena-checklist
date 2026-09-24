@@ -21,7 +21,9 @@ test.describe("Overview tab", () => {
     await loaSignedRow.locator("input[type=date]").fill("2024-04-09");
 
     const contractStartRow = page.locator(".ov-row", { hasText: "Actual Contract Start" });
-    await expect(contractStartRow.getByText("Suggested: 2024-07-09")).toBeVisible();
+    // Suggestion text displays DD MM YYYY; the <input type="date"> itself still uses the
+    // HTML-required YYYY-MM-DD value (checked below).
+    await expect(contractStartRow.getByText("Suggested: 09 07 2024")).toBeVisible();
 
     await contractStartRow.getByRole("button", { name: "Use this date →" }).click();
     await expect(contractStartRow.locator("input[type=date]")).toHaveValue("2024-07-09");
@@ -41,7 +43,7 @@ test.describe("Overview tab", () => {
     await page.getByRole("button", { name: "+ Add EOT" }).click();
 
     const adjustedRow = page.locator(".ov-row", { hasText: "Adjusted Completion" });
-    await expect(adjustedRow.getByText("2026-07-10 (+10 days EOT)")).toBeVisible();
+    await expect(adjustedRow.getByText("10 07 2026 (+10 days EOT)")).toBeVisible();
   });
 
   test("adding a milestone log entry shows up under the right section", async ({ page }) => {
@@ -65,8 +67,8 @@ test.describe("Overview tab", () => {
     await uraSection.getByRole("button", { name: "+ Add" }).click();
 
     const expiryRow = uraSection.locator(".ov-row").filter({ hasText: "PP Expiry" });
-    await expect(expiryRow.locator("strong").first()).toHaveText("2024-12-15");
-    await expect(expiryRow).toContainText("2024-10-15"); // extension deadline, 2 months before
+    await expect(expiryRow.locator("strong").first()).toHaveText("15 12 2024");
+    await expect(expiryRow).toContainText("15 10 2024"); // extension deadline, 2 months before
 
     // No manual validity input anymore — the standard periods are fixed.
     await expect(page.getByText("PP validity (months)")).toHaveCount(0);
@@ -85,7 +87,7 @@ test.describe("Overview tab", () => {
 
     const expiryRow = uraSection.locator(".ov-row").filter({ hasText: "Expiry" });
     await expect(expiryRow.locator(".ov-label")).toHaveText("WP Expiry");
-    await expect(expiryRow.locator("strong").first()).toHaveText("2026-09-01"); // +2 years
+    await expect(expiryRow.locator("strong").first()).toHaveText("01 09 2026"); // +2 years
   });
 
   test("editing the project info bar (title/reference) saves and reflects in the masthead", async ({ page }) => {
