@@ -728,7 +728,7 @@
      the bottom of my Overview page". */
   .shell-grid[hidden]{ display:none; }
   .pi-field input:disabled, .pi-field select:disabled{ opacity:0.55; cursor:not-allowed; }
-  .overview-app{ display:flex; flex-direction:column; gap:18px; max-width:900px; }
+  .overview-app{ display:flex; flex-direction:column; gap:18px; }
   .ov-section{
     background:var(--surface); border:1px solid var(--line); border-radius:12px;
     padding:16px 20px; box-shadow:var(--shadow);
