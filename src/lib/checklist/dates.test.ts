@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { adjustedCompletionDate, eotTotalDays, loaSuggestedStart, ppExpiryInfo, tpcSuggestedDate } from "./dates";
+import { adjustedCompletionDate, eotTotalDays, loaSuggestedStart, ppWpExpiryInfo, tpcSuggestedDate } from "./dates";
 import type { ProjectDates } from "@/lib/supabase/database.types";
 
 function baseDates(overrides: Partial<ProjectDates> = {}): ProjectDates {
@@ -88,34 +88,74 @@ describe("adjustedCompletionDate", () => {
   });
 });
 
-describe("ppExpiryInfo", () => {
-  it("returns null when validity months isn't set", () => {
-    expect(ppExpiryInfo([{ type: "PP Submitted", date: "2024-01-01" }], "")).toBeNull();
+describe("ppWpExpiryInfo", () => {
+  it("returns null when there are no entries", () => {
+    expect(ppWpExpiryInfo([])).toBeNull();
   });
 
   it("returns null when no entry has a date", () => {
-    expect(ppExpiryInfo([{ type: "PP Submitted", date: null }], "12")).toBeNull();
+    expect(ppWpExpiryInfo([{ type: "PP Cleared / Granted", date: null }])).toBeNull();
   });
 
-  it("computes expiry from the latest dated entry, ignoring undated ones", () => {
+  it("returns null when entries exist but none read as an actual grant", () => {
+    // "Submitted" and "Rejected" aren't grants — validity only starts once something is
+    // actually cleared/granted/issued.
+    const entries = [
+      { type: "PP Submitted", date: "2024-01-01" },
+      { type: "Rejected", date: "2024-02-01" },
+      { type: "Written Direction (WD1)", date: "2024-03-01" },
+    ];
+    expect(ppWpExpiryInfo(entries)).toBeNull();
+  });
+
+  it("computes a 6-month PP expiry from a PP grant, ignoring undated/non-grant rows", () => {
     const entries = [
       { type: "PP Submitted", date: "2023-01-01" },
-      { type: "PP Advice", date: "2024-06-15" },
+      { type: "PP Cleared / Granted", date: "2024-06-15" },
       { type: "Placeholder", date: null },
     ];
-    const info = ppExpiryInfo(entries, "12");
-    expect(info?.date).toBe("2025-06-15");
+    const info = ppWpExpiryInfo(entries)!;
+    expect(info.kind).toBe("pp");
+    expect(info.basisDate).toBe("2024-06-15");
+    expect(info.date).toBe("2024-12-15");
+    expect(info.extensionDeadline).toBe("2024-10-15"); // 2 months before expiry
+  });
+
+  it("computes a 2-year WP expiry from a WP grant", () => {
+    const info = ppWpExpiryInfo([{ type: "WP Granted", date: "2024-06-15" }])!;
+    expect(info.kind).toBe("wp");
+    expect(info.date).toBe("2026-06-15");
+    expect(info.extensionDeadline).toBe("2026-04-15");
+  });
+
+  it("prefers WP over PP once WP is granted, even if the PP grant date is later", () => {
+    const entries = [
+      { type: "WP Granted", date: "2023-01-01" },
+      { type: "PP Cleared / Granted", date: "2024-06-15" }, // later date, but superseded
+    ];
+    const info = ppWpExpiryInfo(entries)!;
+    expect(info.kind).toBe("wp");
+    expect(info.basisDate).toBe("2023-01-01");
+  });
+
+  it("uses the latest grant when there are several of the same kind", () => {
+    const entries = [
+      { type: "PP Cleared / Granted", date: "2023-01-01" },
+      { type: "PP Cleared / Granted", date: "2024-06-15" },
+    ];
+    const info = ppWpExpiryInfo(entries)!;
+    expect(info.basisDate).toBe("2024-06-15");
   });
 
   it("flags a far-future expiry as ok", () => {
     const farFuture = new Date();
     farFuture.setUTCFullYear(farFuture.getUTCFullYear() + 5);
-    const info = ppExpiryInfo([{ type: "x", date: farFuture.toISOString().slice(0, 10) }], "1");
+    const info = ppWpExpiryInfo([{ type: "WP Granted", date: farFuture.toISOString().slice(0, 10) }]);
     expect(info?.status).toBe("ok");
   });
 
   it("flags a past expiry as expired", () => {
-    const info = ppExpiryInfo([{ type: "x", date: "2000-01-01" }], "1");
+    const info = ppWpExpiryInfo([{ type: "PP Cleared / Granted", date: "2000-01-01" }]);
     expect(info?.status).toBe("expired");
     expect(info?.daysRemaining).toBeLessThan(0);
   });

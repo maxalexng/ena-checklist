@@ -72,7 +72,6 @@ export interface ProjectChecklistData {
     step_stage: Record<string, string>;
     assignments_locked: boolean;
     projectDates: ProjectDates;
-    ppValidityMonths: string;
     listPresets: Record<string, string[]>;
     stageDurationWeeks: Record<string, number>;
   };
@@ -100,7 +99,7 @@ export function useProjectData(projectId: string) {
         supabase
           .from("projects")
           .select(
-            "id, reference, title, address, initialism, bca_ref, contract_period_months, contract_sum, current_stage, step_order, item_order, step_stage, assignments_locked, project_dates, pp_validity_months, list_presets, stage_duration_weeks"
+            "id, reference, title, address, initialism, bca_ref, contract_period_months, contract_sum, current_stage, step_order, item_order, step_stage, assignments_locked, project_dates, list_presets, stage_duration_weeks"
           )
           .eq("id", projectId)
           .single(),
@@ -243,7 +242,6 @@ export function useProjectData(projectId: string) {
           step_stage: (projectRes.data.step_stage as Record<string, string>) ?? {},
           assignments_locked: projectRes.data.assignments_locked,
           projectDates: projectRes.data.project_dates,
-          ppValidityMonths: projectRes.data.pp_validity_months,
           listPresets: (projectRes.data.list_presets as Record<string, string[]>) ?? {},
           stageDurationWeeks: (projectRes.data.stage_duration_weeks as Record<string, number>) ?? {},
         },

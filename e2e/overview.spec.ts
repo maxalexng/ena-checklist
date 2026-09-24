@@ -58,6 +58,36 @@ test.describe("Overview tab", () => {
     await expect(reloadedSection.locator(".sl-row")).toHaveCount(1);
   });
 
+  test("logging a PP grant shows a 6-month PP Expiry, bold, with an extension reminder", async ({ page }) => {
+    const uraSection = page.locator(".ov-section").filter({ hasText: "URA — Provisional Permission" });
+    await uraSection.locator('[data-field="type"]').fill("PP Cleared / Granted");
+    await uraSection.locator('[data-field="date"]').fill("2024-06-15");
+    await uraSection.getByRole("button", { name: "+ Add" }).click();
+
+    const expiryRow = uraSection.locator(".ov-row").filter({ hasText: "PP Expiry" });
+    await expect(expiryRow.locator("strong").first()).toHaveText("2024-12-15");
+    await expect(expiryRow).toContainText("2024-10-15"); // extension deadline, 2 months before
+
+    // No manual validity input anymore — the standard periods are fixed.
+    await expect(page.getByText("PP validity (months)")).toHaveCount(0);
+  });
+
+  test("logging a WP grant supersedes PP with a 2-year WP Expiry", async ({ page }) => {
+    const uraSection = page.locator(".ov-section").filter({ hasText: "URA — Provisional Permission" });
+
+    await uraSection.locator('[data-field="type"]').fill("PP Cleared / Granted");
+    await uraSection.locator('[data-field="date"]').fill("2024-06-15");
+    await uraSection.getByRole("button", { name: "+ Add" }).click();
+
+    await uraSection.locator('[data-field="type"]').fill("WP Granted");
+    await uraSection.locator('[data-field="date"]').fill("2024-09-01");
+    await uraSection.getByRole("button", { name: "+ Add" }).click();
+
+    const expiryRow = uraSection.locator(".ov-row").filter({ hasText: "Expiry" });
+    await expect(expiryRow.locator(".ov-label")).toHaveText("WP Expiry");
+    await expect(expiryRow.locator("strong").first()).toHaveText("2026-09-01"); // +2 years
+  });
+
   test("editing the project info bar (title/reference) saves and reflects in the masthead", async ({ page }) => {
     await page.getByLabel("Title").fill("Renamed Project Title");
     await page.getByLabel("Title").blur();

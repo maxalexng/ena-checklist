@@ -1,10 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import type { OverviewSectionDef } from "@/template";
 import type { ProjectChecklistData } from "@/hooks/useProjectData";
-import { useUpdatePpValidityMonths } from "@/hooks/useOverviewMutations";
-import { ppExpiryInfo } from "@/lib/checklist/dates";
+import { ppWpExpiryInfo } from "@/lib/checklist/dates";
 import { MilestoneLog } from "./MilestoneLog";
 
 export function OverviewSection({
@@ -16,12 +14,9 @@ export function OverviewSection({
   section: OverviewSectionDef;
   data: ProjectChecklistData;
 }) {
-  const updatePpValidity = useUpdatePpValidityMonths(projectId);
-  const [validityInput, setValidityInput] = useState(data.project.ppValidityMonths);
-
   const isUra = section.id === "ura";
   const ppEntries = isUra ? data.milestonesByStep["ura__PP"] ?? [] : [];
-  const expiry = isUra ? ppExpiryInfo(ppEntries, data.project.ppValidityMonths) : null;
+  const expiry = isUra ? ppWpExpiryInfo(ppEntries) : null;
 
   return (
     <div className="ov-section">
@@ -42,34 +37,30 @@ export function OverviewSection({
       ))}
 
       {isUra && (
-        <>
-          <div className="ov-row">
-            <span className="ov-label">PP Expiry</span>
-            {expiry ? (
+        <div className="ov-row">
+          <span className="ov-label">{expiry?.kind === "wp" ? "WP Expiry" : "PP Expiry"}</span>
+          {expiry ? (
+            <>
               <span className={`ms-expiry ${expiry.status}`}>
-                {expiry.date} ({expiry.daysRemaining >= 0 ? `${expiry.daysRemaining} days left` : "expired"})
+                <strong>{expiry.date}</strong>
+                {" "}({expiry.daysRemaining >= 0 ? `${expiry.daysRemaining} days left` : "expired"})
               </span>
-            ) : (
+              <span className="ov-hint" style={{ flexBasis: "100%" }}>
+                Standard validity: 6 months from PP grant, or 2 years from WP grant (WP supersedes PP once
+                granted) — not editable per project. Apply for an extension by{" "}
+                <strong>{expiry.extensionDeadline}</strong>, 2 months before expiry.
+              </span>
+            </>
+          ) : (
+            <>
               <span className="ov-empty">Not enough data to calculate.</span>
-            )}
-          </div>
-          <div className="ov-row">
-            <span className="ov-label">PP validity (months)</span>
-            <span className="ov-inputs">
-              <input
-                type="number"
-                min={1}
-                max={120}
-                value={validityInput}
-                onChange={(e) => setValidityInput(e.target.value)}
-                onBlur={() => updatePpValidity.mutate({ months: validityInput })}
-              />
-            </span>
-            <span className="ov-hint">
-              Used to calculate PP Expiry from whichever row above looks like the latest grant or extension.
-            </span>
-          </div>
-        </>
+              <span className="ov-hint" style={{ flexBasis: "100%" }}>
+                Standard validity: 6 months from PP grant, or 2 years from WP grant. Log a &quot;PP Cleared /
+                Granted&quot; or &quot;WP Granted&quot; row above (with a date) once one comes through.
+              </span>
+            </>
+          )}
+        </div>
       )}
     </div>
   );

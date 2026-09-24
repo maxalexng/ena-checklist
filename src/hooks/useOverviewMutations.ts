@@ -32,14 +32,6 @@ export function useUpdateProjectDates(projectId: string) {
   });
 }
 
-export function useUpdatePpValidityMonths(projectId: string) {
-  const supabase = createClient();
-  return useProjectMutation<{ months: string }>(projectId, async ({ months }) => {
-    const { error } = await supabase.from("projects").update({ pp_validity_months: months }).eq("id", projectId);
-    if (error) throw error;
-  });
-}
-
 export function useAddMilestone(projectId: string) {
   const supabase = createClient();
   const queryClient = useQueryClient();
