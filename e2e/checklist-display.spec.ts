@@ -65,9 +65,9 @@ test.describe("Checklist item labels and conditional badges", () => {
     await expect(item).toBeVisible();
     const statusBtn = item.locator(".status-chip");
     await expect(statusBtn).toHaveText("Not started");
-    // Each click reads the current status from a prop, not a readback — firing the next
-    // click before the mutation's refetch lands would just repeat the same transition
-    // instead of advancing, so wait for each step before clicking again.
+    // Asserting between clicks (rather than firing all three back-to-back) keeps this test
+    // about the badge/progress behavior, not about click timing — see fast-clicking.spec.ts
+    // for rapid-fire click correctness.
     await statusBtn.click();
     await expect(statusBtn).toHaveText("In progress");
     await statusBtn.click();
