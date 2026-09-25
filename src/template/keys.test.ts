@@ -125,18 +125,33 @@ describe("defaultStepOrder", () => {
 // against the legacy prototype's real data (see scripts/migrate-html-import.ts's run for
 // "2 Astrid Hill": 183 items imported vs 183 in source).
 describe("template integrity", () => {
-  it("has exactly 41 steps", () => {
-    expect(STEPS.length).toBe(41);
+  it("has exactly 43 steps", () => {
+    expect(STEPS.length).toBe(43);
   });
 
-  it("has exactly 189 checklist items across all steps", () => {
+  it("has exactly 197 checklist items across all steps", () => {
     // 183 from the original prototype port, +1 for the Consultant Appointments step's own
     // clearable item, +2 for the new Asbestos Survey & Removal step, +2 for the design-lock
     // and construction-drawings checkpoints added to PP/BP, -1 for the NEA grease trap item
     // removed in R11a (grease traps are PUB's, under the Sewerage & Sanitary plan), +2 for
-    // the Contract Award & Documents step added in R12.
+    // the Contract Award & Documents step added in R12, +8 for the two TFCC steps added in R13.
     const total = STEPS.reduce((sum, s) => sum + s.items.length, 0);
-    expect(total).toBe(189);
+    expect(total).toBe(197);
+  });
+
+  it("places the TFCC steps after IMDA COPIF and after the gas connection, with the NetLink logo", () => {
+    const plan = STEPS.findIndex((s) => s.id === "tfcc__PLAN");
+    expect(STEPS[plan - 1].id).toBe("imda__COPIF");
+    expect(STEPS[plan].defaultStage).toBe("detailed");
+    expect(STEPS[plan].items).toHaveLength(3);
+
+    const fibre = STEPS.findIndex((s) => s.id === "tfcc__FIBRE");
+    expect(STEPS[fibre - 1].id).toBe("utilities__GAS");
+    expect(STEPS[fibre].defaultStage).toBe("construction");
+    expect(STEPS[fibre].items).toHaveLength(5);
+    expect(STEPS[fibre].items.every((i) => i.agencyCode === "TFCC")).toBe(true);
+
+    expect(agencyLogoSrc("tfcc")).toBe("/logos/tfcc.png");
   });
 
   it("places Contract Award & Documents in Tendering, right after the BCA Structural Plan", () => {

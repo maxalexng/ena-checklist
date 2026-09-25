@@ -688,4 +688,38 @@ export const AGENCIES: Agency[] = [
       },
     ],
   },
+  {
+    id: "tfcc",
+    code: "TFCC",
+    name: "Telecommunication Facility Co-ordination Committee",
+    full: "TFCC / NetLink Trust",
+    blurb:
+      "Telecom facility coordination for the building — NetLink Trust, as the TFCC member responsible for fibre, reviews the telecom plans and brings the fibre lead-in to the house.",
+    submissions: [
+      {
+        code: "PLAN",
+        name: "Telecom facility plans & NetLink Trust registration",
+        stepName: "TFCC — Telecom Facility Plans & NetLink Registration",
+        when: "During Detailed Design, alongside the IMDA COPIF compliance work.",
+        items: [
+          "Project set up with NetLink Trust (TFCC's fibre coordinator), with the QP and builder as the project contacts",
+          "Telecommunication facility plans (lead-in pipe route from the boundary, termination point location) submitted to TFCC via CORENET, compliant with COPIF",
+          "TFCC / NetLink Trust comments on the telecom facility plans addressed and plans cleared",
+        ],
+      },
+      {
+        code: "FIBRE",
+        name: "Fibre lead-in & NetLink Trust appointment",
+        stepName: "TFCC — Fibre Lead-in & NetLink Appointment",
+        when: "Notify TFCC at least three months before TOP, so NetLink Trust can survey and lay the fibre lead-in in time.",
+        items: [
+          "TFCC notified via CORENET at least three months before TOP (mandatory for A&A works that affect existing telecom facilities)",
+          "Lead-in pipe and termination point installed by the builder, per the cleared telecom facility plans",
+          "NetLink Trust site survey / inspection appointment booked",
+          "Fibre lead-in cable and termination point installed by NetLink Trust, and fibre readiness confirmed",
+          "Client informed the house is fibre-ready, so they can order broadband from their service provider",
+        ],
+      },
+    ],
+  },
 ];

@@ -10,7 +10,7 @@
 // bump n and drop any letter suffix. "R<n><letter>" for a smaller revision within that
 // cycle (a wording tweak, a logo swap, a bug fix) — keep n, advance the letter.
 // Never renumber a revision once published.
-export const TEMPLATE_VERSION = "R12";
+export const TEMPLATE_VERSION = "R13";
 
 export interface ChangelogEntry {
   rev: string;
@@ -23,6 +23,12 @@ export interface ChangelogEntry {
 // from the HTML prototype (submissions-register-MASTER.html); entries from here on
 // describe changes made in this app.
 export const TEMPLATE_CHANGELOG: ChangelogEntry[] = [
+  {
+    rev: "R13",
+    date: "2026-09-25",
+    summary:
+      'New governing body, TFCC (Telecommunication Facility Co-ordination Committee), with NetLink Trust handling fibre, and two steps. "Telecom Facility Plans & NetLink Registration" (PLAN) sits in Detailed Design right after IMDA COPIF: set the project up with NetLink Trust, submit the telecom facility plans via CORENET, and clear the comments. "Fibre Lead-in & NetLink Appointment" (FIBRE) sits in Construction after the gas supply connection: notify TFCC at least three months before TOP, have the builder install the lead-in pipe and termination point, book the NetLink site survey appointment, get the fibre lead-in installed, and tell the client the house is fibre-ready. Existing projects get both steps the next time they are opened.',
+  },
   {
     rev: "R12",
     date: "2026-09-25",
