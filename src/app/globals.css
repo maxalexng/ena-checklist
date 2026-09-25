@@ -941,6 +941,37 @@
   }
   .consultant-note-input:focus-visible{ outline:2px solid var(--accent); outline-offset:1px; }
 
+  /* PC sum schedule: a table run through line by line with the client. Scrolls sideways
+     inside its own wrapper on narrow screens rather than the whole page. */
+  .pc-sums{ display:flex; flex-direction:column; gap:8px; padding:4px 8px 8px; }
+  .pc-table-wrap{ overflow-x:auto; }
+  .pc-table{ width:100%; min-width:860px; table-layout:fixed; border-collapse:collapse; font-size:12.3px; }
+  .pc-table th{
+    font-family:'IBM Plex Mono',monospace; font-size:9.5px; font-weight:500; text-transform:uppercase;
+    letter-spacing:0.05em; color:var(--ink-faint); text-align:left; padding:4px 6px; border-bottom:1px solid var(--line);
+  }
+  .pc-table td{ padding:4px 6px; border-bottom:1px solid var(--line); vertical-align:middle; }
+  .pc-table tr:hover td{ background:var(--surface-2); }
+  .pc-cell-center{ text-align:center; }
+  .pc-cell-move{ width:28px; }
+  .pc-input{
+    width:100%; font-family:'IBM Plex Sans', sans-serif; font-size:12.3px; color:var(--ink);
+    background:var(--paper); border:1px solid var(--line); border-radius:5px; padding:4px 6px;
+  }
+  .pc-input:focus-visible{ outline:2px solid var(--accent); outline-offset:1px; }
+  .pc-item-input{ font-weight:600; text-overflow:ellipsis; }
+  .pc-amount{ font-family:'IBM Plex Mono',monospace; text-align:right; }
+  .pc-invalid{ border-color:var(--danger); background:var(--danger-soft); }
+  .pc-selection{ padding-right:2px; }
+  .pc-selection-client{ color:var(--st-cleared); }
+  .pc-selection-recommended{ color:var(--accent); }
+  .pc-row-na td{ opacity:0.45; }
+  .pc-row-na .pc-item-input{ text-decoration:line-through; }
+  .pc-summary{ font-size:12px; color:var(--ink-soft); margin:0; }
+  .pc-empty{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .pc-add{ align-self:flex-start; }
+  .pc-add:disabled{ opacity:0.6; cursor:default; }
+
   /* Dated design logs (Concept, DD, tender set): fixed first/last rows with rounds between. */
   .design-review-row{ display:flex; align-items:center; flex-wrap:wrap; gap:10px; padding:6px 8px; border-radius:6px; }
   .design-review-row:hover{ background:var(--surface-2); }

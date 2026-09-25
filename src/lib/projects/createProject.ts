@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { STEPS, defaultRoles, defaultListPresets, defaultStageDurationWeeks } from "@/template";
+import { DEFAULT_PC_SUM_ITEMS, STEPS, defaultRoles, defaultListPresets, defaultStageDurationWeeks } from "@/template";
 import type { Database } from "@/lib/supabase/database.types";
 
 export interface NewProjectInput {
@@ -10,8 +10,9 @@ export interface NewProjectInput {
 }
 
 /** Creates a new project row and seeds it from the template: every checklist item at
- * "pending", the office's default roles, and default list presets/stage durations. Mirrors
- * the prototype's defaultState() — see src/template/defaults.ts. */
+ * "pending", the office's default roles, the standard PC sum list, and default list
+ * presets/stage durations. Mirrors the prototype's defaultState() — see
+ * src/template/defaults.ts. */
 export async function createProject(
   supabase: SupabaseClient<Database>,
   input: NewProjectInput,
@@ -59,5 +60,14 @@ export async function createProject(
   const { error: rolesError } = await supabase.from("project_roles").insert(roleRows);
   if (rolesError) throw rolesError;
 
+  const { error: pcSumsError } = await supabase.from("pc_sums").insert(pcSumRows(project.id));
+  if (pcSumsError) throw pcSumsError;
+
   return project;
+}
+
+/** The standard PC sum list as pc_sums rows — used when a project is created, and to load
+ * the list into a project created before the PC sum schedule existed. */
+export function pcSumRows(projectId: string) {
+  return DEFAULT_PC_SUM_ITEMS.map((item, i) => ({ project_id: projectId, item, sort_order: i }));
 }

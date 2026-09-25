@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
-import type { ItemStatus } from "@/template";
+import type { ItemStatus, PcSumSelection } from "@/template";
 import type { FeeCalculatorInputsRow, ProjectDates } from "@/lib/supabase/database.types";
 import { missingItemRows } from "@/lib/checklist/reconcileItems";
 
@@ -38,6 +38,18 @@ export interface ConsultantEntry {
   company: string;
   roleId: string | null;
   dateSigned: string | null;
+  note: string;
+  sortOrder: number;
+}
+
+export interface PcSumEntry {
+  id: string;
+  item: string;
+  supplier: string;
+  selection: PcSumSelection;
+  amount: number | null;
+  clientConfirmed: boolean;
+  na: boolean;
   note: string;
   sortOrder: number;
 }
@@ -82,6 +94,7 @@ export interface ProjectChecklistData {
   roles: RoleRecord[];
   milestonesByStep: Record<string, MilestoneEntry[]>;
   consultants: ConsultantEntry[];
+  pcSums: PcSumEntry[];
   timelinePlanByStep: Record<string, TimelinePlanEntry>;
   itemFilesByItem: Record<string, ItemFileEntry>;
 }
@@ -96,7 +109,7 @@ export function useProjectData(projectId: string) {
     queryFn: async (): Promise<ProjectChecklistData> => {
       const supabase = createClient();
 
-      const [projectRes, itemsRes, rolesRes, milestonesRes, consultantsRes, timelinePlanRes] = await Promise.all([
+      const [projectRes, itemsRes, rolesRes, milestonesRes, consultantsRes, pcSumsRes, timelinePlanRes] = await Promise.all([
         supabase
           .from("projects")
           .select(
@@ -108,6 +121,10 @@ export function useProjectData(projectId: string) {
         supabase.from("project_roles").select("id, name, color, sort_order").eq("project_id", projectId).order("sort_order"),
         supabase.from("milestones").select("id, step_key, type, date, note, sort_order").eq("project_id", projectId),
         supabase.from("consultants").select("id, company, role_id, date_signed, note, sort_order").eq("project_id", projectId),
+        supabase
+          .from("pc_sums")
+          .select("id, item, supplier, selection, amount, client_confirmed, na, note, sort_order")
+          .eq("project_id", projectId),
         supabase.from("timeline_plan").select("step_key, start_date, end_date").eq("project_id", projectId),
       ]);
 
@@ -116,6 +133,7 @@ export function useProjectData(projectId: string) {
       if (rolesRes.error) throw rolesRes.error;
       if (milestonesRes.error) throw milestonesRes.error;
       if (consultantsRes.error) throw consultantsRes.error;
+      if (pcSumsRes.error) throw pcSumsRes.error;
       if (timelinePlanRes.error) throw timelinePlanRes.error;
 
       const itemsByKey: Record<string, ItemRecord> = {};
@@ -207,6 +225,21 @@ export function useProjectData(projectId: string) {
         }))
         .sort((a, b) => a.sortOrder - b.sortOrder);
 
+      const pcSums: PcSumEntry[] = (pcSumsRes.data ?? [])
+        .map((r) => ({
+          id: r.id,
+          item: r.item,
+          supplier: r.supplier,
+          selection: r.selection,
+          // PostgREST can hand numeric columns back as strings; normalise to a number.
+          amount: r.amount === null ? null : Number(r.amount),
+          clientConfirmed: r.client_confirmed,
+          na: r.na,
+          note: r.note,
+          sortOrder: r.sort_order,
+        }))
+        .sort((a, b) => a.sortOrder - b.sortOrder);
+
       const itemFilesByItem: Record<string, ItemFileEntry> = {};
       (itemFilesRes.data ?? []).forEach((row) => {
         itemFilesByItem[row.item_id] = {
@@ -253,6 +286,7 @@ export function useProjectData(projectId: string) {
         roles,
         milestonesByStep,
         consultants,
+        pcSums,
         timelinePlanByStep,
         itemFilesByItem,
       };

@@ -532,6 +532,22 @@ export const AGENCIES: Agency[] = [
         ],
       },
       {
+        code: "PCSUMS",
+        name: "PC Sum Schedule & Client Selections",
+        stepCode: "PCSUMS",
+        stepName: "PC Sum Schedule & Client Selections",
+        stepBlurb:
+          "Going through every possible PC (Prime Cost) sum item with the client: which apply, whether the client has their own pick or goes with our recommendation, the supplier or brand agreed, and the allowance carried into the tender.",
+        when: "In Detailed Design, before the tender drawing set and documents are produced.",
+        isPcSumSchedule: true,
+        items: [
+          "Standard PC sum list run through with the client, with items not in this project marked N/A",
+          "Supplier / brand agreed for every remaining PC sum, as the client's own choice or our recommendation",
+          "PC sum allowances set with the QS and carried into the tender documents",
+          "Client's written confirmation of the PC sum schedule",
+        ],
+      },
+      {
         code: "TENDERSET",
         name: "Tender Drawing Set & Documents",
         stepCode: "TENDERSET",

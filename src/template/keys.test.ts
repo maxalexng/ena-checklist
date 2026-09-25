@@ -125,11 +125,11 @@ describe("defaultStepOrder", () => {
 // against the legacy prototype's real data (see scripts/migrate-html-import.ts's run for
 // "2 Astrid Hill": 183 items imported vs 183 in source).
 describe("template integrity", () => {
-  it("has exactly 47 steps", () => {
-    expect(STEPS.length).toBe(47);
+  it("has exactly 48 steps", () => {
+    expect(STEPS.length).toBe(48);
   });
 
-  it("has exactly 223 checklist items across all steps", () => {
+  it("has exactly 227 checklist items across all steps", () => {
     // 183 from the original prototype port, +1 for the Consultant Appointments step's own
     // clearable item, +2 for the new Asbestos Survey & Removal step, +2 for the design-lock
     // and construction-drawings checkpoints added to PP/BP, -1 for the NEA grease trap item
@@ -137,9 +137,9 @@ describe("template integrity", () => {
     // the Contract Award & Documents step added in R12, +8 for the two TFCC steps added in R13,
     // +1 for the Concept Design & Client Presentations step added in R14, +17 for the Design
     // Development (8) and Tender Drawing Set (9) steps added in R15, +8 for Tender Calling &
-    // Evaluation added in R16.
+    // Evaluation added in R16, +4 for the PC Sum Schedule step added in R17.
     const total = STEPS.reduce((sum, s) => sum + s.items.length, 0);
-    expect(total).toBe(223);
+    expect(total).toBe(227);
   });
 
   it("places the TFCC steps after IMDA COPIF and after the gas connection, with the NetLink logo", () => {
@@ -174,7 +174,10 @@ describe("template integrity", () => {
     expect(STEPS[dev].items[7].text).toMatch(/^Design Freeze Sign-off form/);
 
     const tender = STEPS.findIndex((s) => s.id === "admin__TENDERSET");
-    expect(STEPS[tender - 1].id).toBe("tfcc__PLAN");
+    expect(STEPS[tender - 1].id).toBe("admin__PCSUMS");
+    expect(STEPS[tender - 2].id).toBe("tfcc__PLAN");
+    expect(STEPS[tender - 1].isPcSumSchedule).toBe(true);
+    expect(STEPS[tender - 1].defaultStage).toBe("detailed");
     expect(STEPS[tender].defaultStage).toBe("detailed");
     expect(STEPS[tender + 1].defaultStage).toBe("tender");
     expect(STEPS[tender].designLog).toBe("tender");

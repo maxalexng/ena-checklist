@@ -67,6 +67,7 @@ export const STEPS: TemplateStep[] = STEP_ORDER.map((triple: StepOrderTriple, id
     defaultStage: stageId,
     isConsultantList: submission.isConsultantList,
     designLog: submission.designLog,
+    isPcSumSchedule: submission.isPcSumSchedule,
     submission,
     items: buildItems(agency, submission, key),
   };

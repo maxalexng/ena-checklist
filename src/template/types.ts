@@ -58,6 +58,8 @@ export interface Submission {
   isConsultantList?: boolean;
   /** Renders a dated design log (template/designLogs.ts) after the item list. */
   designLog?: DesignLogId;
+  /** Renders the PC sum schedule table after the item list. */
+  isPcSumSchedule?: boolean;
 }
 
 export interface Agency {
@@ -88,6 +90,7 @@ export interface TemplateStep {
   defaultStage: StageId;
   isConsultantList?: boolean;
   designLog?: DesignLogId;
+  isPcSumSchedule?: boolean;
   submission: Submission;
   items: TemplateItem[];
 }

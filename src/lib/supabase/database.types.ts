@@ -155,6 +155,25 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["consultants"]["Row"]>;
         Relationships: [];
       };
+      pc_sums: {
+        Row: {
+          id: string;
+          project_id: string;
+          item: string;
+          supplier: string;
+          selection: "tbc" | "client" | "recommended";
+          amount: number | null;
+          client_confirmed: boolean;
+          na: boolean;
+          note: string;
+          sort_order: number;
+        };
+        Insert: Partial<Database["public"]["Tables"]["pc_sums"]["Row"]> & {
+          project_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["pc_sums"]["Row"]>;
+        Relationships: [];
+      };
       timeline_plan: {
         Row: {
           project_id: string;

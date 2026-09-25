@@ -10,6 +10,7 @@ import { ItemRow } from "./ItemRow";
 import { Highlight } from "./Highlight";
 import { ConsultantsWidget } from "@/components/consultants/ConsultantsWidget";
 import { DesignReviewLog } from "./DesignReviewLog";
+import { PcSumsWidget } from "@/components/pcSums/PcSumsWidget";
 
 export function StepCard({
   projectId,
@@ -204,6 +205,7 @@ export function StepCard({
             locked={locked}
           />
         )}
+        {step.isPcSumSchedule && <PcSumsWidget projectId={projectId} pcSums={data.pcSums} locked={locked} />}
       </div>
     </div>
   );

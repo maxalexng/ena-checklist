@@ -10,7 +10,7 @@
 // bump n and drop any letter suffix. "R<n><letter>" for a smaller revision within that
 // cycle (a wording tweak, a logo swap, a bug fix) — keep n, advance the letter.
 // Never renumber a revision once published.
-export const TEMPLATE_VERSION = "R16";
+export const TEMPLATE_VERSION = "R17";
 
 export interface ChangelogEntry {
   rev: string;
@@ -23,6 +23,12 @@ export interface ChangelogEntry {
 // from the HTML prototype (submissions-register-MASTER.html); entries from here on
 // describe changes made in this app.
 export const TEMPLATE_CHANGELOG: ChangelogEntry[] = [
+  {
+    rev: "R17",
+    date: "2026-09-25",
+    summary:
+      'New Practice Administration step in Detailed Design, "PC Sum Schedule & Client Selections" (PCSUMS), right before the Tender Drawing Set. It holds a PC sum schedule run through with the client: each PC sum item, whether it is the client\'s own choice or our recommendation, the supplier or brand agreed, the allowance, whether the client has confirmed it, and N/A for items not in the project, with a running total. New projects start with the office\'s standard list of 18 PC sum items; existing projects can load the same list with one click. Four items sit alongside it: run through the list with the client, agree a supplier for every PC sum, set the allowances with the QS, and get the client\'s written confirmation. Needs migration 0007.',
+  },
   {
     rev: "R16",
     date: "2026-09-25",
