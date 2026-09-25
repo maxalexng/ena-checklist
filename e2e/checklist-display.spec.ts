@@ -114,4 +114,26 @@ test.describe("Checklist item labels and conditional badges", () => {
     const items = bpCard.locator(".item");
     await expect(items.first()).toContainText("Construction (working) drawing set");
   });
+
+  test("the drawing location / office standard panels open fully visible on a step's last item", async ({
+    page,
+  }) => {
+    // CORENET team registration is a one-item step — the panel used to be an absolutely
+    // positioned popover that the step card's overflow:hidden clipped on the last item.
+    await page.getByPlaceholder("Search checklist…").fill("CORENET — Project Team Registration");
+    const stepCard = page.locator(".agency").filter({ hasText: "CORENET" }).first();
+    const item = stepCard.locator(".item").last();
+
+    await item.getByRole("button", { name: "Drawing location" }).click();
+    await item.getByRole("button", { name: "Office standard" }).click();
+    const drawingInput = item.getByPlaceholder("Drawing location (path or URL)");
+    await expect(drawingInput).toBeVisible();
+    await expect(item.locator(".template-file-note")).toBeVisible();
+
+    const card = await stepCard.boundingBox();
+    for (const panel of await item.locator(".file-panel").all()) {
+      const box = await panel.boundingBox();
+      expect(box!.y + box!.height).toBeLessThanOrEqual(card!.y + card!.height);
+    }
+  });
 });

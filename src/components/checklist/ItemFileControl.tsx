@@ -41,10 +41,12 @@ export function ItemFileControl({
           setLinkValue(record?.link ?? "");
         }}
       >
-        🗎
+        {hasContent && <span className="file-toggle-dot" aria-hidden="true" />}
+        Drawing location
       </button>
       {open && (
         <div className="file-panel">
+          <span className="file-panel-title">Drawing location</span>
           <button type="button" className="file-panel-close" onClick={() => setOpen(false)}>
             ×
           </button>

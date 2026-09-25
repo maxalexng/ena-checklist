@@ -21,10 +21,12 @@ export function TemplateFileControl({ itemKey, locked }: { itemKey: string; lock
         title="Office template document"
         onClick={() => setOpen((v) => !v)}
       >
-        📎
+        {record && <span className="file-toggle-dot" aria-hidden="true" />}
+        Office standard
       </button>
       {open && (
         <div className="file-panel">
+          <span className="file-panel-title">Office standard</span>
           <button type="button" className="file-panel-close" onClick={() => setOpen(false)}>
             ×
           </button>
