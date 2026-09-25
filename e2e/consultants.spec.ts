@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { createTestProject, deleteProjectByReference, login, uniqueE2eReference } from "./helpers";
+import { createTestProject, deleteProjectByReference, uniqueE2eReference } from "./helpers";
 
 test.describe("Consultants widget", () => {
   let reference: string;
@@ -7,7 +7,6 @@ test.describe("Consultants widget", () => {
   test.beforeEach(async ({ page }) => {
     reference = uniqueE2eReference("consultants");
     const project = await createTestProject({ reference, title: "Consultants Test Project" });
-    await login(page);
     await page.goto(`/projects/${project.id}`);
     await page.getByRole("button", { name: "Checklist" }).click();
     // Narrows the (large) checklist tree down to just the Consultant Appointments step.

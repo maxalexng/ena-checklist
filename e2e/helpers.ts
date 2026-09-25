@@ -2,6 +2,12 @@ import type { Page } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 import { createProject, type NewProjectInput } from "../src/lib/projects/createProject";
 
+/** Where auth.setup.ts saves the signed-in session that every other spec starts from. */
+export const AUTH_STATE_PATH = "playwright/.auth/user.json";
+
+/** Signs in through the real login form. Only auth.setup.ts and the smoke test call this —
+ * every other spec reuses the saved session, because signing in once per test (~60 per run)
+ * trips Supabase's auth rate limit ("Request rate limit reached") partway through a run. */
 export async function login(page: Page) {
   const email = process.env.PLAYWRIGHT_TEST_EMAIL;
   const password = process.env.PLAYWRIGHT_TEST_PASSWORD;
@@ -14,7 +20,11 @@ export async function login(page: Page) {
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();
-  await page.waitForURL("/");
+  // A failed sign-in redirects back to /login?error=… — surface that message right away
+  // instead of waiting out the whole test timeout for a navigation that never comes.
+  await page.waitForURL((url) => url.pathname === "/" || url.searchParams.has("error"));
+  const error = new URL(page.url()).searchParams.get("error");
+  if (error) throw new Error(`Sign-in failed: ${error}`);
 }
 
 /** Admin client for e2e-only cleanup (deleting throwaway test projects after a run) —
@@ -42,7 +52,7 @@ export async function deleteProjectByReference(reference: string) {
  * own "New Project" flow does — reuses createProject() directly rather than duplicating
  * its seeding logic, so a future change to that flow can't silently drift out of sync with
  * what these tests set up. Runs with the service-role client, bypassing RLS (there's no
- * logged-in user in this setup step — the test signs in separately via login()). */
+ * logged-in user in this setup step — tests start from the session auth.setup.ts saved). */
 export async function createTestProject(input: NewProjectInput) {
   return createProject(adminClient(), input, null);
 }

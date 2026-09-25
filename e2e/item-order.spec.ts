@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { createTestProject, deleteProjectByReference, login, uniqueE2eReference } from "./helpers";
+import { createTestProject, deleteProjectByReference, uniqueE2eReference } from "./helpers";
 
 test.describe("Reordering items within a step", () => {
   let reference: string;
@@ -7,7 +7,6 @@ test.describe("Reordering items within a step", () => {
   test.beforeEach(async ({ page }) => {
     reference = uniqueE2eReference("itemorder");
     const project = await createTestProject({ reference, title: "Item Order Test Project" });
-    await login(page);
     await page.goto(`/projects/${project.id}`);
     await page.getByRole("button", { name: "Checklist" }).click();
     // Site Investigation & Utility Plans (PREINV) has 6 items — enough room to reorder.

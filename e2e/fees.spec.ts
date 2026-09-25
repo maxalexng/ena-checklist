@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { createTestProject, deleteProjectByReference, login, uniqueE2eReference } from "./helpers";
+import { createTestProject, deleteProjectByReference, uniqueE2eReference } from "./helpers";
 
 test.describe("Fees tab", () => {
   let reference: string;
@@ -7,7 +7,6 @@ test.describe("Fees tab", () => {
   test.beforeEach(async ({ page }) => {
     reference = uniqueE2eReference("fees");
     const project = await createTestProject({ reference, title: "Fees Test Project" });
-    await login(page);
     await page.goto(`/projects/${project.id}`);
     await page.getByRole("button", { name: "Fees" }).click();
   });

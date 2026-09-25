@@ -2,6 +2,9 @@ import { expect, test } from "@playwright/test";
 import { adminClient, deleteProjectByReference, login, uniqueE2eReference } from "./helpers";
 
 test.describe("smoke: login, dashboard, project creation", () => {
+  // Start signed out (not from the saved session) so the login form itself stays covered.
+  test.use({ storageState: { cookies: [], origins: [] } });
+
   let reference: string;
 
   test.afterEach(async () => {

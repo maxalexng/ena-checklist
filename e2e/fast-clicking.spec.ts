@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { createTestProject, deleteProjectByReference, login, uniqueE2eReference } from "./helpers";
+import { createTestProject, deleteProjectByReference, uniqueE2eReference } from "./helpers";
 
 // Optimistic updates (useChecklistMutations.ts's useProjectMutation) patch the cache the
 // instant you click, before the network round trip — so a fast run of clicks on the same
@@ -12,7 +12,6 @@ test.describe("Rapid clicking stays correct and responsive", () => {
   test.beforeEach(async ({ page }) => {
     reference = uniqueE2eReference("fastclick");
     const project = await createTestProject({ reference, title: "Fast Clicking Test Project" });
-    await login(page);
     await page.goto(`/projects/${project.id}`);
     await page.getByRole("button", { name: "Checklist" }).click();
     await page.getByPlaceholder("Search checklist…").fill("Topographic survey");

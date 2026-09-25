@@ -2,7 +2,6 @@ import { expect, test } from "@playwright/test";
 import {
   createTestProject,
   deleteProjectByReference,
-  login,
   setProjectFields,
   uniqueE2eReference,
 } from "./helpers";
@@ -29,7 +28,6 @@ test.describe("Timeline tab", () => {
   test("prompts for a contract start date when none is set", async ({ page }) => {
     reference = uniqueE2eReference("timeline-empty");
     const project = await createTestProject({ reference, title: "Timeline Empty" });
-    await login(page);
     await page.goto(`/projects/${project.id}`);
     await page.getByRole("button", { name: "Timeline" }).click();
 
@@ -42,7 +40,6 @@ test.describe("Timeline tab", () => {
     const project = await createTestProject({ reference, title: "Timeline Bands" });
     await setProjectFields(project.id, { project_dates: PROJECT_DATES_WITH_START });
 
-    await login(page);
     await page.goto(`/projects/${project.id}`);
     await page.getByRole("button", { name: "Timeline" }).click();
 
@@ -67,7 +64,6 @@ test.describe("Timeline tab", () => {
     const project = await createTestProject({ reference, title: "Timeline Plan" });
     await setProjectFields(project.id, { project_dates: PROJECT_DATES_WITH_START });
 
-    await login(page);
     await page.goto(`/projects/${project.id}`);
     await page.getByRole("button", { name: "Timeline" }).click();
 

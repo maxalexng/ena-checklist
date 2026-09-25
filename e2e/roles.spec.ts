@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { createTestProject, deleteProjectByReference, login, uniqueE2eReference } from "./helpers";
+import { createTestProject, deleteProjectByReference, uniqueE2eReference } from "./helpers";
 
 test.describe("Roles panel", () => {
   let reference: string;
@@ -7,7 +7,6 @@ test.describe("Roles panel", () => {
   test.beforeEach(async ({ page }) => {
     reference = uniqueE2eReference("roles");
     const project = await createTestProject({ reference, title: "Roles Test Project" });
-    await login(page);
     await page.goto(`/projects/${project.id}`);
     await page.getByRole("button", { name: "Roles", exact: true }).click();
     await expect(page.locator(".roles-panel")).toBeVisible();
