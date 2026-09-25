@@ -4,23 +4,26 @@ import { useState } from "react";
 import type { MilestoneEntry } from "@/hooks/useProjectData";
 import { useAddMilestone, useDeleteMilestone, useUpdateMilestone } from "@/hooks/useOverviewMutations";
 import {
-  DESIGN_REVIEW_TYPES,
   formatDayGap,
+  roundCountLabel,
   summarizeDesignReviews,
   type DesignReviewRow,
 } from "@/lib/checklist/designReviews";
+import type { DesignLogConfig } from "@/template/designLogs";
 
-// The Concept Design step's dated log: Produce Initial Concept Design, then any number of
-// presentations, then Revise and Confirm Design. The two fixed rows exist before they have
+// A step's dated design log (see template/designLogs.ts): a fixed first row, any number of
+// numbered rounds, then a fixed last row. The two fixed rows exist before they have
 // a milestone behind them; the first edit to one creates it.
 function ReviewRow({
   projectId,
   stepKey,
+  config,
   row,
   locked,
 }: {
   projectId: string;
   stepKey: string;
+  config: DesignLogConfig;
   row: DesignReviewRow;
   locked: boolean;
 }) {
@@ -37,7 +40,7 @@ function ReviewRow({
     } else {
       addMilestone.mutate({
         stepKey,
-        type: DESIGN_REVIEW_TYPES[row.kind],
+        type: config.types[row.kind],
         date: patch.date ?? null,
         note: patch.note ?? "",
       });
@@ -74,7 +77,7 @@ function ReviewRow({
           if (note !== (entry?.note ?? "")) save({ note });
         }}
       />
-      {!locked && row.kind === "presentation" && entry && (
+      {!locked && row.kind === "round" && entry && (
         <button
           type="button"
           className="ov-del"
@@ -91,24 +94,25 @@ function ReviewRow({
 export function DesignReviewLog({
   projectId,
   stepKey,
+  config,
   entries,
   locked,
 }: {
   projectId: string;
   stepKey: string;
+  config: DesignLogConfig;
   entries: MilestoneEntry[];
   locked: boolean;
 }) {
   const addMilestone = useAddMilestone(projectId);
-  const summary = summarizeDesignReviews(entries);
+  const summary = summarizeDesignReviews(entries, config);
   // The confirm row is always last, so the add button goes right before it.
   const addAfter = summary.rows.length - 2;
 
-  const count = summary.presentationCount;
   let span = "";
   if (summary.totalDays !== null) {
     span = summary.confirmed
-      ? ` · ${formatDayGap(summary.totalDays)} from initial design to confirmation`
+      ? ` · ${formatDayGap(summary.totalDays)} ${config.spanPhrase}`
       : ` · ${formatDayGap(summary.totalDays)} so far`;
   }
 
@@ -116,23 +120,23 @@ export function DesignReviewLog({
     <div className="items design-review-log">
       {summary.rows.map((row, i) => (
         <div key={row.entry?.id ?? row.kind} style={{ display: "contents" }}>
-          <ReviewRow projectId={projectId} stepKey={stepKey} row={row} locked={locked} />
+          <ReviewRow projectId={projectId} stepKey={stepKey} config={config} row={row} locked={locked} />
           {!locked && i === addAfter && (
             <button
               type="button"
               className="roles-add-btn design-review-add"
               disabled={addMilestone.isPending}
               onClick={() =>
-                addMilestone.mutate({ stepKey, type: DESIGN_REVIEW_TYPES.presentation, date: null, note: "" })
+                addMilestone.mutate({ stepKey, type: config.types.round, date: null, note: "" })
               }
             >
-              + Add presentation
+              + Add {config.roundNoun.toLowerCase()}
             </button>
           )}
         </div>
       ))}
       <span className="design-review-summary">
-        {count} presentation{count === 1 ? "" : "s"}
+        {roundCountLabel(summary.roundCount, config.roundNoun)}
         {span}
       </span>
     </div>

@@ -7,3 +7,4 @@ export * from "./defaults";
 export * from "./overviewSections";
 export * from "./changelog";
 export * from "./feeRates";
+export * from "./designLogs";

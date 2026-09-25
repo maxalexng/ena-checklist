@@ -941,11 +941,11 @@
   }
   .consultant-note-input:focus-visible{ outline:2px solid var(--accent); outline-offset:1px; }
 
-  /* Concept Design presentation log: fixed first/last rows with presentations between. */
+  /* Dated design logs (Concept, DD, tender set): fixed first/last rows with rounds between. */
   .design-review-row{ display:flex; align-items:center; flex-wrap:wrap; gap:10px; padding:6px 8px; border-radius:6px; }
   .design-review-row:hover{ background:var(--surface-2); }
   .design-review-label{ flex:0 0 220px; font-size:12.8px; font-weight:600; color:var(--ink); }
-  .design-review-presentation .design-review-label{ font-weight:500; padding-left:14px; }
+  .design-review-round .design-review-label{ font-weight:500; padding-left:14px; }
   .design-review-gap{
     flex:none; font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--ink-soft);
     background:var(--surface-3); border-radius:4px; padding:2px 6px;

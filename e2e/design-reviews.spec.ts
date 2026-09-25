@@ -3,17 +3,17 @@ import { createTestProject, deleteProjectByReference, uniqueE2eReference } from 
 
 const STEP = "Concept Design & Client Presentations";
 
-async function openStep(page: Page) {
+async function openStep(page: Page, step = STEP) {
   await page.getByRole("button", { name: "Checklist" }).click();
-  await page.getByPlaceholder("Search checklist…").fill(STEP);
-  await expect(page.getByRole("heading", { name: STEP }).first()).toBeVisible();
+  await page.getByPlaceholder("Search checklist…").fill(step);
+  await expect(page.getByRole("heading", { name: step }).first()).toBeVisible();
 }
 
 function rowLabels(page: Page) {
   return page.locator(".design-review-label").allTextContents();
 }
 
-test.describe("Concept Design presentation log", () => {
+test.describe("Dated design logs (Concept, DD, tender set)", () => {
   let reference: string;
 
   test.beforeEach(async ({ page }) => {
@@ -42,7 +42,7 @@ test.describe("Concept Design presentation log", () => {
     await add.click();
     await expect(page.getByLabel("First Presentation date")).toBeVisible();
     await page.getByLabel("First Presentation date").fill("2026-03-16");
-    await expect(page.locator(".design-review-presentation .design-review-gap")).toHaveText("+2 wks");
+    await expect(page.locator(".design-review-round .design-review-gap")).toHaveText("+2 wks");
 
     await add.click();
     await expect(page.getByLabel("Second Presentation date")).toBeVisible();
@@ -92,5 +92,28 @@ test.describe("Concept Design presentation log", () => {
     await expect(page.getByRole("button", { name: "Remove First Presentation" })).toHaveCount(0);
     await expect(page.getByLabel("First Presentation date")).toBeDisabled();
     await expect(page.getByLabel("Produce Initial Concept Design date")).toBeDisabled();
+  });
+
+  test("the DD and tender set steps each run their own log with their own labels", async ({ page }) => {
+    await openStep(page, "Design Development & Client Sign-off");
+    const dev = page.locator("#step-admin__DEV");
+    await dev.getByLabel("DD Set Issued to Client date").fill("2026-06-01");
+    await expect(dev.getByLabel("DD Set Issued to Client date")).toHaveValue("2026-06-01");
+    await dev.getByRole("button", { name: "+ Add review meeting" }).click();
+    await expect(dev.getByLabel("First Review Meeting date")).toBeVisible();
+    await dev.getByLabel("First Review Meeting date").fill("2026-06-15");
+    await dev.getByLabel("Design Frozen / Signed Off date").fill("2026-06-29");
+    await expect(dev.locator(".design-review-summary")).toHaveText(
+      "1 review meeting · 4 wks from DD set issued to design freeze"
+    );
+
+    await openStep(page, "Tender Drawing Set & Documents");
+    const tender = page.locator("#step-admin__TENDERSET");
+    expect(await tender.locator(".design-review-label").allTextContents()).toEqual([
+      "Tender Set Issued for Coordination",
+      "Tender Set Issued",
+    ]);
+    await expect(tender.getByRole("button", { name: "+ Add coordination round" })).toBeVisible();
+    await expect(tender.locator(".design-review-summary")).toHaveText("0 coordination rounds");
   });
 });

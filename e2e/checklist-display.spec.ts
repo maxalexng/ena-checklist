@@ -23,7 +23,8 @@ test.describe("Checklist item labels and conditional badges", () => {
     await page.getByPlaceholder("Search checklist…").fill("Topographic survey");
     const labels = page.locator(".item-label");
     await expect(labels.first()).toHaveText("4a.");
-    await expect(page.locator(".item-label", { hasText: "4b." })).toBeVisible();
+    // Exact match: a later step (44b.) also has a topographic survey item.
+    await expect(page.locator(".item-label", { hasText: /^4b\.$/ })).toBeVisible();
   });
 
   test("a conditional submission (Outline Permission) is tagged 'If applicable'", async ({ page }) => {
@@ -104,7 +105,7 @@ test.describe("Checklist item labels and conditional badges", () => {
     const ppCard = page.locator(".agency").filter({ hasText: "Planning Permission (Written Permission)" }).first();
     const items = ppCard.locator(".item");
     await expect(items.first()).toContainText("Design locked");
-    await expect(items.first().locator(".item-label")).toHaveText("14a.");
+    await expect(items.first().locator(".item-label")).toHaveText("15a.");
   });
 
   test("Building Plan submission opens on producing the construction drawing set", async ({ page }) => {

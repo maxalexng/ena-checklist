@@ -1,6 +1,7 @@
 // Shared types for the checklist template. The template itself (agencies.ts, stages.ts,
 // stepOrder.ts) is pure data + pure functions — no React, no Supabase — so it can be
 // imported by both the app and the one-off migration script (scripts/migrate-html-import.ts).
+import type { DesignLogId } from "./designLogs";
 
 export type ItemStatus = "pending" | "progress" | "submitted" | "cleared";
 
@@ -55,8 +56,8 @@ export interface Submission {
   stepBlurb?: string;
   /** Renders the dedicated Consultants widget instead of a normal item list. */
   isConsultantList?: boolean;
-  /** Renders the Concept Design presentation log (dated rows) after the item list. */
-  isDesignReviewLog?: boolean;
+  /** Renders a dated design log (template/designLogs.ts) after the item list. */
+  designLog?: DesignLogId;
 }
 
 export interface Agency {
@@ -86,7 +87,7 @@ export interface TemplateStep {
   stepNo: number;
   defaultStage: StageId;
   isConsultantList?: boolean;
-  isDesignReviewLog?: boolean;
+  designLog?: DesignLogId;
   submission: Submission;
   items: TemplateItem[];
 }

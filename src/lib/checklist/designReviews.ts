@@ -1,16 +1,12 @@
-// The Concept Design step's presentation log: a fixed first row (initial concept design),
-// any number of client presentations, and a fixed last row (revise and confirm design).
-// Stored as ordinary milestone rows under the step's key, told apart by `type`, so no
-// schema of its own is needed. Presentations are numbered from their order, not stored,
-// so deleting one renumbers the rest.
+// A step's dated design log: a fixed first row, any number of rounds (client
+// presentations, review meetings, coordination rounds), and a fixed last row. The labels
+// and stored types come from the step's DesignLogConfig (template/designLogs.ts). Rows are
+// ordinary milestone rows under the step's key, told apart by `type`, so no schema of
+// their own is needed. Rounds are numbered from their order, not stored, so deleting one
+// renumbers the rest.
+import type { DesignLogConfig } from "@/template/designLogs";
 
-export const DESIGN_REVIEW_TYPES = {
-  initial: "Initial Concept Design",
-  presentation: "Presentation",
-  confirm: "Revise and Confirm Design",
-} as const;
-
-export type DesignReviewKind = keyof typeof DESIGN_REVIEW_TYPES;
+export type DesignReviewKind = "initial" | "round" | "confirm";
 
 export interface DesignReviewEntry {
   id: string;
@@ -31,9 +27,9 @@ export interface DesignReviewRow {
 
 export interface DesignReviewSummary {
   rows: DesignReviewRow[];
-  presentationCount: number;
-  /** Days from the initial concept design to confirmation, or to the latest dated row so
-   * far if the design isn't confirmed yet. null until two rows have dates. */
+  roundCount: number;
+  /** Days from the first dated row to the confirm row, or to the latest dated row so far
+   * if not confirmed yet. null until two rows have dates. */
   totalDays: number | null;
   confirmed: boolean;
 }
@@ -47,8 +43,13 @@ export function ordinalWord(n: number): string {
   return `${n}${suffix}`;
 }
 
-export function presentationLabel(n: number): string {
-  return `${ordinalWord(n)} Presentation`;
+export function roundLabel(n: number, noun: string): string {
+  return `${ordinalWord(n)} ${noun}`;
+}
+
+/** "Presentation" → "presentations"; the summary line's count noun. */
+export function roundCountLabel(count: number, noun: string): string {
+  return `${count} ${noun.toLowerCase()}${count === 1 ? "" : "s"}`;
 }
 
 /** Whole days between two "YYYY-MM-DD" dates, computed in UTC so it can't shift by a day. */
@@ -70,23 +71,23 @@ export function formatDayGap(days: number): string {
   return rest === 0 ? `${sign}${weekPart}` : `${sign}${weekPart} ${dayPart}`;
 }
 
-export function summarizeDesignReviews(entries: DesignReviewEntry[]): DesignReviewSummary {
+export function summarizeDesignReviews(entries: DesignReviewEntry[], config: DesignLogConfig): DesignReviewSummary {
   const sorted = [...entries].sort((a, b) => a.sortOrder - b.sortOrder);
-  const initial = sorted.find((e) => e.type === DESIGN_REVIEW_TYPES.initial) ?? null;
-  const confirm = sorted.find((e) => e.type === DESIGN_REVIEW_TYPES.confirm) ?? null;
-  const presentations = sorted.filter((e) => e.type === DESIGN_REVIEW_TYPES.presentation);
+  const initial = sorted.find((e) => e.type === config.types.initial) ?? null;
+  const confirm = sorted.find((e) => e.type === config.types.confirm) ?? null;
+  const rounds = sorted.filter((e) => e.type === config.types.round);
 
   const rows: DesignReviewRow[] = [
-    { kind: "initial", label: "Produce Initial Concept Design", entry: initial, daysSincePrevious: null },
-    ...presentations.map(
+    { kind: "initial", label: config.initialLabel, entry: initial, daysSincePrevious: null },
+    ...rounds.map(
       (entry, i): DesignReviewRow => ({
-        kind: "presentation",
-        label: presentationLabel(i + 1),
+        kind: "round",
+        label: roundLabel(i + 1, config.roundNoun),
         entry,
         daysSincePrevious: null,
       })
     ),
-    { kind: "confirm", label: "Revise and Confirm Design", entry: confirm, daysSincePrevious: null },
+    { kind: "confirm", label: config.confirmLabel, entry: confirm, daysSincePrevious: null },
   ];
 
   let lastDate: string | null = null;
@@ -102,7 +103,7 @@ export function summarizeDesignReviews(entries: DesignReviewEntry[]): DesignRevi
 
   return {
     rows,
-    presentationCount: presentations.length,
+    roundCount: rounds.length,
     totalDays,
     confirmed: !!confirm?.date,
   };

@@ -125,19 +125,20 @@ describe("defaultStepOrder", () => {
 // against the legacy prototype's real data (see scripts/migrate-html-import.ts's run for
 // "2 Astrid Hill": 183 items imported vs 183 in source).
 describe("template integrity", () => {
-  it("has exactly 44 steps", () => {
-    expect(STEPS.length).toBe(44);
+  it("has exactly 46 steps", () => {
+    expect(STEPS.length).toBe(46);
   });
 
-  it("has exactly 198 checklist items across all steps", () => {
+  it("has exactly 215 checklist items across all steps", () => {
     // 183 from the original prototype port, +1 for the Consultant Appointments step's own
     // clearable item, +2 for the new Asbestos Survey & Removal step, +2 for the design-lock
     // and construction-drawings checkpoints added to PP/BP, -1 for the NEA grease trap item
     // removed in R11a (grease traps are PUB's, under the Sewerage & Sanitary plan), +2 for
     // the Contract Award & Documents step added in R12, +8 for the two TFCC steps added in R13,
-    // +1 for the Concept Design & Client Presentations step added in R14.
+    // +1 for the Concept Design & Client Presentations step added in R14, +17 for the Design
+    // Development (8) and Tender Drawing Set (9) steps added in R15.
     const total = STEPS.reduce((sum, s) => sum + s.items.length, 0);
-    expect(total).toBe(198);
+    expect(total).toBe(215);
   });
 
   it("places the TFCC steps after IMDA COPIF and after the gas connection, with the NetLink logo", () => {
@@ -159,8 +160,25 @@ describe("template integrity", () => {
     const i = STEPS.findIndex((s) => s.id === "admin__DESIGN");
     expect(STEPS[i - 1].defaultStage).toBe("pre-design");
     expect(STEPS[i].defaultStage).toBe("concept");
-    expect(STEPS[i].isDesignReviewLog).toBe(true);
+    expect(STEPS[i].designLog).toBe("concept");
     expect(STEPS[i].items.map((it) => it.id)).toEqual(["admin__DESIGN__0"]);
+  });
+
+  it("opens Design Development with the DD sign-off step and closes Detailed Design with the tender set", () => {
+    const dev = STEPS.findIndex((s) => s.id === "admin__DEV");
+    expect(STEPS[dev - 1].defaultStage).toBe("concept");
+    expect(STEPS[dev].defaultStage).toBe("dev");
+    expect(STEPS[dev].designLog).toBe("dev");
+    expect(STEPS[dev].items).toHaveLength(8);
+    expect(STEPS[dev].items[7].text).toMatch(/^Design Freeze Sign-off form/);
+
+    const tender = STEPS.findIndex((s) => s.id === "admin__TENDERSET");
+    expect(STEPS[tender - 1].id).toBe("tfcc__PLAN");
+    expect(STEPS[tender].defaultStage).toBe("detailed");
+    expect(STEPS[tender + 1].defaultStage).toBe("tender");
+    expect(STEPS[tender].designLog).toBe("tender");
+    expect(STEPS[tender].items).toHaveLength(9);
+    expect(STEPS[tender].items[0].checklist).toHaveLength(7);
   });
 
   it("places Contract Award & Documents in Tendering, right after the BCA Structural Plan", () => {

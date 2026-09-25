@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import type { TemplateStep } from "@/template";
-import { agencyColorFor, agencyLogoSrc } from "@/template";
+import { DESIGN_LOGS, agencyColorFor, agencyLogoSrc } from "@/template";
 import type { ProjectChecklistData } from "@/hooks/useProjectData";
 import { effectiveItemOrder, moveItemInOrder, orderedStepItems } from "@/lib/checklist/itemOrder";
 import { useToggleStepNa, useUpdateItemOrder } from "@/hooks/useChecklistMutations";
@@ -195,10 +195,11 @@ export function StepCard({
             locked={locked}
           />
         )}
-        {step.isDesignReviewLog && (
+        {step.designLog && (
           <DesignReviewLog
             projectId={projectId}
             stepKey={step.id}
+            config={DESIGN_LOGS[step.designLog]}
             entries={data.milestonesByStep[step.id] ?? []}
             locked={locked}
           />

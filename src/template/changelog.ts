@@ -10,7 +10,7 @@
 // bump n and drop any letter suffix. "R<n><letter>" for a smaller revision within that
 // cycle (a wording tweak, a logo swap, a bug fix) — keep n, advance the letter.
 // Never renumber a revision once published.
-export const TEMPLATE_VERSION = "R14";
+export const TEMPLATE_VERSION = "R15";
 
 export interface ChangelogEntry {
   rev: string;
@@ -23,6 +23,12 @@ export interface ChangelogEntry {
 // from the HTML prototype (submissions-register-MASTER.html); entries from here on
 // describe changes made in this app.
 export const TEMPLATE_CHANGELOG: ChangelogEntry[] = [
+  {
+    rev: "R15",
+    date: "2026-09-25",
+    summary:
+      'Two new Practice Administration steps with the same kind of dated log as Concept Design. "Design Development & Client Sign-off" (DEV) opens Design Development: eight deliverables from briefing the consultants through developed drawings, the C&S scheme, M&E schematic design, outline specification, GFA check and QS cost plan, ending with the client\'s signed Design Freeze Sign-off form. Its log tracks DD Set Issued to Client, any number of review meetings, then Design Frozen / Signed Off. "Tender Drawing Set & Documents" (TENDERSET) closes Detailed Design: nine deliverables covering the architectural, C&S, M&E, landscape and ID tender drawings, specifications, the coordination check, the QS bills and pre-tender estimate, the tender documents, and the client\'s approval before tender is called. Its log tracks Tender Set Issued for Coordination, any number of coordination rounds, then Tender Set Issued. URA Planning Permission\'s design-lock item now points to the Design Freeze Sign-off. Existing projects get both steps the next time they are opened.',
+  },
   {
     rev: "R14",
     date: "2026-09-25",

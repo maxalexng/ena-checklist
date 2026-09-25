@@ -23,7 +23,7 @@ export const AGENCIES: Agency[] = [
         name: "Planning Permission (Written Permission)",
         when: "New erection, reconstruction, or any addition/alteration that changes GFA, use, or the building envelope.",
         items: [
-          "Design locked — client and QP sign-off obtained before lodging PP (further changes go through a formal variation, not folded in quietly)",
+          "Design locked — client's Design Freeze Sign-off (Design Development step) and QP sign-off obtained before lodging PP (further changes go through a formal variation, not folded in quietly)",
           "Application lodged via CORENET X / CORENET 2.0",
           "QP declaration form",
           "Landowner's consent and title particulars",
@@ -485,11 +485,71 @@ export const AGENCIES: Agency[] = [
         stepBlurb:
           "The initial concept design, every round of client presentations after it, and the final revised design the client confirms, each with its date, so the number of rounds and the time between them are on record.",
         when: "Through Concept Design, from the first design proposal until the client confirms the design for Design Development.",
-        // Renders the presentation log (initial design, any number of presentations, then
+        // Renders the Concept Design log (initial design, any number of presentations, then
         // revise and confirm) below this step's single clearable item. Entries are stored
-        // as milestones under this step's key; see lib/checklist/designReviews.ts.
-        isDesignReviewLog: true,
+        // as milestones under this step's key; see template/designLogs.ts.
+        designLog: "concept",
         items: ["Concept design confirmed by the client, ready for Design Development"],
+      },
+      {
+        code: "DEV",
+        name: "Design Development & Client Sign-off",
+        stepCode: "DEV",
+        stepName: "Design Development & Client Sign-off",
+        stepBlurb:
+          "Developing the confirmed concept with the consultants' input into a coordinated, costed design, then getting the client to sign it off and freeze it before Planning Permission is lodged.",
+        when: "Once the consultants are briefed, through Design Development, until the client signs off the design freeze ahead of the PP submission.",
+        designLog: "dev",
+        items: [
+          "Design brief issued to the consultants (C&S, M&E, QS, landscape) based on the confirmed concept",
+          "Developed architectural plans, elevations and sections, incorporating the structural grid and member sizes, M&E risers, AC ledge and plant positions, and water tank and DB locations",
+          "C&S preliminary structural scheme — foundation type, structural grid and key member sizes",
+          "M&E schematic design — electrical load estimate, plumbing and sanitary layout, AC concept, rainwater and drainage concept",
+          "Outline specification and schedule of key materials and finishes (façade, roof, windows, main floor finishes)",
+          "Area / GFA schedule checked against URA's landed housing controls (setbacks, storey heights, attic and basement rules)",
+          "QS cost plan / elemental estimate reconciled against the client's budget",
+          "Design Freeze Sign-off form signed and dated by the client — lists the approved DD drawing numbers and revisions, the acknowledged cost plan figure, and that later changes are variations with fee and time implications",
+        ],
+      },
+      {
+        code: "TENDERSET",
+        name: "Tender Drawing Set & Documents",
+        stepCode: "TENDERSET",
+        stepName: "Tender Drawing Set & Documents",
+        stepBlurb:
+          "Producing the coordinated tender drawing set, specifications and tender documents from the frozen design, and getting the client's approval before tender is called.",
+        when: "Through Detailed Design, after the design freeze, until the tender set is ready to issue to contractors.",
+        designLog: "tender",
+        items: [
+          {
+            text: "Architectural tender drawings",
+            checklist: [
+              "General arrangement plans, elevations and sections",
+              "Wall and roof sections",
+              "Details — staircases, toilets, kitchen, façade",
+              "Door and window schedule",
+              "Finishes schedule",
+              "Reflected ceiling plans",
+              "External works",
+            ],
+          },
+          "C&S tender drawings — foundation, framing and typical details",
+          "M&E tender drawings and specifications — electrical, ACMV, plumbing and sanitary, ELV, and fire protection where applicable",
+          "Landscape and ID drawings, where they are in the main contract",
+          "Architectural specification, plus each consultant's own specification",
+          "Cross-discipline coordination check (combined services and clashes), with each consultant confirming their part of the set",
+          "QS bills of quantities / schedule of rates, and a pre-tender estimate reconciled against the DD cost plan",
+          {
+            text: "Tender documents",
+            checklist: [
+              "Preliminaries",
+              "Conditions of Contract (usually SIA Lump Sum for private residential)",
+              "Form of Tender and Appendix — contract period, liquidated damages, retention",
+              "Drawing register",
+            ],
+          },
+          "Client approval of the pre-tender estimate, the tender documents and the list of contractors invited, before tender is called",
+        ],
       },
       {
         code: "CONSULTANTS",
