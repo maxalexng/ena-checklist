@@ -2,7 +2,7 @@
 // row. A step opts in with `designLog: <id>` on its submission (see agencies.ts); the rows
 // are stored as milestones under that step's key (see lib/checklist/designReviews.ts).
 
-export type DesignLogId = "concept" | "dev" | "tender";
+export type DesignLogId = "concept" | "dev" | "tender" | "tenderCall";
 
 export interface DesignLogConfig {
   /** Stored milestone `type` values. Existing rows are matched on these, so never change
@@ -11,6 +11,8 @@ export interface DesignLogConfig {
   initialLabel: string;
   /** Rounds are labelled "First <roundNoun>", "Second <roundNoun>", and so on. */
   roundNoun: string;
+  /** Summary-line plural, when adding an "s" to roundNoun is wrong (Addendum → addenda). */
+  roundNounPlural?: string;
   confirmLabel: string;
   /** Finishes the summary line, e.g. "9 wks from initial design to confirmation". */
   spanPhrase: string;
@@ -41,5 +43,13 @@ export const DESIGN_LOGS: Record<DesignLogId, DesignLogConfig> = {
     roundNoun: "Coordination Round",
     confirmLabel: "Tender Set Issued",
     spanPhrase: "from first issue to tender set issued",
+  },
+  tenderCall: {
+    types: { initial: "Tender Called", round: "Tender Addendum", confirm: "Tender Recommendation Approved" },
+    initialLabel: "Tender Called",
+    roundNoun: "Tender Addendum",
+    roundNounPlural: "tender addenda",
+    confirmLabel: "Tender Recommendation Approved",
+    spanPhrase: "from tender called to recommendation approved",
   },
 };

@@ -13,7 +13,7 @@ function rowLabels(page: Page) {
   return page.locator(".design-review-label").allTextContents();
 }
 
-test.describe("Dated design logs (Concept, DD, tender set)", () => {
+test.describe("Dated design logs", () => {
   let reference: string;
 
   test.beforeEach(async ({ page }) => {
@@ -115,5 +115,21 @@ test.describe("Dated design logs (Concept, DD, tender set)", () => {
     ]);
     await expect(tender.getByRole("button", { name: "+ Add coordination round" })).toBeVisible();
     await expect(tender.locator(".design-review-summary")).toHaveText("0 coordination rounds");
+  });
+
+  test("the tender calling step logs addenda and counts them with the right plural", async ({ page }) => {
+    await openStep(page, "Tender Calling & Evaluation");
+    const step = page.locator("#step-admin__TENDER");
+    await step.getByLabel("Tender Called date").fill("2026-08-03");
+    await expect(step.getByLabel("Tender Called date")).toHaveValue("2026-08-03");
+    const add = step.getByRole("button", { name: "+ Add tender addendum" });
+    await add.click();
+    await expect(step.getByLabel("First Tender Addendum date")).toBeVisible();
+    await add.click();
+    await expect(step.getByLabel("Second Tender Addendum date")).toBeVisible();
+    await step.getByLabel("Tender Recommendation Approved date").fill("2026-09-14");
+    await expect(step.locator(".design-review-summary")).toHaveText(
+      "2 tender addenda · 6 wks from tender called to recommendation approved"
+    );
   });
 });

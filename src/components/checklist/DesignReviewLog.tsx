@@ -136,7 +136,7 @@ export function DesignReviewLog({
         </div>
       ))}
       <span className="design-review-summary">
-        {roundCountLabel(summary.roundCount, config.roundNoun)}
+        {roundCountLabel(summary.roundCount, config.roundNoun, config.roundNounPlural)}
         {span}
       </span>
     </div>

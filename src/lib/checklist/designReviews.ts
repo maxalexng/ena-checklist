@@ -47,8 +47,10 @@ export function roundLabel(n: number, noun: string): string {
   return `${ordinalWord(n)} ${noun}`;
 }
 
-/** "Presentation" → "presentations"; the summary line's count noun. */
-export function roundCountLabel(count: number, noun: string): string {
+/** "Presentation" → "presentations"; the summary line's count noun. `plural` overrides the
+ * default "s" for irregular nouns. */
+export function roundCountLabel(count: number, noun: string, plural?: string): string {
+  if (count !== 1 && plural) return `${count} ${plural}`;
   return `${count} ${noun.toLowerCase()}${count === 1 ? "" : "s"}`;
 }
 

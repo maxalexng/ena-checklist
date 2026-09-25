@@ -463,6 +463,26 @@ export const AGENCIES: Agency[] = [
         ],
       },
       {
+        code: "TENDER",
+        name: "Tender Calling & Evaluation",
+        stepCode: "TENDER",
+        stepName: "Tender Calling & Evaluation",
+        stepBlurb:
+          "Calling tender on the approved tender set, managing queries and addenda through the tender period, then evaluating the returned tenders and recommending one to the client for award.",
+        when: "From the client's approval of the tender documents until the client approves the tender recommendation, ahead of the Letter of Award.",
+        designLog: "tenderCall",
+        items: [
+          "Tender invitation issued to the approved list of contractors (BCA-licensed general builders), with the tender drawings, specifications and documents, and the closing date and time",
+          "Site show-round / tender briefing held for the tenderers",
+          "Tender queries answered, with every clarification issued to all tenderers as a numbered tender addendum",
+          "Tenders received by the closing date and opened in the presence of the client, with a tender opening record of prices and qualifications",
+          "QS tender report — arithmetic check, qualifications and exclusions, and comparison against the pre-tender estimate",
+          "Tender interviews / post-tender clarifications with the shortlisted tenderers, confirmed in writing",
+          "Architect's tender recommendation report to the client, with the QS report attached",
+          "Client's written approval of the recommended tenderer, then unsuccessful tenderers notified once the Letter of Award is issued",
+        ],
+      },
+      {
         code: "AWARD",
         name: "Contract Award & Documents",
         // Same override convention as SITEVISIT above — this is the office's own paperwork

@@ -10,7 +10,7 @@
 // bump n and drop any letter suffix. "R<n><letter>" for a smaller revision within that
 // cycle (a wording tweak, a logo swap, a bug fix) — keep n, advance the letter.
 // Never renumber a revision once published.
-export const TEMPLATE_VERSION = "R15";
+export const TEMPLATE_VERSION = "R16";
 
 export interface ChangelogEntry {
   rev: string;
@@ -23,6 +23,12 @@ export interface ChangelogEntry {
 // from the HTML prototype (submissions-register-MASTER.html); entries from here on
 // describe changes made in this app.
 export const TEMPLATE_CHANGELOG: ChangelogEntry[] = [
+  {
+    rev: "R16",
+    date: "2026-09-25",
+    summary:
+      'New Practice Administration step in Tendering, "Tender Calling & Evaluation" (TENDER), right before Contract Award & Documents. Eight items take the tender from the invitation to the approved contractor list, through the site show-round, queries and numbered addenda, tender opening, the QS tender report, post-tender interviews and the architect\'s recommendation, to the client\'s written approval and notifying the unsuccessful tenderers after award. Its dated log tracks Tender Called, any number of tender addenda, then Tender Recommendation Approved. Existing projects get the step the next time they are opened.',
+  },
   {
     rev: "R15",
     date: "2026-09-25",

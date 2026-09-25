@@ -33,6 +33,8 @@ describe("ordinalWord / roundLabel / roundCountLabel", () => {
     expect(roundCountLabel(0, "Presentation")).toBe("0 presentations");
     expect(roundCountLabel(1, "Coordination Round")).toBe("1 coordination round");
     expect(roundCountLabel(3, "Review Meeting")).toBe("3 review meetings");
+    expect(roundCountLabel(2, "Tender Addendum", "tender addenda")).toBe("2 tender addenda");
+    expect(roundCountLabel(1, "Tender Addendum", "tender addenda")).toBe("1 tender addendum");
   });
 });
 

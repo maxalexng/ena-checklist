@@ -125,20 +125,21 @@ describe("defaultStepOrder", () => {
 // against the legacy prototype's real data (see scripts/migrate-html-import.ts's run for
 // "2 Astrid Hill": 183 items imported vs 183 in source).
 describe("template integrity", () => {
-  it("has exactly 46 steps", () => {
-    expect(STEPS.length).toBe(46);
+  it("has exactly 47 steps", () => {
+    expect(STEPS.length).toBe(47);
   });
 
-  it("has exactly 215 checklist items across all steps", () => {
+  it("has exactly 223 checklist items across all steps", () => {
     // 183 from the original prototype port, +1 for the Consultant Appointments step's own
     // clearable item, +2 for the new Asbestos Survey & Removal step, +2 for the design-lock
     // and construction-drawings checkpoints added to PP/BP, -1 for the NEA grease trap item
     // removed in R11a (grease traps are PUB's, under the Sewerage & Sanitary plan), +2 for
     // the Contract Award & Documents step added in R12, +8 for the two TFCC steps added in R13,
     // +1 for the Concept Design & Client Presentations step added in R14, +17 for the Design
-    // Development (8) and Tender Drawing Set (9) steps added in R15.
+    // Development (8) and Tender Drawing Set (9) steps added in R15, +8 for Tender Calling &
+    // Evaluation added in R16.
     const total = STEPS.reduce((sum, s) => sum + s.items.length, 0);
-    expect(total).toBe(215);
+    expect(total).toBe(223);
   });
 
   it("places the TFCC steps after IMDA COPIF and after the gas connection, with the NetLink logo", () => {
@@ -181,9 +182,15 @@ describe("template integrity", () => {
     expect(STEPS[tender].items[0].checklist).toHaveLength(7);
   });
 
-  it("places Contract Award & Documents in Tendering, right after the BCA Structural Plan", () => {
+  it("runs Tender Calling & Evaluation after the BCA Structural Plan, then Contract Award", () => {
+    const t = STEPS.findIndex((s) => s.id === "admin__TENDER");
+    expect(STEPS[t - 1].id).toBe("bca__ST");
+    expect(STEPS[t].defaultStage).toBe("tender");
+    expect(STEPS[t].designLog).toBe("tenderCall");
+    expect(STEPS[t].items).toHaveLength(8);
+
     const i = STEPS.findIndex((s) => s.id === "admin__AWARD");
-    expect(STEPS[i - 1].id).toBe("bca__ST");
+    expect(STEPS[i - 1].id).toBe("admin__TENDER");
     expect(STEPS[i].defaultStage).toBe("tender");
     expect(STEPS[i].items.map((it) => it.id)).toEqual(["admin__AWARD__0", "admin__AWARD__1"]);
   });
