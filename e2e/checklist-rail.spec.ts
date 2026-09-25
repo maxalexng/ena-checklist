@@ -1,12 +1,15 @@
 import { expect, test } from "@playwright/test";
-import { createTestProject, deleteProjectByReference, uniqueE2eReference } from "./helpers";
+import { STEPS } from "../src/template";
+import { adminClient, createTestProject, deleteProjectByReference, uniqueE2eReference } from "./helpers";
 
 test.describe("Checklist rail navigation and step reordering", () => {
   let reference: string;
+  let projectId: string;
 
   test.beforeEach(async ({ page }) => {
     reference = uniqueE2eReference("rail");
     const project = await createTestProject({ reference, title: "Rail Test Project" });
+    projectId = project.id;
     await page.goto(`/projects/${project.id}`);
     await page.getByRole("button", { name: "Checklist" }).click();
   });
@@ -155,5 +158,43 @@ test.describe("Checklist rail navigation and step reordering", () => {
     await expect(page.getByRole("button", { name: "🔒 Locked" })).toBeVisible();
 
     await expect(firstCard.locator(".step-move-btn")).toHaveCount(0);
+  });
+
+  test("a stage whose steps are all cleared or N/A is badged complete, and N/A steps read N/A", async ({
+    page,
+  }) => {
+    // Clear every Pre-Design step except the last (Singapore Land Authority), which goes N/A.
+    const preDesign = STEPS.filter((s) => s.defaultStage === "pre-design");
+    const naStep = preDesign[preDesign.length - 1];
+    const supabase = adminClient();
+    const cleared = await supabase
+      .from("checklist_items")
+      .update({ status: "cleared", na: false })
+      .eq("project_id", projectId)
+      .in(
+        "step_key",
+        preDesign.filter((s) => s !== naStep).map((s) => s.id),
+      );
+    if (cleared.error) throw cleared.error;
+    const na = await supabase
+      .from("checklist_items")
+      .update({ na: true })
+      .eq("project_id", projectId)
+      .eq("step_key", naStep.id);
+    if (na.error) throw na.error;
+
+    await page.reload();
+    await page.getByRole("button", { name: "Checklist" }).click();
+
+    const groups = page.locator(".rail .rail-stage-group");
+    await expect(groups.first()).toHaveClass(/stage-complete/);
+    await expect(groups.first().locator(".rail-stage-done")).toHaveText("✓ Complete");
+    const naItem = groups.first().locator(".rail-item", { hasText: naStep.name });
+    await expect(naItem).toHaveClass(/step-na/);
+    await expect(naItem.locator(".rail-count")).toHaveText("N/A");
+    await expect(groups.first().locator(".rail-item.step-done").first().locator(".rail-count")).toContainText("✓");
+
+    await expect(groups.nth(1)).not.toHaveClass(/stage-complete/);
+    await expect(groups.nth(1).locator(".rail-stage-done")).toHaveCount(0);
   });
 });

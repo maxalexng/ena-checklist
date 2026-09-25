@@ -261,6 +261,30 @@
   .rail-stage-name{
     font-family:'Archivo', system-ui, sans-serif; font-size:12px; font-weight:700; color:var(--ink);
   }
+  /* Step/stage completion on the rail. Done steps fill green; N/A steps fade and get a
+     hatched bar so "doesn't apply" reads differently from "not started"; a stage whose steps
+     are all done or N/A takes a green edge and a Complete badge. */
+  .rail-item.step-done .rail-bar span{ background:var(--st-cleared); }
+  .rail-item.step-done .rail-count{ color:var(--st-cleared); font-weight:600; }
+  .rail-item.step-na .rail-code,
+  .rail-item.step-na .rail-name{ color:var(--ink-faint); }
+  .rail-item.step-na .rail-name{ font-weight:500; }
+  .rail-item.step-na .rail-count{ letter-spacing:0.06em; }
+  .rail-item.step-na .rail-bar{ background:var(--st-na-soft); }
+  .rail-item.step-na .rail-bar span{
+    background:repeating-linear-gradient(-45deg, var(--st-na) 0 3px, transparent 3px 6px);
+  }
+  .rail-stage-group.stage-complete{
+    border-color:var(--st-cleared); box-shadow:inset 3px 0 0 var(--st-cleared);
+  }
+  .rail-stage-group.stage-complete .rail-stage-no{
+    color:var(--st-cleared); background:var(--st-cleared-soft);
+  }
+  .rail-stage-done{
+    margin-left:auto; font-family:'IBM Plex Mono',monospace; font-size:9px; font-weight:700;
+    text-transform:uppercase; letter-spacing:0.06em; white-space:nowrap;
+    color:var(--st-cleared); background:var(--st-cleared-soft); border-radius:4px; padding:1px 5px;
+  }
   .rail-position-line{
     position:absolute; left:0; width:3px; border-radius:2px;
     background:var(--accent); pointer-events:none; opacity:0;
