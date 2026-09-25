@@ -104,7 +104,7 @@ test.describe("Checklist item labels and conditional badges", () => {
     const ppCard = page.locator(".agency").filter({ hasText: "Planning Permission (Written Permission)" }).first();
     const items = ppCard.locator(".item");
     await expect(items.first()).toContainText("Design locked");
-    await expect(items.first().locator(".item-label")).toHaveText("13a.");
+    await expect(items.first().locator(".item-label")).toHaveText("14a.");
   });
 
   test("Building Plan submission opens on producing the construction drawing set", async ({ page }) => {

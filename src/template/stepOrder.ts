@@ -10,6 +10,7 @@ export const STEP_ORDER: StepOrderTriple[] = [
   ["pre-design", "admin", "SITEVISIT"],
   ["pre-design", "site", "PREINV"],
   ["pre-design", "sla", "SURVEY"],
+  ["concept", "admin", "DESIGN"],
   ["concept", "ura", "SUB"],
   ["concept", "ura", "OP"],
   ["concept", "ura", "CONSV"],

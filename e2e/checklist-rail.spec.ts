@@ -18,13 +18,13 @@ test.describe("Checklist rail navigation and step reordering", () => {
   test("the rail lists every stage and step, with step numbers and progress", async ({ page }) => {
     const rail = page.locator(".rail");
     await expect(rail.locator(".rail-stage-group")).toHaveCount(8);
-    await expect(rail.locator(".rail-item")).toHaveCount(43);
+    await expect(rail.locator(".rail-item")).toHaveCount(44);
     await expect(rail.locator(".rail-item").first()).toContainText("1.");
   });
 
   test("every step card shows its step number", async ({ page }) => {
     await expect(page.getByText("Step 1", { exact: true })).toBeVisible();
-    await expect(page.getByText("Step 43", { exact: true })).toBeVisible();
+    await expect(page.getByText("Step 44", { exact: true })).toBeVisible();
   });
 
   test("clicking a rail item expands and scrolls to that step", async ({ page }) => {
@@ -131,11 +131,11 @@ test.describe("Checklist rail navigation and step reordering", () => {
   });
 
   test("moving a step past the top of its stage crosses into the previous stage", async ({ page }) => {
-    // Concept's first step (Subdivision / Amalgamation of Lots) moving up should cross
+    // Concept's first step (Concept Design & Client Presentations) moving up should cross
     // into Pre-Design, landing as its new last step.
     const conceptGroup = page.locator(".stage").filter({ has: page.locator(".stage-label", { hasText: "Stage 2" }) });
     const firstConceptCard = conceptGroup.locator(".agency").first();
-    await expect(firstConceptCard).toContainText("Subdivision / Amalgamation of Lots");
+    await expect(firstConceptCard).toContainText("Concept Design & Client Presentations");
 
     await firstConceptCard.locator(".step-move-btn").nth(0).click(); // ▲
 
@@ -143,7 +143,7 @@ test.describe("Checklist rail navigation and step reordering", () => {
       .locator(".stage")
       .filter({ has: page.locator(".stage-label", { hasText: "Stage 1" }) });
     const lastPreDesignCard = preDesignGroup.locator(".agency").last();
-    await expect(lastPreDesignCard).toContainText("Subdivision / Amalgamation of Lots");
+    await expect(lastPreDesignCard).toContainText("Concept Design & Client Presentations");
     await expect(lastPreDesignCard.locator(".stage-tag")).toHaveText("Pre-Design");
   });
 

@@ -45,7 +45,9 @@ export function useAddMilestone(projectId: string) {
         type,
         date,
         note,
-        sort_order: existing.length,
+        // Max + 1 rather than length: after a delete, length can equal a surviving row's
+        // sort_order, and two rows sharing one would sort in no fixed order.
+        sort_order: existing.reduce((max, m) => Math.max(max, m.sortOrder + 1), 0),
       });
       if (error) throw error;
     }

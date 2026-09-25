@@ -9,6 +9,7 @@ import { useToggleStepNa, useUpdateItemOrder } from "@/hooks/useChecklistMutatio
 import { ItemRow } from "./ItemRow";
 import { Highlight } from "./Highlight";
 import { ConsultantsWidget } from "@/components/consultants/ConsultantsWidget";
+import { DesignReviewLog } from "./DesignReviewLog";
 
 export function StepCard({
   projectId,
@@ -191,6 +192,14 @@ export function StepCard({
             projectId={projectId}
             consultants={data.consultants}
             roles={data.roles}
+            locked={locked}
+          />
+        )}
+        {step.isDesignReviewLog && (
+          <DesignReviewLog
+            projectId={projectId}
+            stepKey={step.id}
+            entries={data.milestonesByStep[step.id] ?? []}
             locked={locked}
           />
         )}

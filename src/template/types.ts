@@ -55,6 +55,8 @@ export interface Submission {
   stepBlurb?: string;
   /** Renders the dedicated Consultants widget instead of a normal item list. */
   isConsultantList?: boolean;
+  /** Renders the Concept Design presentation log (dated rows) after the item list. */
+  isDesignReviewLog?: boolean;
 }
 
 export interface Agency {
@@ -84,6 +86,7 @@ export interface TemplateStep {
   stepNo: number;
   defaultStage: StageId;
   isConsultantList?: boolean;
+  isDesignReviewLog?: boolean;
   submission: Submission;
   items: TemplateItem[];
 }

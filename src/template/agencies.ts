@@ -478,6 +478,20 @@ export const AGENCIES: Agency[] = [
         ],
       },
       {
+        code: "DESIGN",
+        name: "Concept Design & Client Presentations",
+        stepCode: "DESIGN",
+        stepName: "Concept Design & Client Presentations",
+        stepBlurb:
+          "The initial concept design, every round of client presentations after it, and the final revised design the client confirms, each with its date, so the number of rounds and the time between them are on record.",
+        when: "Through Concept Design, from the first design proposal until the client confirms the design for Design Development.",
+        // Renders the presentation log (initial design, any number of presentations, then
+        // revise and confirm) below this step's single clearable item. Entries are stored
+        // as milestones under this step's key; see lib/checklist/designReviews.ts.
+        isDesignReviewLog: true,
+        items: ["Concept design confirmed by the client, ready for Design Development"],
+      },
+      {
         code: "CONSULTANTS",
         name: "Consultant Appointments",
         stepCode: "CONSULTANTS",

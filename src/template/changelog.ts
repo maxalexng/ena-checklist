@@ -10,7 +10,7 @@
 // bump n and drop any letter suffix. "R<n><letter>" for a smaller revision within that
 // cycle (a wording tweak, a logo swap, a bug fix) — keep n, advance the letter.
 // Never renumber a revision once published.
-export const TEMPLATE_VERSION = "R13";
+export const TEMPLATE_VERSION = "R14";
 
 export interface ChangelogEntry {
   rev: string;
@@ -23,6 +23,12 @@ export interface ChangelogEntry {
 // from the HTML prototype (submissions-register-MASTER.html); entries from here on
 // describe changes made in this app.
 export const TEMPLATE_CHANGELOG: ChangelogEntry[] = [
+  {
+    rev: "R14",
+    date: "2026-09-25",
+    summary:
+      'New Practice Administration step at the start of Concept Design, "Concept Design & Client Presentations" (DESIGN). It logs the date of the initial concept design, then as many client presentations as the project needs (First Presentation, Second Presentation, and so on, added one at a time), then the date the revised design is confirmed. Each row shows the time since the previous one, and the step shows the number of presentations and the total time from initial design to confirmation. One clearable item, "Concept design confirmed by the client, ready for Design Development", sits alongside the log. Existing projects get the step the next time they are opened.',
+  },
   {
     rev: "R13",
     date: "2026-09-25",

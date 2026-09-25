@@ -941,6 +941,22 @@
   }
   .consultant-note-input:focus-visible{ outline:2px solid var(--accent); outline-offset:1px; }
 
+  /* Concept Design presentation log: fixed first/last rows with presentations between. */
+  .design-review-row{ display:flex; align-items:center; flex-wrap:wrap; gap:10px; padding:6px 8px; border-radius:6px; }
+  .design-review-row:hover{ background:var(--surface-2); }
+  .design-review-label{ flex:0 0 220px; font-size:12.8px; font-weight:600; color:var(--ink); }
+  .design-review-presentation .design-review-label{ font-weight:500; padding-left:14px; }
+  .design-review-gap{
+    flex:none; font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--ink-soft);
+    background:var(--surface-3); border-radius:4px; padding:2px 6px;
+  }
+  .design-review-add{ align-self:flex-start; margin:4px 0 4px 22px; }
+  .design-review-add:disabled{ opacity:0.6; cursor:default; }
+  .design-review-summary{ font-size:11.5px; color:var(--ink-soft); padding:6px 8px 0; }
+  @media (max-width:600px){
+    .design-review-label{ flex:1 1 100%; }
+  }
+
   .ov-label-row{ display:flex; align-items:center; justify-content:space-between; gap:8px; flex:none; }
   .op-toggle-btn{
     font-family:'IBM Plex Mono',monospace; font-size:10px; font-weight:600; color:var(--ink-faint);

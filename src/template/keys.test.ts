@@ -125,18 +125,19 @@ describe("defaultStepOrder", () => {
 // against the legacy prototype's real data (see scripts/migrate-html-import.ts's run for
 // "2 Astrid Hill": 183 items imported vs 183 in source).
 describe("template integrity", () => {
-  it("has exactly 43 steps", () => {
-    expect(STEPS.length).toBe(43);
+  it("has exactly 44 steps", () => {
+    expect(STEPS.length).toBe(44);
   });
 
-  it("has exactly 197 checklist items across all steps", () => {
+  it("has exactly 198 checklist items across all steps", () => {
     // 183 from the original prototype port, +1 for the Consultant Appointments step's own
     // clearable item, +2 for the new Asbestos Survey & Removal step, +2 for the design-lock
     // and construction-drawings checkpoints added to PP/BP, -1 for the NEA grease trap item
     // removed in R11a (grease traps are PUB's, under the Sewerage & Sanitary plan), +2 for
-    // the Contract Award & Documents step added in R12, +8 for the two TFCC steps added in R13.
+    // the Contract Award & Documents step added in R12, +8 for the two TFCC steps added in R13,
+    // +1 for the Concept Design & Client Presentations step added in R14.
     const total = STEPS.reduce((sum, s) => sum + s.items.length, 0);
-    expect(total).toBe(197);
+    expect(total).toBe(198);
   });
 
   it("places the TFCC steps after IMDA COPIF and after the gas connection, with the NetLink logo", () => {
@@ -152,6 +153,14 @@ describe("template integrity", () => {
     expect(STEPS[fibre].items.every((i) => i.agencyCode === "TFCC")).toBe(true);
 
     expect(agencyLogoSrc("tfcc")).toBe("/logos/tfcc.png");
+  });
+
+  it("opens Concept Design with the presentation log step", () => {
+    const i = STEPS.findIndex((s) => s.id === "admin__DESIGN");
+    expect(STEPS[i - 1].defaultStage).toBe("pre-design");
+    expect(STEPS[i].defaultStage).toBe("concept");
+    expect(STEPS[i].isDesignReviewLog).toBe(true);
+    expect(STEPS[i].items.map((it) => it.id)).toEqual(["admin__DESIGN__0"]);
   });
 
   it("places Contract Award & Documents in Tendering, right after the BCA Structural Plan", () => {
