@@ -28,8 +28,11 @@ export type FeeCalculatorInputsRow = Partial<{
   ltaSubmissionsFrom4th: number;
   bcaBpAmendmentStoreys: number;
   scdfFswAmendmentStoreys: number;
-  uraPpExtensionFee: number;
-  uraWpExtensionFee: number;
+  bcaStAmendmentStoreys: number;
+  uraPpExtensions: number;
+  uraWpExtensions: number;
+  bcaWaivers: number;
+  scdfWaivers: number;
 }>;
 
 export interface Database {

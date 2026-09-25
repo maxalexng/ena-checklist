@@ -56,6 +56,27 @@ test.describe("Fees tab", () => {
     await expect(nparksRow.locator(".fee-amount")).toHaveText("S$2,675");
   });
 
+  test("picking a number of PP extensions computes the escalating fee", async ({ page }) => {
+    await page.getByLabel("No. of URA PP extensions").selectOption("3");
+    const ppRow = page.locator(".fee-table tr", { hasText: "Provisional Permission (PP) extensions" });
+    await expect(ppRow.locator(".fee-amount")).toHaveText("S$2,000"); // 500 + 500 + 1,000
+    await expect(ppRow).toContainText("$500 + $500 + $1,000");
+  });
+
+  test("keying in waiver counts adds BCA and SCDF waiver fees", async ({ page }) => {
+    const bca = page.getByLabel("No. of BCA waivers");
+    await bca.fill("3");
+    await bca.blur();
+    const scdf = page.getByLabel("No. of SCDF waivers");
+    await scdf.fill("2");
+    await scdf.blur();
+
+    const bcaRow = page.locator(".fee-table tr", { hasText: "Modification / waiver of building regulations" });
+    await expect(bcaRow.locator(".fee-amount")).toHaveText("S$300");
+    const scdfRow = page.locator(".fee-table tr", { hasText: "Fire safety waiver" });
+    await expect(scdfRow.locator(".fee-amount")).toHaveText("S$320");
+  });
+
   test("inputs persist across reload", async ({ page }) => {
     const sgfaInput = page.locator('input[type="number"]').first();
     await sgfaInput.fill("2500");

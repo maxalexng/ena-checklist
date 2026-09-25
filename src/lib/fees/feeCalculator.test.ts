@@ -4,8 +4,35 @@ import {
   defaultFeeCalculatorInputs,
   feeBreakdownTotal,
   roundedSgfa,
+  uraExtensionFee,
+  uraExtensionFees,
   uraNewErectionRate,
 } from "./feeCalculator";
+
+describe("uraExtensionFee", () => {
+  it("is $500 for the 1st and 2nd extension, $1,000 for the 3rd, then $1,000 more for each one after", () => {
+    expect(uraExtensionFee(1)).toBe(500);
+    expect(uraExtensionFee(2)).toBe(500);
+    expect(uraExtensionFee(3)).toBe(1000);
+    expect(uraExtensionFee(4)).toBe(2000);
+    expect(uraExtensionFee(5)).toBe(3000);
+  });
+
+  it("is 0 for a non-positive extension number", () => {
+    expect(uraExtensionFee(0)).toBe(0);
+  });
+});
+
+describe("uraExtensionFees", () => {
+  it("lists each extension's fee in order", () => {
+    expect(uraExtensionFees(0)).toEqual([]);
+    expect(uraExtensionFees(4)).toEqual([500, 500, 1000, 2000]);
+  });
+
+  it("treats a negative count as no extensions", () => {
+    expect(uraExtensionFees(-2)).toEqual([]);
+  });
+});
 
 describe("roundedSgfa", () => {
   it("rounds up to the next 100 m²", () => {
@@ -98,14 +125,43 @@ describe("computeFeeBreakdown", () => {
     );
   });
 
-  it("passes manual URA PP/WP extension fees straight through into the total", () => {
+  it("sums URA PP/WP extension fees from the number of extensions, with a per-extension breakdown", () => {
     const inputs = defaultFeeCalculatorInputs();
-    inputs.units = 0;
-    inputs.uraPpExtensionFee = 500;
-    inputs.uraWpExtensionFee = 1500;
+    inputs.uraPpExtensions = 1;
+    inputs.uraWpExtensions = 3;
     const lines = computeFeeBreakdown(inputs);
-    expect(lines.find((l) => l.description.startsWith("PP extension"))!.fee).toBe(500);
-    expect(lines.find((l) => l.description.startsWith("WP extension"))!.fee).toBe(1500);
+    const pp = lines.find((l) => l.description === "Provisional Permission (PP) extensions")!;
+    const wp = lines.find((l) => l.description === "Written Permission (WP) extensions")!;
+    expect(pp.fee).toBe(500);
+    expect(wp.fee).toBe(2000); // 500 + 500 + 1,000
+    expect(wp.basis).toBe("$500 + $500 + $1,000");
+    expect(wp.inputUsed).toBe("3");
+  });
+
+  it("charges BCA waivers at $100 and SCDF waivers at $160 per item", () => {
+    const inputs = defaultFeeCalculatorInputs();
+    inputs.bcaWaivers = 3;
+    inputs.scdfWaivers = 2;
+    const lines = computeFeeBreakdown(inputs);
+    expect(lines.find((l) => l.description === "Modification / waiver of building regulations")!.fee).toBe(300);
+    expect(lines.find((l) => l.description === "Fire safety waiver")!.fee).toBe(320);
+  });
+
+  it("charges the engineer's structural plan amendments per storey, but nothing extra for the 1st ST submission", () => {
+    const inputs = defaultFeeCalculatorInputs();
+    inputs.bcaStAmendmentStoreys = 4;
+    const lines = computeFeeBreakdown(inputs);
+    expect(lines.find((l) => l.description === "Structural Plan 1st submission (engineer / PE)")!.fee).toBe(0);
+    expect(lines.find((l) => l.description === "Structural Plan amendment (engineer / PE)")!.fee).toBe(800);
+  });
+
+  it("adds extensions and waivers onto the worked-example total", () => {
+    const inputs = defaultFeeCalculatorInputs();
+    inputs.sgfa = 1000;
+    inputs.uraPpExtensions = 2; // 1,000
+    inputs.bcaWaivers = 1; // 100
+    inputs.scdfWaivers = 1; // 160
+    expect(feeBreakdownTotal(computeFeeBreakdown(inputs))).toBe(13655 + 1000 + 100 + 160);
   });
 
   it("multiplies per-storey and per-submission fees by their counts", () => {

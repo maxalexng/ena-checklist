@@ -11,8 +11,11 @@ export interface FeeCalculatorInputs {
   ltaSubmissionsFrom4th: number;
   bcaBpAmendmentStoreys: number;
   scdfFswAmendmentStoreys: number;
-  uraPpExtensionFee: number;
-  uraWpExtensionFee: number;
+  bcaStAmendmentStoreys: number;
+  uraPpExtensions: number;
+  uraWpExtensions: number;
+  bcaWaivers: number;
+  scdfWaivers: number;
 }
 
 export function defaultFeeCalculatorInputs(): FeeCalculatorInputs {
@@ -26,8 +29,11 @@ export function defaultFeeCalculatorInputs(): FeeCalculatorInputs {
     ltaSubmissionsFrom4th: 0,
     bcaBpAmendmentStoreys: 0,
     scdfFswAmendmentStoreys: 0,
-    uraPpExtensionFee: 0,
-    uraWpExtensionFee: 0,
+    bcaStAmendmentStoreys: 0,
+    uraPpExtensions: 0,
+    uraWpExtensions: 0,
+    bcaWaivers: 0,
+    scdfWaivers: 0,
   };
 }
 
@@ -51,6 +57,26 @@ export function uraNewErectionRate(gcba: boolean): number {
   return gcba ? FEE_RATES.uraNewErectionGcba : FEE_RATES.uraNewErectionNonGcba;
 }
 
+/** Fee for the nth (1-based) URA PP/WP extension — $500 for the 1st and 2nd, then $1,000
+ * for the 3rd, $2,000 for the 4th, and so on. */
+export function uraExtensionFee(nth: number): number {
+  if (nth < 1) return 0;
+  if (nth <= 2) return FEE_RATES.uraExtensionFirstTwo;
+  return (nth - 2) * FEE_RATES.uraExtensionIncrement;
+}
+
+/** Each individual extension's fee, 1st to count-th, e.g. 3 → [500, 500, 1000]. */
+export function uraExtensionFees(count: number): number[] {
+  return Array.from({ length: Math.max(Math.floor(count), 0) }, (_, i) => uraExtensionFee(i + 1));
+}
+
+function uraExtensionBasis(count: number): string {
+  if (count < 1) return "$500 (1st/2nd); $1,000 (3rd); +$1,000 more for each one after";
+  return uraExtensionFees(count)
+    .map((f) => `$${f.toLocaleString()}`)
+    .join(" + ");
+}
+
 function nparksFee(category: NParksCategoryId): number {
   return NPARKS_CATEGORIES.find((c) => c.id === category)?.fee ?? 0;
 }
@@ -64,6 +90,7 @@ export function computeFeeBreakdown(inputs: FeeCalculatorInputs): FeeLineItem[] 
   const bcaTier1Sqm = Math.min(sgfaRounded, FEE_RATES.bcaTierThresholdSqm);
   const bcaTier2Sqm = Math.max(sgfaRounded - FEE_RATES.bcaTierThresholdSqm, 0);
   const nparksCategory = NPARKS_CATEGORIES.find((c) => c.id === inputs.nparksCategory);
+  const sum = (ns: number[]) => ns.reduce((a, b) => a + b, 0);
 
   return [
     {
@@ -82,17 +109,17 @@ export function computeFeeBreakdown(inputs: FeeCalculatorInputs): FeeLineItem[] 
     },
     {
       agency: "URA",
-      description: "PP extension (manual entry — see note below)",
-      basis: "$500 (1st/2nd); +$1,000 incremental thereafter",
-      inputUsed: "manual",
-      fee: inputs.uraPpExtensionFee,
+      description: "Provisional Permission (PP) extensions",
+      basis: uraExtensionBasis(inputs.uraPpExtensions),
+      inputUsed: String(inputs.uraPpExtensions),
+      fee: sum(uraExtensionFees(inputs.uraPpExtensions)),
     },
     {
       agency: "URA",
-      description: "WP extension (manual entry — see note below)",
-      basis: "$500 (1st/2nd); +$1,000 incremental thereafter",
-      inputUsed: "manual",
-      fee: inputs.uraWpExtensionFee,
+      description: "Written Permission (WP) extensions",
+      basis: uraExtensionBasis(inputs.uraWpExtensions),
+      inputUsed: String(inputs.uraWpExtensions),
+      fee: sum(uraExtensionFees(inputs.uraWpExtensions)),
     },
     {
       agency: "PUB",
@@ -123,6 +150,27 @@ export function computeFeeBreakdown(inputs: FeeCalculatorInputs): FeeLineItem[] 
       fee: FEE_RATES.bcaAmendmentPerStorey * inputs.bcaBpAmendmentStoreys,
     },
     {
+      agency: "BCA",
+      description: "Structural Plan 1st submission (engineer / PE)",
+      basis: "No separate fee — covered by the BCA plan fee above, paid once per project",
+      inputUsed: "—",
+      fee: 0,
+    },
+    {
+      agency: "BCA",
+      description: "Structural Plan amendment (engineer / PE)",
+      basis: `$${FEE_RATES.bcaAmendmentPerStorey} per storey per block`,
+      inputUsed: String(inputs.bcaStAmendmentStoreys),
+      fee: FEE_RATES.bcaAmendmentPerStorey * inputs.bcaStAmendmentStoreys,
+    },
+    {
+      agency: "BCA",
+      description: "Modification / waiver of building regulations",
+      basis: `$${FEE_RATES.bcaWaiverPerItem} per waiver item`,
+      inputUsed: String(inputs.bcaWaivers),
+      fee: FEE_RATES.bcaWaiverPerItem * inputs.bcaWaivers,
+    },
+    {
       agency: "LTA",
       description: "Development Control submission",
       basis: `$${FEE_RATES.ltaPerSubmissionFrom4th} per submission, 4th onwards only`,
@@ -149,6 +197,13 @@ export function computeFeeBreakdown(inputs: FeeCalculatorInputs): FeeLineItem[] 
       basis: `$${FEE_RATES.scdfAmendmentPerStorey} per storey`,
       inputUsed: String(inputs.scdfFswAmendmentStoreys),
       fee: FEE_RATES.scdfAmendmentPerStorey * inputs.scdfFswAmendmentStoreys,
+    },
+    {
+      agency: "SCDF",
+      description: "Fire safety waiver",
+      basis: `$${FEE_RATES.scdfWaiverPerItem} per waiver item`,
+      inputUsed: String(inputs.scdfWaivers),
+      fee: FEE_RATES.scdfWaiverPerItem * inputs.scdfWaivers,
     },
     {
       agency: "NEA",

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { NPARKS_CATEGORIES, PUB_PROJECT_TYPES } from "@/template";
+import { MAX_URA_EXTENSIONS, NPARKS_CATEGORIES, PUB_PROJECT_TYPES } from "@/template";
 import type { NParksCategoryId, PubProjectType } from "@/template";
 import type { ProjectChecklistData } from "@/hooks/useProjectData";
 import { useUpdateFeeCalculatorInputs } from "@/hooks/useFeeCalculatorMutations";
@@ -10,6 +10,7 @@ import {
   defaultFeeCalculatorInputs,
   feeBreakdownTotal,
   roundedSgfa,
+  uraExtensionFees,
   type FeeCalculatorInputs,
 } from "@/lib/fees/feeCalculator";
 
@@ -22,6 +23,31 @@ function formatSgd(n: number): string {
  * concrete value to show and compute from. */
 function resolvedInputs(saved: ProjectChecklistData["project"]["feeCalculatorInputs"]): FeeCalculatorInputs {
   return { ...defaultFeeCalculatorInputs(), ...saved } as FeeCalculatorInputs;
+}
+
+/** 0–MAX_URA_EXTENSIONS dropdown, each option showing the running total it adds up to. */
+function ExtensionSelect({
+  value,
+  disabled,
+  onChange,
+}: {
+  value: number;
+  disabled: boolean;
+  onChange: (n: number) => void;
+}) {
+  const options = Array.from({ length: MAX_URA_EXTENSIONS + 1 }, (_, n) => ({
+    n,
+    total: uraExtensionFees(n).reduce((sum, f) => sum + f, 0),
+  }));
+  return (
+    <select value={value} disabled={disabled} onChange={(e) => onChange(Number(e.target.value))}>
+      {options.map(({ n, total }) => (
+        <option key={n} value={n}>
+          {n === 0 ? "0 — none" : `${n} — ${formatSgd(total)}`}
+        </option>
+      ))}
+    </select>
+  );
 }
 
 export function FeesTab({ projectId, data }: { projectId: string; data: ProjectChecklistData }) {
@@ -38,8 +64,9 @@ export function FeesTab({ projectId, data }: { projectId: string; data: ProjectC
   const [ltaInput, setLtaInput] = useState(String(saved.ltaSubmissionsFrom4th));
   const [bcaStoreysInput, setBcaStoreysInput] = useState(String(saved.bcaBpAmendmentStoreys));
   const [scdfStoreysInput, setScdfStoreysInput] = useState(String(saved.scdfFswAmendmentStoreys));
-  const [ppExtInput, setPpExtInput] = useState(String(saved.uraPpExtensionFee));
-  const [wpExtInput, setWpExtInput] = useState(String(saved.uraWpExtensionFee));
+  const [stStoreysInput, setStStoreysInput] = useState(String(saved.bcaStAmendmentStoreys));
+  const [bcaWaiversInput, setBcaWaiversInput] = useState(String(saved.bcaWaivers));
+  const [scdfWaiversInput, setScdfWaiversInput] = useState(String(saved.scdfWaivers));
 
   function commitNumber(field: keyof FeeCalculatorInputs, raw: string, previous: number) {
     const n = Number(raw) || 0;
@@ -176,25 +203,55 @@ export function FeesTab({ projectId, data }: { projectId: string; data: ProjectC
 
         <div className="pi-row">
           <label className="pi-field">
-            <span>URA PP extension fee (enter $ manually)</span>
+            <span>No. of storeys — BCA ST amendment (engineer)</span>
             <input
               type="number"
               min={0}
               disabled={locked}
-              value={ppExtInput}
-              onChange={(e) => setPpExtInput(e.target.value)}
-              onBlur={() => commitNumber("uraPpExtensionFee", ppExtInput, saved.uraPpExtensionFee)}
+              value={stStoreysInput}
+              onChange={(e) => setStStoreysInput(e.target.value)}
+              onBlur={() => commitNumber("bcaStAmendmentStoreys", stStoreysInput, saved.bcaStAmendmentStoreys)}
             />
           </label>
           <label className="pi-field">
-            <span>URA WP extension fee (enter $ manually)</span>
+            <span>No. of BCA waivers</span>
             <input
               type="number"
               min={0}
               disabled={locked}
-              value={wpExtInput}
-              onChange={(e) => setWpExtInput(e.target.value)}
-              onBlur={() => commitNumber("uraWpExtensionFee", wpExtInput, saved.uraWpExtensionFee)}
+              value={bcaWaiversInput}
+              onChange={(e) => setBcaWaiversInput(e.target.value)}
+              onBlur={() => commitNumber("bcaWaivers", bcaWaiversInput, saved.bcaWaivers)}
+            />
+          </label>
+          <label className="pi-field">
+            <span>No. of SCDF waivers</span>
+            <input
+              type="number"
+              min={0}
+              disabled={locked}
+              value={scdfWaiversInput}
+              onChange={(e) => setScdfWaiversInput(e.target.value)}
+              onBlur={() => commitNumber("scdfWaivers", scdfWaiversInput, saved.scdfWaivers)}
+            />
+          </label>
+        </div>
+
+        <div className="pi-row">
+          <label className="pi-field">
+            <span>No. of URA PP extensions</span>
+            <ExtensionSelect
+              value={saved.uraPpExtensions}
+              disabled={locked}
+              onChange={(n) => updateInputs.mutate({ uraPpExtensions: n })}
+            />
+          </label>
+          <label className="pi-field">
+            <span>No. of URA WP extensions</span>
+            <ExtensionSelect
+              value={saved.uraWpExtensions}
+              disabled={locked}
+              onChange={(n) => updateInputs.mutate({ uraWpExtensions: n })}
             />
           </label>
           <label className="pi-field">
@@ -203,8 +260,9 @@ export function FeesTab({ projectId, data }: { projectId: string; data: ProjectC
           </label>
         </div>
         <p className="ov-hint">
-          1st &amp; 2nd extension $500 each; 3rd onwards +$1,000 incrementally, for both Provisional Permission (PP,
-          lapses 6 months from grant) and Written Permission (WP, lapses 2 years from grant).
+          PP/WP extensions: 1st &amp; 2nd are $500 each, the 3rd is $1,000, and each one after adds another
+          $1,000 (4th $2,000, 5th $3,000, …). PP lapses 6 months from grant, WP 2 years. Waivers: BCA $100 and SCDF $160 per
+          waiver item.
         </p>
       </div>
 
@@ -249,7 +307,15 @@ export function FeesTab({ projectId, data }: { projectId: string; data: ProjectC
           <h3>Notes</h3>
         </div>
         <ol className="fee-notes">
-          <li>This summary excludes any waiver fees, CSC/TOP-stage fees, and professional fees.</li>
+          <li>
+            This summary excludes CSC/TOP-stage fees and professional fees (including the engineer&apos;s own fee).
+            Waivers other than BCA and SCDF aren&apos;t included.
+          </li>
+          <li>
+            The engineer&apos;s (PE&apos;s) first structural plan submission has no separate BCA fee — BCA charges one
+            plan fee per project for both building and structural plans, already counted in the BCA SGFA lines. Each
+            structural plan amendment is charged separately at $200 per storey.
+          </li>
           <li>A fee row with a 0 input contributes S$0 and can be ignored — no need to change it.</li>
           <li>
             Rates were cross-checked against each agency&apos;s own published fee schedule as of Sep 2026 (URA, BCA,
@@ -257,7 +323,6 @@ export function FeesTab({ projectId, data }: { projectId: string; data: ProjectC
             are carried over from the office&apos;s own reference sheet. Verify against the current CORENET X fee
             schedule before quoting a client.
           </li>
-          <li>PP/WP extension fees follow an incremental scale and are entered manually in Step 1.</li>
         </ol>
       </div>
     </div>

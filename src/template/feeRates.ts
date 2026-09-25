@@ -11,6 +11,12 @@
 //   (Resubmissions, Extension of Permissions).
 // - BCA: "Building Plan Submission Fee Schedule" (effective 30 Dec 2024),
 //   https://www1.bca.gov.sg/safety-and-standards/applications-and-licenses/building-plan-submission/statistical-gross-floor-area-and-plan-fees/
+//   and the Building Control Regulations 2003, Second Schedule (current as at Sep 2026),
+//   https://sso.agc.gov.sg/SL/BCA1989-S666-2003?ProvIds=Sc2- — para 2 (one plan fee per
+//   application for building works, covering both the building and structural plans), para 9
+//   (amended plans, per storey), para 11 (modification/waiver, per item).
+// - SCDF: "Waiver Application", https://www.scdf.gov.sg/home/fire-safety/plans-and-consultations/waiver-application
+//   — per waiver item.
 // - PUB: "Application Fees for Submission of Building Plan and Water Service Works"
 //   (effective 1 Apr 2025), https://www.pub.gov.sg/Professionals/Requirements/Qualified-Persons/Building-Plan-Submission-Process-Flow/Application-Fees-for-Submission-of-Building-Plan-and-Water-Service-Works
 // - NParks: "Development Submission Plan Application Fee Schedule",
@@ -48,6 +54,9 @@ export type NParksCategoryId = (typeof NPARKS_CATEGORIES)[number]["id"];
 export const PUB_PROJECT_TYPES = ["Minor", "Major"] as const;
 export type PubProjectType = (typeof PUB_PROJECT_TYPES)[number];
 
+/** Options for the PP/WP "no. of extensions" dropdowns. */
+export const MAX_URA_EXTENSIONS = 8;
+
 export const FEE_RATES = {
   // URA New Erection, Landed Housing (Table 1) — a single unit inside a Good Class
   // Bungalow Area (GCBA) costs more than one outside it. Resubmissions are 50% of
@@ -56,10 +65,10 @@ export const FEE_RATES = {
   uraNewErectionNonGcba: 6000,
 
   // URA extension of validity for Provisional Permission / Written Permission (Table 5) —
-  // same fee scale for both: 1st & 2nd extension $500 each, 3rd and every subsequent
-  // extension adds another $1,000. Ambiguous enough in the office's own reading (and left
-  // as a manual entry in their spreadsheet) that this stays a manual $ field rather than an
-  // auto-computed one here.
+  // same scale for both, as the office reads it: the 1st and 2nd extension are $500 each,
+  // the 3rd is $1,000, and each one after that adds another $1,000 (4th $2,000, 5th $3,000...).
+  uraExtensionFirstTwo: 500,
+  uraExtensionIncrement: 1000,
 
   // PUB drainage/sewerage/sanitary works, one-time submission fee.
   pubMinor: 1450,
@@ -71,8 +80,16 @@ export const FEE_RATES = {
   bcaAbove2500PerHundredSqm: 270,
   bcaTierThresholdSqm: 2500,
 
-  // BCA Building Plan amendment/deviation to an approved plan, per storey.
+  // BCA amendment/deviation to an approved plan, per storey (Second Schedule para 9) — each
+  // amendment application pays it, whether it's the architect's building plan amendment or
+  // the engineer's (PE's) structural plan amendment.
   bcaAmendmentPerStorey: 200,
+
+  // BCA application to modify / waive a building regulation (Second Schedule para 11).
+  bcaWaiverPerItem: 100,
+
+  // SCDF fire safety waiver application.
+  scdfWaiverPerItem: 160,
 
   // LTA vehicle parking proposal resubmission — free for the first 3 submissions, then
   // charged per submission from the 4th onwards.
