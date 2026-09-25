@@ -129,12 +129,26 @@ describe("template integrity", () => {
     expect(STEPS.length).toBe(40);
   });
 
-  it("has exactly 188 checklist items across all steps", () => {
+  it("has exactly 187 checklist items across all steps", () => {
     // 183 from the original prototype port, +1 for the Consultant Appointments step's own
     // clearable item, +2 for the new Asbestos Survey & Removal step, +2 for the design-lock
-    // and construction-drawings checkpoints added to PP/BP.
+    // and construction-drawings checkpoints added to PP/BP, -1 for the NEA grease trap item
+    // removed in R11a (grease traps are PUB's, under the Sewerage & Sanitary plan).
     const total = STEPS.reduce((sum, s) => sum + s.items.length, 0);
-    expect(total).toBe(188);
+    expect(total).toBe(187);
+  });
+
+  it("keeps grease traps under PUB's Sewerage & Sanitary plan only, not NEA", () => {
+    const mentions = STEPS.flatMap((s) =>
+      s.items.filter((i) => /grease/i.test(i.text)).map((i) => i.id)
+    );
+    expect(mentions).toEqual(["pub__SS__2"]);
+    expect(STEP_BY_ID["nea__ENV"].items.map((i) => i.text)).toEqual([
+      "Environmental control measures for construction dust and noise",
+      "Refuse / bin collection point siting with access for collection vehicles",
+      "Construction noise permit, where extended or night works are needed",
+      "Vector control (mosquito breeding prevention) site management plan",
+    ]);
   });
 
   it("gives every step a unique id", () => {

@@ -10,7 +10,7 @@
 // bump n and drop any letter suffix. "R<n><letter>" for a smaller revision within that
 // cycle (a wording tweak, a logo swap, a bug fix) — keep n, advance the letter.
 // Never renumber a revision once published.
-export const TEMPLATE_VERSION = "R11";
+export const TEMPLATE_VERSION = "R11a";
 
 export interface ChangelogEntry {
   rev: string;
@@ -23,6 +23,12 @@ export interface ChangelogEntry {
 // from the HTML prototype (submissions-register-MASTER.html); entries from here on
 // describe changes made in this app.
 export const TEMPLATE_CHANGELOG: ChangelogEntry[] = [
+  {
+    rev: "R11a",
+    date: "2026-09-25",
+    summary:
+      'NEA Joint referral / environmental clearance (ENV) no longer has a "Grease trap maintenance declaration, coordinated with PUB" item. Grease trap design is approved by PUB under the Sewerage & Sanitary plan submission, which keeps its own grease trap item, and ongoing maintenance is checked by NEA when it licenses the food shop, not at the building-plan stage. Existing projects keep the status, assignees and files of the remaining ENV items (migration 0006).',
+  },
   {
     rev: "R11",
     date: "2026-09-21",

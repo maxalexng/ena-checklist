@@ -277,7 +277,6 @@ export const AGENCIES: Agency[] = [
         items: [
           "Environmental control measures for construction dust and noise",
           "Refuse / bin collection point siting with access for collection vehicles",
-          "Grease trap maintenance declaration, coordinated with PUB",
           "Construction noise permit, where extended or night works are needed",
           "Vector control (mosquito breeding prevention) site management plan",
         ],
