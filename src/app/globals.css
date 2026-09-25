@@ -1075,4 +1075,19 @@
   .tl-legend-item{ display:flex; align-items:center; gap:5px; }
   .tl-legend-dot{ width:9px; height:9px; border-radius:2px; display:inline-block; }
 
+  .fee-table{ width:100%; border-collapse:collapse; font-size:12.5px; }
+  .fee-table th{
+    text-align:left; font-size:10.5px; text-transform:uppercase; letter-spacing:0.05em;
+    color:var(--ink-faint); font-weight:600; padding:6px 8px; border-bottom:2px solid var(--ink);
+  }
+  .fee-table td{ padding:8px; border-bottom:1px solid var(--line-soft); vertical-align:top; }
+  .fee-table tbody tr:hover{ background:var(--surface-2); }
+  .fee-basis{ color:var(--ink-soft); font-size:12px; }
+  .fee-amount{ text-align:right; white-space:nowrap; }
+  .fee-total-row td{
+    border-bottom:none; border-top:2px solid var(--ink); font-weight:700; font-size:13.5px;
+    padding-top:12px;
+  }
+  .fee-notes{ margin:0; padding-left:18px; color:var(--ink-soft); font-size:12px; display:flex; flex-direction:column; gap:4px; }
+  .fee-notes li{ padding-left:2px; }
 

@@ -6,3 +6,4 @@ export * from "./keys";
 export * from "./defaults";
 export * from "./overviewSections";
 export * from "./changelog";
+export * from "./feeRates";

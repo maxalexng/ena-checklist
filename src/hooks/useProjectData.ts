@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import type { ItemStatus } from "@/template";
-import type { ProjectDates } from "@/lib/supabase/database.types";
+import type { FeeCalculatorInputsRow, ProjectDates } from "@/lib/supabase/database.types";
 import { missingItemRows } from "@/lib/checklist/reconcileItems";
 
 export interface ItemRecord {
@@ -74,6 +74,7 @@ export interface ProjectChecklistData {
     projectDates: ProjectDates;
     listPresets: Record<string, string[]>;
     stageDurationWeeks: Record<string, number>;
+    feeCalculatorInputs: FeeCalculatorInputsRow;
   };
   itemsByKey: Record<string, ItemRecord>;
   subchecksByItem: Record<string, Record<number, boolean>>;
@@ -99,7 +100,7 @@ export function useProjectData(projectId: string) {
         supabase
           .from("projects")
           .select(
-            "id, reference, title, address, initialism, bca_ref, contract_period_months, contract_sum, current_stage, step_order, item_order, step_stage, assignments_locked, project_dates, list_presets, stage_duration_weeks"
+            "id, reference, title, address, initialism, bca_ref, contract_period_months, contract_sum, current_stage, step_order, item_order, step_stage, assignments_locked, project_dates, list_presets, stage_duration_weeks, fee_calculator_inputs"
           )
           .eq("id", projectId)
           .single(),
@@ -244,6 +245,7 @@ export function useProjectData(projectId: string) {
           projectDates: projectRes.data.project_dates,
           listPresets: (projectRes.data.list_presets as Record<string, string[]>) ?? {},
           stageDurationWeeks: (projectRes.data.stage_duration_weeks as Record<string, number>) ?? {},
+          feeCalculatorInputs: (projectRes.data.fee_calculator_inputs as FeeCalculatorInputsRow) ?? {},
         },
         itemsByKey,
         subchecksByItem,

@@ -7,10 +7,11 @@ import { SummaryStats } from "./SummaryStats";
 import { ChecklistTab } from "./checklist/ChecklistTab";
 import { OverviewTab } from "./overview/OverviewTab";
 import { TimelineTab } from "./timeline/TimelineTab";
+import { FeesTab } from "./fees/FeesTab";
 import { RolesPanel } from "./roles/RolesPanel";
 import { LockFab } from "./LockFab";
 
-type Tab = "overview" | "checklist" | "timeline";
+type Tab = "overview" | "checklist" | "timeline" | "fees";
 
 export function ProjectShell({ projectId }: { projectId: string }) {
   const [tab, setTab] = useState<Tab>("overview");
@@ -60,6 +61,9 @@ export function ProjectShell({ projectId }: { projectId: string }) {
           <button type="button" className={`seg-btn${tab === "timeline" ? " active" : ""}`} onClick={() => setTab("timeline")}>
             Timeline
           </button>
+          <button type="button" className={`seg-btn${tab === "fees" ? " active" : ""}`} onClick={() => setTab("fees")}>
+            Fees
+          </button>
         </div>
         <button type="button" className="summary-btn" style={{ marginLeft: "auto" }} onClick={() => setRolesOpen((v) => !v)}>
           Roles
@@ -71,6 +75,7 @@ export function ProjectShell({ projectId }: { projectId: string }) {
       {tab === "checklist" && <ChecklistTab projectId={projectId} data={data} />}
       {tab === "overview" && <OverviewTab projectId={projectId} data={data} />}
       {tab === "timeline" && <TimelineTab projectId={projectId} data={data} />}
+      {tab === "fees" && <FeesTab projectId={projectId} data={data} />}
     </div>
   );
 }

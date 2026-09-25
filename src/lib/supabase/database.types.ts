@@ -16,6 +16,22 @@ export interface ProjectDates {
   eot: { title: string; days: number }[];
 }
 
+// Partial because fee_calculator_inputs starts as '{}' — see defaultFeeCalculatorInputs()
+// in src/lib/fees/feeCalculator.ts for the fallback used when a field is missing.
+export type FeeCalculatorInputsRow = Partial<{
+  sgfa: number;
+  gcba: boolean;
+  units: number;
+  uraResubmissions: number;
+  pubProjectType: "Minor" | "Major";
+  nparksCategory: string;
+  ltaSubmissionsFrom4th: number;
+  bcaBpAmendmentStoreys: number;
+  scdfFswAmendmentStoreys: number;
+  uraPpExtensionFee: number;
+  uraWpExtensionFee: number;
+}>;
+
 export interface Database {
   public: {
     Tables: {
@@ -38,6 +54,7 @@ export interface Database {
           overview_section_order: string[] | null;
           step_stage: Record<string, string>;
           stage_duration_weeks: Record<string, number>;
+          fee_calculator_inputs: FeeCalculatorInputsRow;
           assignments_locked: boolean;
           archived: boolean;
           created_at: string;
@@ -206,6 +223,10 @@ export interface Database {
       };
       merge_stage_duration_weeks: {
         Args: { p_project_id: string; p_patch: Record<string, number> };
+        Returns: void;
+      };
+      merge_fee_calculator_inputs: {
+        Args: { p_project_id: string; p_patch: FeeCalculatorInputsRow };
         Returns: void;
       };
     };
