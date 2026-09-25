@@ -125,17 +125,25 @@ describe("defaultStepOrder", () => {
 // against the legacy prototype's real data (see scripts/migrate-html-import.ts's run for
 // "2 Astrid Hill": 183 items imported vs 183 in source).
 describe("template integrity", () => {
-  it("has exactly 40 steps", () => {
-    expect(STEPS.length).toBe(40);
+  it("has exactly 41 steps", () => {
+    expect(STEPS.length).toBe(41);
   });
 
-  it("has exactly 187 checklist items across all steps", () => {
+  it("has exactly 189 checklist items across all steps", () => {
     // 183 from the original prototype port, +1 for the Consultant Appointments step's own
     // clearable item, +2 for the new Asbestos Survey & Removal step, +2 for the design-lock
     // and construction-drawings checkpoints added to PP/BP, -1 for the NEA grease trap item
-    // removed in R11a (grease traps are PUB's, under the Sewerage & Sanitary plan).
+    // removed in R11a (grease traps are PUB's, under the Sewerage & Sanitary plan), +2 for
+    // the Contract Award & Documents step added in R12.
     const total = STEPS.reduce((sum, s) => sum + s.items.length, 0);
-    expect(total).toBe(187);
+    expect(total).toBe(189);
+  });
+
+  it("places Contract Award & Documents in Tendering, right after the BCA Structural Plan", () => {
+    const i = STEPS.findIndex((s) => s.id === "admin__AWARD");
+    expect(STEPS[i - 1].id).toBe("bca__ST");
+    expect(STEPS[i].defaultStage).toBe("tender");
+    expect(STEPS[i].items.map((it) => it.id)).toEqual(["admin__AWARD__0", "admin__AWARD__1"]);
   });
 
   it("keeps grease traps under PUB's Sewerage & Sanitary plan only, not NEA", () => {

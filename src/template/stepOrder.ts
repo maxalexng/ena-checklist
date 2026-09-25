@@ -28,6 +28,7 @@ export const STEP_ORDER: StepOrderTriple[] = [
   ["detailed", "imda", "COPIF"],
   ["tender", "bca", "BP"],
   ["tender", "bca", "ST"],
+  ["tender", "admin", "AWARD"],
   ["construction", "nea", "ASBESTOS"],
   ["construction", "bca", "PERMIT"],
   ["construction", "bca", "DEMO"],

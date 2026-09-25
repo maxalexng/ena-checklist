@@ -48,7 +48,7 @@ export async function deleteProjectByReference(reference: string) {
   await supabase.from("projects").delete().eq("reference", reference);
 }
 
-/** Seeds a full project (187 checklist items + 11 default roles) the same way the app's
+/** Seeds a full project (189 checklist items + 11 default roles) the same way the app's
  * own "New Project" flow does — reuses createProject() directly rather than duplicating
  * its seeding logic, so a future change to that flow can't silently drift out of sync with
  * what these tests set up. Runs with the service-role client, bypassing RLS (there's no

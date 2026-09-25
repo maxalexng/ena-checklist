@@ -463,6 +463,21 @@ export const AGENCIES: Agency[] = [
         ],
       },
       {
+        code: "AWARD",
+        name: "Contract Award & Documents",
+        // Same override convention as SITEVISIT above — this is the office's own paperwork
+        // for awarding the main contract at the close of tender, not a government submission.
+        stepCode: "AWARD",
+        stepName: "Contract Award & Documents",
+        stepBlurb:
+          "Closing out the tender: the Letter of Award to the successful contractor, and the signed contract documents compiled by the QS kept on file.",
+        when: "At the close of Tendering, once the client approves the tender recommendation and before construction starts.",
+        items: [
+          "Prepare the Letter of Award (LOA)",
+          "File the digital copy of the signed compiled Contract Documents from the QS",
+        ],
+      },
+      {
         code: "CONSULTANTS",
         name: "Consultant Appointments",
         stepCode: "CONSULTANTS",

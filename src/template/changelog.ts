@@ -10,7 +10,7 @@
 // bump n and drop any letter suffix. "R<n><letter>" for a smaller revision within that
 // cycle (a wording tweak, a logo swap, a bug fix) — keep n, advance the letter.
 // Never renumber a revision once published.
-export const TEMPLATE_VERSION = "R11a";
+export const TEMPLATE_VERSION = "R12";
 
 export interface ChangelogEntry {
   rev: string;
@@ -23,6 +23,12 @@ export interface ChangelogEntry {
 // from the HTML prototype (submissions-register-MASTER.html); entries from here on
 // describe changes made in this app.
 export const TEMPLATE_CHANGELOG: ChangelogEntry[] = [
+  {
+    rev: "R12",
+    date: "2026-09-25",
+    summary:
+      'New Practice Administration step in Tendering, "Contract Award & Documents" (AWARD), right after the BCA Structural Plan submission. It has two items: prepare the Letter of Award (LOA), and file the digital copy of the signed compiled Contract Documents from the QS. Existing projects get the new step and its items the next time they are opened, and every step after it moves down one number.',
+  },
   {
     rev: "R11a",
     date: "2026-09-25",
