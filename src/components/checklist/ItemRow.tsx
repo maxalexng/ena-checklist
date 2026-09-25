@@ -14,6 +14,7 @@ import {
 } from "@/hooks/useChecklistMutations";
 import { ItemFileControl } from "./ItemFileControl";
 import { TemplateFileControl } from "./TemplateFileControl";
+import { Highlight } from "./Highlight";
 
 function statusClass(status: ItemStatus, na: boolean) {
   if (na) return "status-chip status-na";
@@ -35,6 +36,7 @@ export function ItemRow({
   isFirst,
   isLast,
   onMove,
+  query,
 }: {
   projectId: string;
   item: TemplateItem;
@@ -50,6 +52,7 @@ export function ItemRow({
   isFirst: boolean;
   isLast: boolean;
   onMove: (direction: -1 | 1) => void;
+  query: string;
 }) {
   const updateStatus = useUpdateItemStatus(projectId);
   const toggleNa = useToggleItemNa(projectId);
@@ -106,7 +109,9 @@ export function ItemRow({
         {letterForIndex(index)}.
       </span>
       {showAgencyTag && <span className="item-agency-tag">{item.agencyCode}</span>}
-      <span className="item-text">{item.text}</span>
+      <span className="item-text">
+        <Highlight text={item.text} query={query} />
+      </span>
 
       <button
         type="button"

@@ -3,6 +3,7 @@
 import type { TemplateStep } from "@/template";
 import type { ProjectChecklistData } from "@/hooks/useProjectData";
 import type { StageGroup } from "@/lib/checklist/grouping";
+import { Highlight } from "./Highlight";
 
 /** The left-hand navigation rail — a persistent, at-a-glance outline of every stage and
  * step (with its number and clear/applicable count), so you don't have to scroll the whole
@@ -14,12 +15,14 @@ export function ChecklistRail({
   stepNoById,
   stageOrdinalById,
   onJump,
+  query,
 }: {
   groups: StageGroup[];
   data: ProjectChecklistData;
   stepNoById: Record<string, number>;
   stageOrdinalById: Record<string, number>;
   onJump: (stepId: string) => void;
+  query: string;
 }) {
   function progress(step: TemplateStep) {
     const records = step.items.map((it) => data.itemsByKey[it.id]);
@@ -42,13 +45,15 @@ export function ChecklistRail({
               <button type="button" className="rail-item" key={step.id} onClick={() => onJump(step.id)}>
                 <div className="rail-top">
                   <span className="rail-code">
-                    {stepNoById[step.id] ?? step.stepNo}. {step.code}
+                    {stepNoById[step.id] ?? step.stepNo}. <Highlight text={step.code} query={query} />
                   </span>
                   <span className="rail-count">
                     {cleared}/{applicable}
                   </span>
                 </div>
-                <span className="rail-name">{step.name}</span>
+                <span className="rail-name">
+                  <Highlight text={step.name} query={query} />
+                </span>
                 <div className="rail-bar">
                   <span style={{ width: `${pct}%` }} />
                 </div>

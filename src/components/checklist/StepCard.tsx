@@ -7,6 +7,7 @@ import type { ProjectChecklistData } from "@/hooks/useProjectData";
 import { effectiveItemOrder, moveItemInOrder, orderedStepItems } from "@/lib/checklist/itemOrder";
 import { useToggleStepNa, useUpdateItemOrder } from "@/hooks/useChecklistMutations";
 import { ItemRow } from "./ItemRow";
+import { Highlight } from "./Highlight";
 import { ConsultantsWidget } from "@/components/consultants/ConsultantsWidget";
 
 export function StepCard({
@@ -20,6 +21,7 @@ export function StepCard({
   canMoveUp,
   canMoveDown,
   onMove,
+  query,
 }: {
   projectId: string;
   step: TemplateStep;
@@ -31,6 +33,8 @@ export function StepCard({
   canMoveUp: boolean;
   canMoveDown: boolean;
   onMove: (direction: -1 | 1) => void;
+  /** The live checklist search text; matches are highlighted in the card. */
+  query: string;
 }) {
   const toggleStepNa = useToggleStepNa(projectId);
   const updateItemOrder = useUpdateItemOrder(projectId);
@@ -98,19 +102,25 @@ export function StepCard({
           </div>
         ) : (
           <span className="agency-code" style={{ background: `var(--role-${agencyColorFor(step.code)})` }}>
-            {step.code}
+            <Highlight text={step.code} query={query} />
           </span>
         )}
         <div className="agency-head-main">
           <div className="agency-head-top">
             <span className="agency-tag step-tag">Step {stepNo}</span>
             <span className="agency-tag stage-tag">{stageName}</span>
-            <h3>{step.name}</h3>
+            <h3>
+              <Highlight text={step.name} query={query} />
+            </h3>
             {step.conditional && <span className="agency-tag">If applicable</span>}
             {stepIsNa && <span className="agency-tag step-na-badge">N/A</span>}
           </div>
-          <div className="agency-full">{step.full}</div>
-          <p className="agency-blurb">{step.blurb}</p>
+          <div className="agency-full">
+            <Highlight text={step.full} query={query} />
+          </div>
+          <p className="agency-blurb">
+            <Highlight text={step.blurb} query={query} />
+          </p>
         </div>
         <div className="agency-meta">
           {items.length > 0 && (
@@ -142,10 +152,16 @@ export function StepCard({
           <div className="submission">
             <div className="submission-head">
               <span className="code-badge">{step.submission.code}</span>
-              <h4>{step.submission.name}</h4>
+              <h4>
+                <Highlight text={step.submission.name} query={query} />
+              </h4>
               {step.submission.conditional && <span className="agency-tag">If applicable</span>}
             </div>
-            {step.submission.when && <p className="when">{step.submission.when}</p>}
+            {step.submission.when && (
+              <p className="when">
+                <Highlight text={step.submission.when} query={query} />
+              </p>
+            )}
             <div className="items">
               {items.map((item, i) => (
                 <ItemRow
@@ -164,6 +180,7 @@ export function StepCard({
                   isFirst={i === 0}
                   isLast={i === items.length - 1}
                   onMove={(direction) => moveItem(item.id, direction)}
+                  query={query}
                 />
               ))}
             </div>

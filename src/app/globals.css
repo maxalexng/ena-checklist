@@ -209,6 +209,10 @@
   }
   .roles-add-btn:hover{ opacity:0.9; }
   .search-input:focus{ outline:2px solid var(--accent); outline-offset:1px; }
+  .search-hit{
+    background:#ffe066; color:#1a1a1a; border-radius:4px; padding:0 2px; margin:0 -1px;
+    box-shadow:0 0 0 1px rgba(214,160,0,0.55);
+  }
 
   .shell-grid{ display:grid; grid-template-columns:236px 1fr; gap:24px; align-items:start; }
   @media (max-width:860px){ .shell-grid{ grid-template-columns:1fr; } }
