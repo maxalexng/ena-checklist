@@ -135,4 +135,25 @@ test.describe("Checklist item labels and conditional badges", () => {
       expect(box!.y + box!.height).toBeLessThanOrEqual(card!.y + card!.height);
     }
   });
+
+  test("the drawing location icon shows whether anything is saved", async ({ page }) => {
+    await page.getByPlaceholder("Search checklist…").fill("CORENET — Project Team Registration");
+    const item = page.locator(".agency").filter({ hasText: "CORENET" }).first().locator(".item").last();
+
+    const toggle = item.locator(".file-toggle-btn");
+    await expect(toggle).toHaveAccessibleName("Drawing location (empty)");
+    await expect(toggle).not.toHaveClass(/has-file/);
+
+    await toggle.click();
+    const input = item.getByPlaceholder("Drawing location (path or URL)");
+    await input.fill("\\\\server\\projects\\corenet");
+    await input.blur();
+
+    await expect(toggle).toHaveAccessibleName("Drawing location (saved)");
+    await expect(toggle).toHaveClass(/has-file/);
+    await page.reload();
+    await page.getByRole("button", { name: "Checklist" }).click();
+    await page.getByPlaceholder("Search checklist…").fill("CORENET — Project Team Registration");
+    await expect(item.locator(".file-toggle-btn")).toHaveAccessibleName("Drawing location (saved)");
+  });
 });

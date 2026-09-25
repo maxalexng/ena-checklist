@@ -38,6 +38,24 @@ test.describe("Lock mechanism", () => {
     await expect(page.locator(".agency").first().locator(".step-move-btn")).toHaveCount(0);
   });
 
+  test("office standard icons show on every item while unlocked, but only where a file exists once locked", async ({
+    page,
+  }) => {
+    await page.getByRole("button", { name: "Checklist" }).click();
+    const items = page.locator(".item");
+    await expect(items.first()).toBeVisible();
+    const itemCount = await items.count();
+    expect(itemCount).toBeGreaterThan(100);
+    await expect(page.locator(".template-toggle-btn")).toHaveCount(itemCount);
+
+    await page.getByRole("button", { name: "🔓 Unlocked" }).click();
+    await expect(page.getByRole("button", { name: "🔒 Locked" })).toBeVisible();
+    // Office standard files are shared across all projects, so some may already exist —
+    // what matters is that no empty (nothing-to-download) icon survives the lock.
+    await expect(page.locator(".template-toggle-btn:not(.has-file)")).toHaveCount(0);
+    await expect(page.locator(".file-toggle-btn")).toHaveCount(itemCount);
+  });
+
   test("an already-assigned responsible party can't be removed while locked, and reappears when unlocked", async ({
     page,
   }) => {

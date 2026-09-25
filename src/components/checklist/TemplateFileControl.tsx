@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { openStorageFile } from "@/hooks/useItemFiles";
 import { useRemoveTemplateFile, useTemplateFiles, useUploadTemplateFile } from "@/hooks/useTemplateFiles";
+import { DocDownloadIcon } from "./FileIcons";
 
 export function TemplateFileControl({ itemKey, locked }: { itemKey: string; locked: boolean }) {
   const [open, setOpen] = useState(false);
@@ -13,16 +14,19 @@ export function TemplateFileControl({ itemKey, locked }: { itemKey: string; lock
 
   const record = templateFiles?.[itemKey];
 
+  // Nothing to download and no way to upload while locked — don't take up space in the row.
+  if (!record && locked) return null;
+
   return (
     <div className="item-template-file">
       <button
         type="button"
         className={`template-toggle-btn${record ? " has-file" : ""}${open ? " active" : ""}`}
-        title="Office template document"
+        title={record ? "Office standard — download" : "Office standard — none uploaded yet"}
+        aria-label="Office standard"
         onClick={() => setOpen((v) => !v)}
       >
-        {record && <span className="file-toggle-dot" aria-hidden="true" />}
-        Office standard
+        <DocDownloadIcon />
       </button>
       {open && (
         <div className="file-panel">

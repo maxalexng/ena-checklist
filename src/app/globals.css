@@ -548,17 +548,25 @@
      overflow:hidden, which an absolutely-positioned popover was. */
   .item-file, .item-template-file{ display:contents; }
   .file-toggle-btn, .template-toggle-btn{
-    flex:none; display:inline-flex; align-items:center; gap:5px;
-    font-family:'IBM Plex Mono',monospace; font-size:10px; font-weight:600;
-    background:var(--surface); border:1px solid var(--line); color:var(--ink-soft);
-    border-radius:5px; padding:4px 8px; cursor:pointer; white-space:nowrap;
+    flex:none; display:inline-flex; align-items:center; justify-content:center;
+    width:28px; height:24px; padding:0; border-radius:5px; cursor:pointer;
+    background:transparent; border:1px solid var(--line); color:var(--ink-soft);
+  }
+  .file-icon{
+    width:15px; height:15px; stroke:currentColor; stroke-width:1.5;
+    stroke-linecap:round; stroke-linejoin:round;
   }
   .file-toggle-btn:hover, .template-toggle-btn:hover{ background:var(--surface-3); color:var(--ink); border-color:var(--ink-faint); }
-  .file-toggle-btn.has-file{ color:var(--accent); border-color:var(--accent); }
-  .template-toggle-btn.has-file{ color:var(--brass); border-color:var(--brass); }
-  .file-toggle-btn.active, .template-toggle-btn.active{ background:var(--accent-soft); border-color:var(--accent); color:var(--accent); }
   .file-toggle-btn:focus-visible, .template-toggle-btn:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
-  .file-toggle-dot{ width:6px; height:6px; border-radius:50%; background:currentColor; flex:none; }
+  /* Drawing location: empty = dashed outline + hollow folder; saved = solid accent fill. */
+  .file-toggle-btn{ border-style:dashed; }
+  .file-toggle-btn.has-file{ border-style:solid; border-color:var(--accent); background:var(--accent-soft); color:var(--accent); }
+  /* Office standard: only rendered empty on unlocked projects (for uploading), so it's
+     faded until there's actually a file to download. */
+  .template-toggle-btn{ opacity:0.55; border-style:dashed; }
+  .template-toggle-btn:hover{ opacity:1; }
+  .template-toggle-btn.has-file{ opacity:1; border-style:solid; border-color:var(--brass); background:var(--brass-soft); color:var(--brass); }
+  .file-toggle-btn.active, .template-toggle-btn.active{ opacity:1; border-style:solid; border-color:var(--accent); background:var(--accent-soft); color:var(--accent); }
   .file-panel{
     position:relative; order:98; flex:1 1 100%; min-width:0; background:var(--surface);
     border:1px solid var(--line); border-radius:7px; padding:8px;

@@ -9,6 +9,7 @@ import {
   useSetItemFileLink,
   useUploadItemFile,
 } from "@/hooks/useItemFiles";
+import { FolderIcon } from "./FileIcons";
 
 export function ItemFileControl({
   itemId,
@@ -35,14 +36,14 @@ export function ItemFileControl({
       <button
         type="button"
         className={`file-toggle-btn${hasContent ? " has-file" : ""}${open ? " active" : ""}`}
-        title="Drawing location / attached document"
+        title={hasContent ? "Drawing location — saved" : "Drawing location — empty"}
+        aria-label={hasContent ? "Drawing location (saved)" : "Drawing location (empty)"}
         onClick={() => {
           setOpen((v) => !v);
           setLinkValue(record?.link ?? "");
         }}
       >
-        {hasContent && <span className="file-toggle-dot" aria-hidden="true" />}
-        Drawing location
+        <FolderIcon filled={hasContent} />
       </button>
       {open && (
         <div className="file-panel">
