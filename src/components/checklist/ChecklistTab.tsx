@@ -11,6 +11,13 @@ import { ChecklistRail } from "./ChecklistRail";
 export function ChecklistTab({ projectId, data }: { projectId: string; data: ProjectChecklistData }) {
   const [search, setSearch] = useState("");
   const [collapsedSteps, setCollapsedSteps] = useState<Record<string, boolean>>({});
+  // While searching, every matching step opens so the highlighted items are visible. The
+  // user can still collapse steps mid-search; those choices are tracked separately, reset
+  // whenever the query changes, and the normal collapsed state returns once it's cleared.
+  const [searchCollapsed, setSearchCollapsed] = useState<{ query: string; steps: Record<string, boolean> }>({
+    query: "",
+    steps: {},
+  });
   const [jumpMessage, setJumpMessage] = useState<string | null>(null);
   const updateStepOrderAndStage = useUpdateStepOrderAndStage(projectId);
 
@@ -28,6 +35,16 @@ export function ChecklistTab({ projectId, data }: { projectId: string; data: Pro
   );
 
   const query = search.trim().toLowerCase();
+  const searchCollapsedSteps = searchCollapsed.query === query ? searchCollapsed.steps : {};
+
+  function isCollapsed(stepId: string) {
+    return query ? !!searchCollapsedSteps[stepId] : !!collapsedSteps[stepId];
+  }
+
+  function updateCollapsed(update: (prev: Record<string, boolean>) => Record<string, boolean>) {
+    if (query) setSearchCollapsed({ query, steps: update(searchCollapsedSteps) });
+    else setCollapsedSteps(update);
+  }
 
   function stepMatches(step: (typeof groups)[number]["steps"][number]) {
     if (!query) return true;
@@ -70,7 +87,7 @@ export function ChecklistTab({ projectId, data }: { projectId: string; data: Pro
   );
 
   function expandAndScrollTo(stepId: string) {
-    setCollapsedSteps((prev) => ({ ...prev, [stepId]: false }));
+    updateCollapsed((prev) => ({ ...prev, [stepId]: false }));
     requestAnimationFrame(() => {
       const el = document.getElementById(`step-${stepId}`);
       el?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -80,13 +97,13 @@ export function ChecklistTab({ projectId, data }: { projectId: string; data: Pro
   }
 
   function toggleCollapsed(stepId: string) {
-    setCollapsedSteps((prev) => ({ ...prev, [stepId]: !prev[stepId] }));
+    updateCollapsed((prev) => ({ ...prev, [stepId]: !prev[stepId] }));
   }
 
   function setAllCollapsed(collapsed: boolean) {
     const next: Record<string, boolean> = {};
     groups.forEach((g) => g.steps.forEach((s) => (next[s.id] = collapsed)));
-    setCollapsedSteps(next);
+    updateCollapsed(() => next);
   }
 
   function moveStep(stepId: string, direction: -1 | 1) {
@@ -155,6 +172,7 @@ export function ChecklistTab({ projectId, data }: { projectId: string; data: Pro
           stepNoById={stepNoById}
           stageOrdinalById={stageOrdinalById}
           onJump={expandAndScrollTo}
+          query={query}
         />
 
         <main className="content">
@@ -173,11 +191,12 @@ export function ChecklistTab({ projectId, data }: { projectId: string; data: Pro
                     stepNo={stepNoById[step.id] ?? step.stepNo}
                     stageName={group.stage.name}
                     data={data}
-                    collapsed={!!collapsedSteps[step.id]}
+                    collapsed={isCollapsed(step.id)}
                     onToggleCollapsed={() => toggleCollapsed(step.id)}
                     canMoveUp={step.id !== isGlobalFirst}
                     canMoveDown={step.id !== isGlobalLast}
                     onMove={(direction) => moveStep(step.id, direction)}
+                    query={query}
                   />
                 ))}
               </div>
