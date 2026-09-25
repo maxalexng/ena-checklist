@@ -85,6 +85,13 @@ test.describe("PC sum schedule", () => {
     await openStep(page);
     await expect(page.getByText("No PC sums on this project yet.")).toBeVisible();
 
+    // Locked, the load button is hidden, so the empty state says how to get it back.
+    await page.getByRole("button", { name: "🔓 Unlocked" }).click();
+    await expect(page.getByText("Unlock the project to load the standard PC sum list.")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Load the standard PC sum list" })).toHaveCount(0);
+    await page.getByRole("button", { name: "🔒 Locked" }).click();
+    await expect(page.getByText("Unlock the project to load the standard PC sum list.")).toHaveCount(0);
+
     await page.getByRole("button", { name: "Load the standard PC sum list" }).click();
     await expect(page.locator(".pc-row")).toHaveCount(DEFAULT_PC_SUM_ITEMS.length);
   });

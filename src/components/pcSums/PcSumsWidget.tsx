@@ -219,7 +219,10 @@ export function PcSumsWidget({
     <div className="pc-sums">
       {pcSums.length === 0 ? (
         <div className="pc-empty">
-          <span className="ov-empty">No PC sums on this project yet.</span>
+          <span className="ov-empty">
+            No PC sums on this project yet.
+            {locked && " Unlock the project to load the standard PC sum list."}
+          </span>
           {!locked && (
             <button
               type="button"
