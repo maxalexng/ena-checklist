@@ -1,6 +1,52 @@
 import { describe, expect, it } from "vitest";
 import { STAGES, STEPS, defaultStepOrder } from "@/template";
-import { effectiveStepOrder, flattenSteps, moveStepInOrder, orderedStageGroups, stageOfStep } from "./grouping";
+import {
+  applyStepMove,
+  effectiveStepOrder,
+  flattenSteps,
+  moveStepInOrder,
+  orderedStageGroups,
+  stageOfStep,
+} from "./grouping";
+
+describe("applyStepMove", () => {
+  const groups = orderedStageGroups(null, {}, true);
+  const preDesignIds = groups.find((g) => g.stage.id === "pre-design")!.steps.map((s) => s.id);
+  const conceptIds = groups.find((g) => g.stage.id === "concept")!.steps.map((s) => s.id);
+
+  it("swaps within a stage and leaves the stage overrides as they were", () => {
+    const overrides = { [STEPS[STEPS.length - 1].id]: "csc" };
+    const result = applyStepMove(null, overrides, preDesignIds[0], 1)!;
+    expect(result.order.slice(0, 2)).toEqual([preDesignIds[1], preDesignIds[0]]);
+    expect(result.stepStage).toBe(overrides);
+  });
+
+  it("records the new stage when the step crosses a stage boundary", () => {
+    const last = preDesignIds[preDesignIds.length - 1];
+    const result = applyStepMove(null, {}, last, 1)!;
+    expect(result.stepStage).toEqual({ [last]: "concept" });
+    const conceptNow = orderedStageGroups(result.order, result.stepStage).find((g) => g.stage.id === "concept")!;
+    expect(conceptNow.steps[0].id).toBe(last);
+  });
+
+  it("applies the move on top of an order someone else already changed", () => {
+    // Another person moved Concept's first step up into Pre-Design; this move builds on theirs.
+    const theirs = applyStepMove(null, {}, conceptIds[0], -1)!;
+    const ours = applyStepMove(theirs.order, theirs.stepStage, preDesignIds[0], 1)!;
+    expect(ours.stepStage).toEqual({ [conceptIds[0]]: "pre-design" });
+    const preDesignNow = orderedStageGroups(ours.order, ours.stepStage).find((g) => g.stage.id === "pre-design")!;
+    expect(preDesignNow.steps.map((s) => s.id)).toEqual([
+      preDesignIds[1],
+      preDesignIds[0],
+      ...preDesignIds.slice(2),
+      conceptIds[0],
+    ]);
+  });
+
+  it("returns null when the step can't move that way", () => {
+    expect(applyStepMove(null, {}, preDesignIds[0], -1)).toBeNull();
+  });
+});
 
 describe("effectiveStepOrder", () => {
   it("returns the full template default order when nothing is saved", () => {

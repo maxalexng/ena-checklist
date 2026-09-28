@@ -99,6 +99,9 @@ export interface ProjectChecklistData {
   itemFilesByItem: Record<string, ItemFileEntry>;
 }
 
+/** The single shared_settings row (migration 0008). */
+export const SHARED_SETTINGS_ID = "global";
+
 export function projectDataQueryKey(projectId: string) {
   return ["project-data", projectId] as const;
 }
@@ -109,7 +112,7 @@ export function useProjectData(projectId: string) {
     queryFn: async (): Promise<ProjectChecklistData> => {
       const supabase = createClient();
 
-      const [projectRes, itemsRes, rolesRes, milestonesRes, consultantsRes, pcSumsRes, timelinePlanRes] = await Promise.all([
+      const [projectRes, itemsRes, rolesRes, milestonesRes, consultantsRes, pcSumsRes, timelinePlanRes, sharedRes] = await Promise.all([
         supabase
           .from("projects")
           .select(
@@ -126,6 +129,7 @@ export function useProjectData(projectId: string) {
           .select("id, item, supplier, selection, amount, client_confirmed, na, note, sort_order")
           .eq("project_id", projectId),
         supabase.from("timeline_plan").select("step_key, start_date, end_date").eq("project_id", projectId),
+        supabase.from("shared_settings").select("step_order, step_stage").eq("id", SHARED_SETTINGS_ID).maybeSingle(),
       ]);
 
       if (projectRes.error) throw projectRes.error;
@@ -135,6 +139,7 @@ export function useProjectData(projectId: string) {
       if (consultantsRes.error) throw consultantsRes.error;
       if (pcSumsRes.error) throw pcSumsRes.error;
       if (timelinePlanRes.error) throw timelinePlanRes.error;
+      if (sharedRes.error) throw sharedRes.error;
 
       const itemsByKey: Record<string, ItemRecord> = {};
       (itemsRes.data ?? []).forEach((row) => {
@@ -271,9 +276,11 @@ export function useProjectData(projectId: string) {
           contractPeriodMonths: projectRes.data.contract_period_months,
           contractSum: projectRes.data.contract_sum,
           currentStage: projectRes.data.current_stage,
-          step_order: projectRes.data.step_order,
+          // Step order and stage moves are shared across every project (shared_settings),
+          // not the project's own step_order/step_stage columns — see migration 0008.
+          step_order: sharedRes.data?.step_order ?? null,
           item_order: projectRes.data.item_order,
-          step_stage: (projectRes.data.step_stage as Record<string, string>) ?? {},
+          step_stage: (sharedRes.data?.step_stage as Record<string, string>) ?? {},
           assignments_locked: projectRes.data.assignments_locked,
           projectDates: projectRes.data.project_dates,
           listPresets: (projectRes.data.list_presets as Record<string, string[]>) ?? {},

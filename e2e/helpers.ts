@@ -58,6 +58,38 @@ export async function createTestProject(input: NewProjectInput) {
   return createProject(adminClient(), input, null);
 }
 
+/** The step order is shared by every project (shared_settings, migration 0008) — including
+ * the real ones in the same Supabase project these tests run against. Specs that assume the
+ * template's default order, or that move steps, save the live order first, reset it to the
+ * default, and put the saved one back afterwards. Real users see the default order for the
+ * length of those specs. */
+export async function saveSharedStepOrder(): Promise<() => Promise<void>> {
+  const supabase = adminClient();
+  const { data, error } = await supabase
+    .from("shared_settings")
+    .select("step_order, step_stage")
+    .eq("id", "global")
+    .maybeSingle();
+  if (error) throw error;
+  return async () => {
+    const { error: restoreError } = await supabase.from("shared_settings").upsert({
+      id: "global",
+      step_order: data?.step_order ?? null,
+      step_stage: data?.step_stage ?? {},
+      updated_at: new Date().toISOString(),
+    });
+    if (restoreError) throw restoreError;
+  };
+}
+
+export async function resetSharedStepOrder() {
+  const supabase = adminClient();
+  const { error } = await supabase
+    .from("shared_settings")
+    .upsert({ id: "global", step_order: null, step_stage: {}, updated_at: new Date().toISOString() });
+  if (error) throw error;
+}
+
 export async function setProjectFields(projectId: string, fields: Record<string, unknown>) {
   const supabase = adminClient();
   const { error } = await supabase.from("projects").update(fields).eq("id", projectId);

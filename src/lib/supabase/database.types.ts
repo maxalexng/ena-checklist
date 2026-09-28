@@ -174,6 +174,17 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["pc_sums"]["Row"]>;
         Relationships: [];
       };
+      shared_settings: {
+        Row: {
+          id: string;
+          step_order: string[] | null;
+          step_stage: Record<string, string>;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["shared_settings"]["Row"]>;
+        Update: Partial<Database["public"]["Tables"]["shared_settings"]["Row"]>;
+        Relationships: [];
+      };
       timeline_plan: {
         Row: {
           project_id: string;

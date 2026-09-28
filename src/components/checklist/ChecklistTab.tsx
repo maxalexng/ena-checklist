@@ -1,10 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { effectiveStepOrder, flattenSteps, moveStepInOrder, orderedStageGroups } from "@/lib/checklist/grouping";
+import { flattenSteps, orderedStageGroups } from "@/lib/checklist/grouping";
 import type { ProjectChecklistData } from "@/hooks/useProjectData";
 import { STAGES } from "@/template";
-import { useUpdateStepOrderAndStage } from "@/hooks/useChecklistMutations";
+import { useMoveSharedStep } from "@/hooks/useChecklistMutations";
 import { StepCard } from "./StepCard";
 import { ChecklistRail } from "./ChecklistRail";
 
@@ -19,18 +19,10 @@ export function ChecklistTab({ projectId, data }: { projectId: string; data: Pro
     steps: {},
   });
   const [jumpMessage, setJumpMessage] = useState<string | null>(null);
-  const updateStepOrderAndStage = useUpdateStepOrderAndStage(projectId);
+  const moveSharedStep = useMoveSharedStep(projectId);
 
   const groups = useMemo(
     () => orderedStageGroups(data.project.step_order, data.project.step_stage),
-    [data.project.step_order, data.project.step_stage]
-  );
-
-  // Includes stages a project has emptied out by moving every step elsewhere — moveStep
-  // needs those as valid crossing targets; the render below still uses `groups` (filtered)
-  // so an empty stage doesn't show a bare section header with nothing under it.
-  const allGroups = useMemo(
-    () => orderedStageGroups(data.project.step_order, data.project.step_stage, true),
     [data.project.step_order, data.project.step_stage]
   );
 
@@ -106,14 +98,9 @@ export function ChecklistTab({ projectId, data }: { projectId: string; data: Pro
     updateCollapsed(() => next);
   }
 
+  // The step order is shared by every project, so this moves the step everywhere.
   function moveStep(stepId: string, direction: -1 | 1) {
-    const order = effectiveStepOrder(data.project.step_order);
-    const result = moveStepInOrder(order, allGroups, stepId, direction);
-    if (!result) return;
-    const stepStage = result.stageId
-      ? { ...data.project.step_stage, [stepId]: result.stageId }
-      : data.project.step_stage;
-    updateStepOrderAndStage.mutate({ order: result.order, stepStage });
+    moveSharedStep.mutate({ stepId, direction });
   }
 
   function jumpToNextTodo() {

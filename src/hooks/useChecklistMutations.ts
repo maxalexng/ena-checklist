@@ -1,8 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
-import { projectDataQueryKey } from "./useProjectData";
+import { SHARED_SETTINGS_ID, projectDataQueryKey } from "./useProjectData";
 import type { ItemRecord, ProjectChecklistData } from "./useProjectData";
 import type { ItemStatus } from "@/template";
+import { applyStepMove } from "@/lib/checklist/grouping";
 
 /** All checklist mutations share the same "write, then refetch this project's data" shape
  * — the dataset is small (a few hundred rows) so a full refetch is cheap and simple. Pass
@@ -154,29 +155,59 @@ export function useRemoveAssign(projectId: string) {
   });
 }
 
-/** step_order and step_stage are both plain columns (JSONB, but always written whole) — no
- * merge race here since the caller (ChecklistTab) always computes both from the full current
- * state via moveStepInOrder(), not a partial patch. Written together in one call: a step
- * crossing into a different stage needs both updated atomically, or a mid-way failure could
- * leave a step's order position out of sync with its stage. `stepStage` is the full override
- * map either way (moveStepInOrder only returns a new stageId when the step actually crossed
- * a stage boundary — ChecklistTab passes the existing map unchanged otherwise). */
-export function useUpdateStepOrderAndStage(projectId: string) {
+/** Moves a step one place up/down in the step order shared by every project
+ * (shared_settings, migration 0008), so a move on one project moves it on all of them.
+ * Several people reorder at once, so the move is re-applied to the freshest shared row just
+ * before writing rather than trusting the order this screen last loaded, and moves are
+ * serialised (`scope`) so a quick run of clicks can't read the same row and drop one
+ * another's writes. step_order and step_stage are written together: a step crossing into a
+ * different stage needs both updated at once. */
+export function useMoveSharedStep(projectId: string) {
   const supabase = createClient();
-  return useProjectMutation<{ order: string[]; stepStage: Record<string, string> }>(
-    projectId,
-    async ({ order, stepStage }) => {
-      const { error } = await supabase
-        .from("projects")
-        .update({ step_order: order, step_stage: stepStage })
-        .eq("id", projectId);
+  const queryClient = useQueryClient();
+  const queryKey = projectDataQueryKey(projectId);
+  return useMutation({
+    scope: { id: "shared-step-order" },
+    mutationFn: async ({ stepId, direction }: { stepId: string; direction: -1 | 1 }) => {
+      const { data: current, error: readError } = await supabase
+        .from("shared_settings")
+        .select("step_order, step_stage")
+        .eq("id", SHARED_SETTINGS_ID)
+        .maybeSingle();
+      if (readError) throw readError;
+      const next = applyStepMove(current?.step_order ?? null, current?.step_stage ?? {}, stepId, direction);
+      if (!next) return;
+      const { error } = await supabase.from("shared_settings").upsert({
+        id: SHARED_SETTINGS_ID,
+        step_order: next.order,
+        step_stage: next.stepStage,
+        updated_at: new Date().toISOString(),
+      });
       if (error) throw error;
-    }
-  );
+    },
+    onMutate: async ({ stepId, direction }) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<ProjectChecklistData>(queryKey);
+      const next =
+        previous && applyStepMove(previous.project.step_order, previous.project.step_stage, stepId, direction);
+      if (previous && next) {
+        queryClient.setQueryData(queryKey, {
+          ...previous,
+          project: { ...previous.project, step_order: next.order, step_stage: next.stepStage },
+        });
+      }
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(queryKey, context.previous);
+    },
+    // Every project's cached data carries the shared order, not just this one's.
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["project-data"] }),
+  });
 }
 
-/** Same shape as useUpdateStepOrder, for item_order — the caller (StepCard) always computes
- * the new array from the full current order via moveItemInOrder(). */
+/** Per-project item order (not shared, unlike the step order) — the caller (StepCard) always
+ * computes the new array from the full current order via moveItemInOrder(). */
 export function useUpdateItemOrder(projectId: string) {
   const supabase = createClient();
   return useProjectMutation<string[]>(projectId, async (order) => {

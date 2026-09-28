@@ -2,8 +2,9 @@ import type { StepOrderTriple } from "./types";
 
 // Linear project sequence: the order a real project actually clears these submissions in,
 // regardless of which governing body handles each one. Each entry is
-// [stageId, agencyId, submissionCode] — the stageId is only the default grouping; a step's
-// live stage can be overridden per-project (project_step_stage) once dragged.
+// [stageId, agencyId, submissionCode] — the stageId is only the default grouping. While the
+// office settles on a standard, the live order and stage moves come from one row shared by
+// every project (shared_settings, migration 0008); once final, bake that order in here.
 export const STEP_ORDER: StepOrderTriple[] = [
   ["pre-design", "admin", "INTAKE"],
   ["pre-design", "corenet", "TEAM"],

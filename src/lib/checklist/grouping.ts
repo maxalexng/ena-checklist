@@ -113,3 +113,26 @@ export function moveStepInOrder(
   next.splice(insertAt, 0, stepId);
   return { order: next, stageId: targetGroup.stage.id };
 }
+
+/** One ▲/▼ press applied to a saved order + stage override map, returning both to persist
+ * (or null if the step can't move that way). Takes the raw saved values so the step order
+ * mutation can re-apply the move to the freshest shared order just before writing — the
+ * order is shared across every project, so the screen it was clicked on may be stale. */
+export function applyStepMove(
+  savedOrder: string[] | null,
+  stepStage: Record<string, string>,
+  stepId: string,
+  direction: -1 | 1
+): { order: string[]; stepStage: Record<string, string> } | null {
+  const result = moveStepInOrder(
+    effectiveStepOrder(savedOrder),
+    orderedStageGroups(savedOrder, stepStage, true),
+    stepId,
+    direction
+  );
+  if (!result) return null;
+  return {
+    order: result.order,
+    stepStage: result.stageId ? { ...stepStage, [stepId]: result.stageId } : stepStage,
+  };
+}

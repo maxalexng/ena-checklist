@@ -1,12 +1,40 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { STEPS } from "../src/template";
-import { adminClient, createTestProject, deleteProjectByReference, uniqueE2eReference } from "./helpers";
+import {
+  adminClient,
+  createTestProject,
+  deleteProjectByReference,
+  resetSharedStepOrder,
+  saveSharedStepOrder,
+  uniqueE2eReference,
+} from "./helpers";
+
+/** Resolves once a step move has been written to the shared order. The move shows on screen
+ * before it's saved (optimistic), so a reload or navigation must wait for this or it cancels
+ * the save mid-flight. */
+function sharedOrderSaved(page: Page) {
+  return page.waitForResponse(
+    (res) => res.url().includes("/shared_settings") && res.request().method() === "POST" && res.ok()
+  );
+}
 
 test.describe("Checklist rail navigation and step reordering", () => {
   let reference: string;
   let projectId: string;
+  let restoreSharedStepOrder: () => Promise<void>;
+
+  test.beforeAll(async () => {
+    restoreSharedStepOrder = await saveSharedStepOrder();
+  });
+
+  test.afterAll(async () => {
+    await restoreSharedStepOrder();
+  });
 
   test.beforeEach(async ({ page }) => {
+    // Every test starts from the template's default order — the order is shared, so a
+    // previous test's move would otherwise carry over.
+    await resetSharedStepOrder();
     reference = uniqueE2eReference("rail");
     const project = await createTestProject({ reference, title: "Rail Test Project" });
     projectId = project.id;
@@ -52,18 +80,40 @@ test.describe("Checklist rail navigation and step reordering", () => {
     const [firstBefore, secondBefore] = beforeNames;
 
     const firstCard = page.locator(".agency").first();
+    const saved = sharedOrderSaved(page);
     await firstCard.locator(".step-move-btn").nth(1).click(); // ▼ is the second button
 
-    // Auto-retrying: waits for the mutation's refetch + re-render to actually land instead
-    // of racing a fixed sleep against real network latency.
     await expect(firstStageGroup.locator(".rail-name").first()).toHaveText(secondBefore);
     await expect(firstStageGroup.locator(".rail-name").nth(1)).toHaveText(firstBefore);
+    await saved;
 
     await page.reload();
     await page.getByRole("button", { name: "Checklist" }).click();
     const reloadedGroup = page.locator(".rail").locator(".rail-stage-group").first();
     await expect(reloadedGroup.locator(".rail-name").first()).toHaveText(secondBefore);
     await expect(reloadedGroup.locator(".rail-name").nth(1)).toHaveText(firstBefore);
+  });
+
+  test("moving a step on one project moves it on every other project too", async ({ page }) => {
+    const otherReference = uniqueE2eReference("rail-other");
+    const other = await createTestProject({ reference: otherReference, title: "Rail Test Other Project" });
+    try {
+      const firstStageGroup = page.locator(".rail .rail-stage-group").first();
+      const [firstBefore, secondBefore] = await firstStageGroup.locator(".rail-name").allTextContents();
+
+      const saved = sharedOrderSaved(page);
+      await page.locator(".agency").first().locator(".step-move-btn").nth(1).click(); // ▼
+      await expect(firstStageGroup.locator(".rail-name").first()).toHaveText(secondBefore);
+      await saved;
+
+      await page.goto(`/projects/${other.id}`);
+      await page.getByRole("button", { name: "Checklist" }).click();
+      const otherGroup = page.locator(".rail .rail-stage-group").first();
+      await expect(otherGroup.locator(".rail-name").first()).toHaveText(secondBefore);
+      await expect(otherGroup.locator(".rail-name").nth(1)).toHaveText(firstBefore);
+    } finally {
+      await deleteProjectByReference(otherReference);
+    }
   });
 
   test("moving a step renumbers step N sequentially with no gaps", async ({ page }) => {
@@ -118,12 +168,14 @@ test.describe("Checklist rail navigation and step reordering", () => {
     const lastPreDesignCard = preDesignGroup.locator(".agency").last();
     await expect(lastPreDesignCard).toContainText("Singapore Land Authority");
 
+    const saved = sharedOrderSaved(page);
     await lastPreDesignCard.locator(".step-move-btn").nth(1).click(); // ▼
 
     const conceptGroup = page.locator(".stage").filter({ has: page.locator(".stage-label", { hasText: "Stage 2" }) });
     const firstConceptCard = conceptGroup.locator(".agency").first();
     await expect(firstConceptCard).toContainText("Singapore Land Authority");
     await expect(firstConceptCard.locator(".stage-tag")).toHaveText("Concept Design");
+    await saved;
 
     await page.reload();
     await page.getByRole("button", { name: "Checklist" }).click();

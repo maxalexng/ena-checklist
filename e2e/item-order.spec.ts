@@ -1,8 +1,25 @@
 import { expect, test } from "@playwright/test";
-import { createTestProject, deleteProjectByReference, uniqueE2eReference } from "./helpers";
+import {
+  createTestProject,
+  deleteProjectByReference,
+  resetSharedStepOrder,
+  saveSharedStepOrder,
+  uniqueE2eReference,
+} from "./helpers";
 
 test.describe("Reordering items within a step", () => {
   let reference: string;
+  let restoreSharedStepOrder: () => Promise<void>;
+
+  // The "4a." labels below assume the template's default step order.
+  test.beforeAll(async () => {
+    restoreSharedStepOrder = await saveSharedStepOrder();
+    await resetSharedStepOrder();
+  });
+
+  test.afterAll(async () => {
+    await restoreSharedStepOrder();
+  });
 
   test.beforeEach(async ({ page }) => {
     reference = uniqueE2eReference("itemorder");
