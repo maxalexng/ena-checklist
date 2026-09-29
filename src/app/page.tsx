@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { sortProjectsByRoad } from "@/lib/projects/sortProjects";
 import { signOut } from "./login/actions";
 
 export default async function DashboardPage() {
@@ -8,11 +9,11 @@ export default async function DashboardPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: projects } = await supabase
+  const { data } = await supabase
     .from("projects")
     .select("id, reference, title, address, current_stage, archived")
-    .eq("archived", false)
-    .order("created_at", { ascending: false });
+    .eq("archived", false);
+  const projects = data && sortProjectsByRoad(data);
 
   return (
     <div className="shell">
