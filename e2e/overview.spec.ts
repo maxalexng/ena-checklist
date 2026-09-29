@@ -1,5 +1,10 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { createTestProject, deleteProjectByReference, uniqueE2eReference } from "./helpers";
+
+/** The .ov-row whose own label is exactly `label` — other rows' hint text can mention it. */
+function overviewRow(page: Page, label: string) {
+  return page.locator(".ov-row").filter({ has: page.locator(".ov-label", { hasText: new RegExp(`^${label}$`) }) });
+}
 
 test.describe("Overview tab", () => {
   let reference: string;
@@ -33,16 +38,63 @@ test.describe("Overview tab", () => {
     await expect(reloadedRow.locator("input[type=date]")).toHaveValue("2024-07-09");
   });
 
-  test("adding an Extension of Time updates the adjusted completion date", async ({ page }) => {
-    const completionRow = page.locator(".ov-row", { hasText: "Target Practical Completion" });
+  test("the AI reference sits inside the Actual Contract Start row and persists", async ({ page }) => {
+    const contractStartRow = page.locator(".ov-row", { hasText: "Actual Contract Start" });
+    const aiRef = contractStartRow.getByLabel("AI Reference (regularising start)");
+    await aiRef.fill("AI/2024/0123");
+    await expect(page.locator(".ov-row", { hasText: "AI Reference" })).toHaveCount(1);
+
+    await page.reload();
+    await expect(
+      page.locator(".ov-row", { hasText: "Actual Contract Start" }).getByLabel("AI Reference (regularising start)"),
+    ).toHaveValue("AI/2024/0123");
+  });
+
+  test("EOTs are tallied and added to the target practical completion", async ({ page }) => {
+    const completionRow = overviewRow(page, "Target Practical Completion");
     await completionRow.locator("input[type=date]").fill("2026-06-30");
+
+    const tally = page.locator(".ov-ext-total");
+    await expect(tally).toHaveCount(0);
 
     await page.locator("#eot-add-title").fill("EOT 1 - Adverse Weather");
     await page.locator("#eot-add-days").fill("10");
     await page.getByRole("button", { name: "+ Add EOT" }).click();
+    await expect(tally).toContainText("Total: 1 EOT issued · 10 days awarded");
+    await expect(tally).toContainText("Extended Completion: 10 07 2026");
 
-    const adjustedRow = page.locator(".ov-row", { hasText: "Adjusted Completion" });
-    await expect(adjustedRow.getByText("10 07 2026 (+10 days EOT)")).toBeVisible();
+    await page.locator("#eot-add-title").fill("EOT 2 - Late Utility Diversion");
+    await page.locator("#eot-add-days").fill("5");
+    await page.getByRole("button", { name: "+ Add EOT" }).click();
+    await expect(tally).toContainText("Total: 2 EOTs issued · 15 days awarded");
+    await expect(tally).toContainText("Extended Completion: 15 07 2026");
+    await expect(tally).toContainText("Target Practical Completion 30 06 2026 + 15 days");
+  });
+
+  test("actual completion shows days late against the extended completion date", async ({ page }) => {
+    const actualRow = overviewRow(page, "Actual Completion");
+    await expect(actualRow).toContainText("Set a Target Practical Completion to track days late.");
+
+    await overviewRow(page, "Target Practical Completion").locator("input[type=date]").fill("2026-06-30");
+    await page.locator("#eot-add-title").fill("EOT 1 - Adverse Weather");
+    await page.locator("#eot-add-days").fill("10");
+    await page.getByRole("button", { name: "+ Add EOT" }).click();
+    await expect(page.locator(".ov-ext-total")).toContainText("Extended Completion: 10 07 2026");
+
+    await actualRow.locator("input[type=date]").fill("2026-07-25");
+    const badge = actualRow.locator(".completion-delay");
+    await expect(badge).toHaveText("Completed 15 days late");
+    await expect(badge).toHaveClass(/\burgent\b/);
+    await expect(actualRow).toContainText("vs Extended Completion 10 07 2026");
+
+    await actualRow.locator("input[type=date]").fill("2026-07-08");
+    await expect(badge).toHaveText("Completed 2 days early");
+    await expect(badge).toHaveClass(/\bok\b/);
+
+    await page.reload();
+    const reloaded = overviewRow(page, "Actual Completion");
+    await expect(reloaded.locator("input[type=date]")).toHaveValue("2026-07-08");
+    await expect(reloaded.locator(".completion-delay")).toHaveText("Completed 2 days early");
   });
 
   test("adding a milestone log entry shows up under the right section", async ({ page }) => {

@@ -72,6 +72,37 @@ export function adjustedCompletionDate(dates: ProjectDates): string | null {
   return toIsoDate(addDays(dates.practicalCompletion, total));
 }
 
+export interface CompletionDelay {
+  /** Extended completion date (TPC + EOTs) the delay is measured against. */
+  extendedDate: string;
+  /** True once an actual completion date is recorded; otherwise measured against today. */
+  completed: boolean;
+  /** Days past the extended date: positive = late, zero or negative = on time / early
+   * (for a project still running, negative is the days still to go). */
+  daysLate: number;
+  status: PpExpiryStatus;
+}
+
+/** Warn (amber) when an unfinished project is this close to its extended completion date. */
+const COMPLETION_WARNING_DAYS = 30;
+
+/** Days late against the extended completion date (SIA: liquidated damages run from the
+ * extended date until actual completion). Before completion, measures against `today` so
+ * an overrunning job shows how far out it already is. Null without a TPC to measure from. */
+export function completionDelay(dates: ProjectDates, today: Date = todayUtcMidnight()): CompletionDelay | null {
+  const extendedDate = adjustedCompletionDate(dates);
+  if (!extendedDate) return null;
+  const extended = new Date(extendedDate + "T00:00:00Z").getTime();
+  const completed = !!dates.actualCompletion;
+  const end = completed ? new Date(dates.actualCompletion + "T00:00:00Z").getTime() : today.getTime();
+  const daysLate = Math.round((end - extended) / 86_400_000);
+  let status: PpExpiryStatus;
+  if (daysLate > 0) status = "urgent";
+  else if (completed || -daysLate > COMPLETION_WARNING_DAYS) status = "ok";
+  else status = "soon";
+  return { extendedDate, completed, daysLate, status };
+}
+
 // "urgent" covers both "in the final red window before expiry" and "actually past expiry"
 // — same red treatment for both, per how this is meant to read at a glance (see
 // ppWpExpiryInfo's warningDate/urgentDate). Whether it's literally overdue is a separate

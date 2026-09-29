@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   adjustedCompletionDate,
+  completionDelay,
   eotTotalDays,
   formatDateDMY,
   loaSuggestedStart,
@@ -108,6 +109,41 @@ describe("adjustedCompletionDate", () => {
 
   it("returns null when practicalCompletion isn't set", () => {
     expect(adjustedCompletionDate(baseDates({ eot: [{ title: "x", days: 5 }] }))).toBeNull();
+  });
+});
+
+describe("completionDelay", () => {
+  const today = new Date("2026-08-01T00:00:00Z");
+  const withEot = (overrides: Partial<ProjectDates> = {}) =>
+    baseDates({ practicalCompletion: "2026-06-30", eot: [{ title: "EOT 1", days: 10 }], ...overrides });
+
+  it("returns null without a target practical completion", () => {
+    expect(completionDelay(baseDates({ actualCompletion: "2026-07-01" }), today)).toBeNull();
+  });
+
+  it("counts days late from the extended date (TPC + EOTs) to actual completion", () => {
+    const d = completionDelay(withEot({ actualCompletion: "2026-07-25" }), today)!;
+    expect(d.extendedDate).toBe("2026-07-10");
+    expect(d.completed).toBe(true);
+    expect(d.daysLate).toBe(15);
+    expect(d.status).toBe("urgent");
+  });
+
+  it("reports finishing on or before the extended date as ok", () => {
+    expect(completionDelay(withEot({ actualCompletion: "2026-07-10" }), today)).toMatchObject({ daysLate: 0, status: "ok" });
+    expect(completionDelay(withEot({ actualCompletion: "2026-07-05" }), today)).toMatchObject({ daysLate: -5, status: "ok" });
+  });
+
+  it("measures an unfinished job against today", () => {
+    const overdue = completionDelay(withEot(), today)!;
+    expect(overdue.completed).toBe(false);
+    expect(overdue.daysLate).toBe(22); // 10 Jul → 1 Aug
+    expect(overdue.status).toBe("urgent");
+  });
+
+  it("warns within 30 days of the extended date, ok further out", () => {
+    expect(completionDelay(withEot(), new Date("2026-06-20T00:00:00Z"))).toMatchObject({ daysLate: -20, status: "soon" });
+    expect(completionDelay(withEot(), new Date("2026-05-01T00:00:00Z"))!.status).toBe("ok");
   });
 });
 

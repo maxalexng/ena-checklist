@@ -850,6 +850,14 @@
   .ov-del:hover{ background:var(--danger-soft); color:var(--danger); }
   .ov-ext-list{ display:flex; flex-direction:column; gap:2px; margin:4px 0 8px; }
   .ov-ext-row{ display:flex; align-items:center; gap:8px; font-size:12.3px; }
+  .ov-ext-total{
+    display:flex; flex-direction:column; gap:3px; font-size:12.3px; color:var(--ink-soft);
+    border-top:1px solid var(--line); padding-top:6px; margin:0 0 10px;
+  }
+  .ov-ext-total strong{ color:var(--ink); }
+  .ov-sub-row{ flex-basis:100%; display:flex; align-items:center; flex-wrap:wrap; gap:10px; padding-left:14px; }
+  .ov-sub-label{ font-size:11.5px; color:var(--ink-soft); flex:none; }
+  .completion-delay{ font-size:11.5px; font-weight:600; padding:3px 8px; }
   .ov-ext-ord{ font-family:'IBM Plex Mono',monospace; color:var(--ink-faint); min-width:44px; }
   .ov-hint{ font-size:11px; color:var(--ink-faint); margin-top:6px; }
   .ov-amend-wrap{

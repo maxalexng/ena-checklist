@@ -8,6 +8,8 @@ export interface ProjectDates {
   contractStart: string;
   practicalCompletion: string;
   practicalCompletionNote: string;
+  /** Optional: added after 0001_init, so older projects' JSONB doesn't have it. */
+  actualCompletion?: string;
   contractSigned: string;
   loaSigned: string;
   loaBasisType: "months" | "approval";
