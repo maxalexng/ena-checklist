@@ -66,6 +66,36 @@ export async function createProject(
   return project;
 }
 
+/** How long after creating a project a resubmit of the same form counts as a duplicate. */
+export const DUPLICATE_CREATE_WINDOW_MS = 2 * 60 * 1000;
+
+/** The project this user just created with the same reference and title, if it was within
+ * DUPLICATE_CREATE_WINDOW_MS — a resubmit of the New Project form (a second click while the
+ * first was still seeding, or Back and submit again) should land on that project, not make
+ * another copy. Reference alone isn't unique on purpose: colleagues can open separate
+ * projects under one job reference. */
+export async function findRecentDuplicateProject(
+  supabase: SupabaseClient<Database>,
+  input: NewProjectInput,
+  userId: string | null,
+  now: Date = new Date()
+): Promise<{ id: string } | null> {
+  if (!userId) return null;
+  const since = new Date(now.getTime() - DUPLICATE_CREATE_WINDOW_MS).toISOString();
+  const { data, error } = await supabase
+    .from("projects")
+    .select("id")
+    .eq("created_by", userId)
+    .eq("reference", input.reference)
+    .eq("title", input.title ?? "")
+    .gte("created_at", since)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
 /** The standard PC sum list as pc_sums rows — used when a project is created, and to load
  * the list into a project created before the PC sum schedule existed. */
 export function pcSumRows(projectId: string) {

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createProjectAction } from "./actions";
+import { CreateProjectButton } from "./CreateProjectButton";
 
 export default async function NewProjectPage({
   searchParams,
@@ -65,9 +66,7 @@ export default async function NewProjectPage({
         {error && <div style={{ color: "var(--danger)", fontSize: "13px" }}>{error}</div>}
 
         <div style={{ display: "flex", gap: "10px" }}>
-          <button type="submit" className="roles-add-btn" style={{ padding: "9px 14px" }}>
-            Create project
-          </button>
+          <CreateProjectButton />
           <Link href="/" className="summary-btn" style={{ display: "inline-flex", alignItems: "center" }}>
             Cancel
           </Link>

@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { createProject } from "@/lib/projects/createProject";
+import { createProject, findRecentDuplicateProject } from "@/lib/projects/createProject";
 
 export async function createProjectAction(formData: FormData) {
   const reference = String(formData.get("reference") || "").trim();
@@ -19,7 +19,10 @@ export async function createProjectAction(formData: FormData) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const project = await createProject(supabase, { reference, title, address, initialism }, user?.id ?? null);
+  const input = { reference, title, address, initialism };
+  const userId = user?.id ?? null;
+  const project =
+    (await findRecentDuplicateProject(supabase, input, userId)) ?? (await createProject(supabase, input, userId));
 
   redirect(`/projects/${project.id}`);
 }
