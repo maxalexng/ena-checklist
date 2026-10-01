@@ -10,7 +10,7 @@
 // bump n and drop any letter suffix. "R<n><letter>" for a smaller revision within that
 // cycle (a wording tweak, a logo swap, a bug fix) — keep n, advance the letter.
 // Never renumber a revision once published.
-export const TEMPLATE_VERSION = "R19";
+export const TEMPLATE_VERSION = "R19a";
 
 export interface ChangelogEntry {
   rev: string;
@@ -23,6 +23,12 @@ export interface ChangelogEntry {
 // from the HTML prototype (submissions-register-MASTER.html); entries from here on
 // describe changes made in this app.
 export const TEMPLATE_CHANGELOG: ChangelogEntry[] = [
+  {
+    rev: "R19a",
+    date: "2026-10-01",
+    summary:
+      'The standard PC sum list is now the office\'s own "ENA Checklist for Prime Cost Sum Items" (29 Oct 2025), titles only: 35 items, from Sanitary Wares & Fittings through to Metalworks, with Finishes split into floor (tiles, stone, timber), wall and ceiling. Only new projects, or a project loading the standard list into an empty schedule, get the new list; existing schedules are unchanged.',
+  },
   {
     rev: "R19",
     date: "2026-10-01",

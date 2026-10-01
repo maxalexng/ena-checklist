@@ -4,6 +4,7 @@ import { adminClient, createTestProject, deleteProjectByReference, uniqueE2eRefe
 
 const STEP = "PC Sum Schedule & Client Selections";
 const FIRST = DEFAULT_PC_SUM_ITEMS[0];
+const N = DEFAULT_PC_SUM_ITEMS.length;
 
 async function openStep(page: Page) {
   await page.getByRole("button", { name: "Checklist" }).click();
@@ -64,7 +65,7 @@ test.describe("PC sum schedule", () => {
     await page.getByLabel(`${FIRST} selection`).selectOption({ label: "Specified in contract" });
     await expect(amount).toHaveText("In contract");
     await expect(page.locator(".pc-summary")).toHaveText(
-      `1 of 18 decided · 0 confirmed by client · 1 specified in contract · Total allowances S$0 (17 not priced yet)`
+      `1 of ${N} decided · 0 confirmed by client · 1 specified in contract · Total allowances S$0 (${N - 1} not priced yet)`
     );
 
     await page.reload();
@@ -85,7 +86,7 @@ test.describe("PC sum schedule", () => {
     await page.getByLabel(`${FIRST} amount`).blur();
     await expect(page.getByLabel(`${FIRST} amount`)).toHaveValue("18,500");
     await page.getByLabel(`${FIRST} confirmed by client`).check();
-    await expect(page.locator(".pc-summary")).toContainText("1 of 18 decided · 1 confirmed by client");
+    await expect(page.locator(".pc-summary")).toContainText(`1 of ${N} decided · 1 confirmed by client`);
     await expect(page.locator(".pc-summary")).toContainText("S$18,500");
 
     await page.reload();
@@ -105,7 +106,7 @@ test.describe("PC sum schedule", () => {
 
     await page.getByLabel(`${FIRST} not applicable`).check();
     await expect(page.locator(".pc-row").first()).toHaveClass(/pc-row-na/);
-    await expect(page.locator(".pc-summary")).toContainText("0 of 17 decided");
+    await expect(page.locator(".pc-summary")).toContainText(`0 of ${N - 1} decided`);
   });
 
   test("clicking quickly down the confirmed column never flickers a tick back off", async ({ page }) => {
@@ -159,14 +160,14 @@ test.describe("PC sum schedule", () => {
 
   test("rows can be added and removed", async ({ page }) => {
     await page.getByRole("button", { name: "+ Add PC sum" }).click();
-    await expect(page.locator(".pc-row")).toHaveCount(19);
+    await expect(page.locator(".pc-row")).toHaveCount(N + 1);
     const last = page.locator(".pc-item-input").last();
     await last.fill("Wine chiller");
     await last.blur();
     await expect(page.getByLabel("Wine chiller supplier")).toBeVisible();
 
     await page.getByRole("button", { name: "Remove Wine chiller" }).click();
-    await expect(page.locator(".pc-row")).toHaveCount(18);
+    await expect(page.locator(".pc-row")).toHaveCount(N);
   });
 
   test("a project without PC sums can load the standard list", async ({ page }) => {
