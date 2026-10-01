@@ -4,6 +4,8 @@ import { useState } from "react";
 import { STAGES } from "@/template";
 import type { ProjectChecklistData } from "@/hooks/useProjectData";
 import { useUpdateProjectInfo } from "@/hooks/useProjectInfoMutations";
+import { useUpdateProjectDates } from "@/hooks/useOverviewMutations";
+import { certifiedProgress, formatMoney, formatPercent } from "@/lib/payments/interimCertificate";
 
 export function ProjectInfoBar({ data }: { data: ProjectChecklistData }) {
   const updateInfo = useUpdateProjectInfo(data.project.id);
@@ -18,6 +20,14 @@ export function ProjectInfoBar({ data }: { data: ProjectChecklistData }) {
   const [contractPeriod, setContractPeriod] = useState(
     data.project.contractPeriodMonths != null ? String(data.project.contractPeriodMonths) : ""
   );
+
+  // Interim Certificates live in project_dates (merged atomically, see useUpdateProjectDates).
+  const updateDates = useUpdateProjectDates(data.project.id);
+  const dates = data.project.projectDates;
+  const [icLink, setIcLink] = useState(dates.icLink ?? "");
+  const [icNumber, setIcNumber] = useState(dates.icNumber ?? "");
+  const [icValueOfWorks, setIcValueOfWorks] = useState(dates.icValueOfWorks ?? "");
+  const progress = certifiedProgress(icValueOfWorks, contractSum);
 
   return (
     <div className="project-info-bar">
@@ -75,6 +85,75 @@ export function ProjectInfoBar({ data }: { data: ProjectChecklistData }) {
             onBlur={() => title !== data.project.title && updateInfo.mutate({ title })}
           />
         </label>
+      </div>
+
+      <div className="pi-row ic-row">
+        {/* A div, not a label: the Open/Copy buttons would otherwise sit inside the input's label. */}
+        <div className="pi-field pi-field-wide">
+          <span id="pi-ic-link-label">IC Folder</span>
+          <input
+            aria-labelledby="pi-ic-link-label"
+            value={icLink}
+            disabled={locked}
+            placeholder="Where the Interim Certificates are kept (path or URL)"
+            onChange={(e) => setIcLink(e.target.value)}
+            onBlur={() => icLink !== (dates.icLink ?? "") && updateDates.mutate({ icLink })}
+          />
+          {/^https?:\/\//i.test(icLink) && (
+            <a className="file-mini-btn" href={icLink} target="_blank" rel="noopener noreferrer">
+              Open ↗
+            </a>
+          )}
+          <button
+            type="button"
+            className="file-mini-btn"
+            disabled={!icLink}
+            onClick={() => navigator.clipboard.writeText(icLink).catch(() => {})}
+          >
+            Copy
+          </button>
+        </div>
+      </div>
+
+      <div className="pi-row ic-row">
+        <label className="pi-field">
+          <span>Latest IC No.</span>
+          <input
+            id="pi-ic-number"
+            value={icNumber}
+            disabled={locked}
+            placeholder="e.g. 12"
+            onChange={(e) => setIcNumber(e.target.value)}
+            onBlur={() => icNumber !== (dates.icNumber ?? "") && updateDates.mutate({ icNumber })}
+          />
+        </label>
+        <label className="pi-field">
+          <span>Value of Works Done</span>
+          <input
+            value={icValueOfWorks}
+            disabled={locked}
+            placeholder="S$0.00"
+            onChange={(e) => setIcValueOfWorks(e.target.value)}
+            onBlur={() =>
+              icValueOfWorks !== (dates.icValueOfWorks ?? "") && updateDates.mutate({ icValueOfWorks })
+            }
+          />
+        </label>
+        <div className="pi-field ic-progress">
+          {progress ? (
+            <>
+              <span className={`ms-expiry completion-delay ${progress.overContract ? "soon" : "ok"}`}>
+                {formatPercent(progress.percent)} of Contract Sum
+              </span>
+              <span className="ov-calc-note">
+                {formatMoney(progress.valueOfWorks)} / {formatMoney(progress.contractSum)}
+                {progress.overContract && " — over the Contract Sum (variations)"}
+              </span>
+            </>
+          ) : (
+            <span className="ov-calc-note">Enter the value of works and the Contract Sum to see % of contract.</span>
+          )}
+        </div>
       </div>
 
       <div className="pi-row">

@@ -190,4 +190,45 @@ test.describe("Overview tab", () => {
     await page.reload();
     await expect(page.getByRole("heading", { name: "Renamed Project Title" })).toBeVisible();
   });
+
+  test("interim certificates: folder, latest IC number and value of works against the contract sum", async ({
+    page,
+  }) => {
+    // The % updates as you type, so wait for each save to land before the next edit.
+    async function fillAndSave(label: string, value: string, endpoint = "merge_project_dates") {
+      await page.getByLabel(label).fill(value);
+      const saved = page.waitForResponse((r) => r.url().includes(endpoint) && r.ok());
+      await page.getByLabel(label).blur();
+      await saved;
+    }
+
+    const progress = page.locator(".ic-progress");
+    await expect(progress).toContainText("Enter the value of works and the Contract Sum");
+
+    await fillAndSave("IC Folder", "https://example.com/project/interim-certificates");
+    await expect(page.getByRole("link", { name: "Open ↗" })).toHaveAttribute(
+      "href",
+      "https://example.com/project/interim-certificates",
+    );
+
+    await fillAndSave("Latest IC No.", "12");
+    await fillAndSave("Contract Sum", "S$10,000,000.00", "/rest/v1/projects");
+    await fillAndSave("Value of Works Done", "9m");
+
+    await expect(progress).toContainText("90% of Contract Sum");
+    await expect(progress).toContainText("S$9,000,000.00 / S$10,000,000.00");
+    await expect(progress.locator(".ms-expiry")).toHaveClass(/\bok\b/);
+
+    // Variations can push the value of works past the contract sum.
+    await fillAndSave("Value of Works Done", "12,000,000");
+    await expect(progress).toContainText("120% of Contract Sum");
+    await expect(progress).toContainText("over the Contract Sum");
+    await expect(progress.locator(".ms-expiry")).toHaveClass(/\bsoon\b/);
+
+    await page.reload();
+    await expect(page.getByLabel("IC Folder")).toHaveValue("https://example.com/project/interim-certificates");
+    await expect(page.getByLabel("Latest IC No.")).toHaveValue("12");
+    await expect(page.getByLabel("Value of Works Done")).toHaveValue("12,000,000");
+    await expect(page.locator(".ic-progress")).toContainText("120% of Contract Sum");
+  });
 });

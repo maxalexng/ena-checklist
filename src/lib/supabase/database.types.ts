@@ -16,6 +16,11 @@ export interface ProjectDates {
   loaBasisMonths: string;
   startAiRef: string;
   eot: { title: string; days: number }[];
+  /** Interim Certificate tracking (Overview). Optional for the same reason as
+   * actualCompletion. Amounts stay as typed text, like contract_sum. */
+  icLink?: string;
+  icNumber?: string;
+  icValueOfWorks?: string;
 }
 
 // Partial because fee_calculator_inputs starts as '{}' — see defaultFeeCalculatorInputs()

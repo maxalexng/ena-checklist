@@ -758,6 +758,11 @@
   .pi-field input:focus-visible, .pi-field select:focus-visible{ outline:2px solid var(--accent); outline-offset:1px; }
   .pi-field input::placeholder{ color:var(--ink-faint); }
   #pi-contract-period{ flex:none; width:76px; }
+  #pi-ic-number{ flex:none; width:76px; }
+  .pi-field a.file-mini-btn{ flex:none; text-decoration:none; color:inherit; }
+  .pi-field .file-mini-btn{ flex:none; }
+  .ic-progress{ flex-wrap:wrap; }
+  .ic-progress .ov-calc-note{ flex:1 1 auto; }
 
   .overview-view[hidden]{ display:none; }
   .timeline-view[hidden]{ display:none; }
