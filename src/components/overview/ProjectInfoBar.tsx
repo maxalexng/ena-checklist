@@ -6,6 +6,7 @@ import type { ProjectChecklistData } from "@/hooks/useProjectData";
 import { useUpdateProjectInfo } from "@/hooks/useProjectInfoMutations";
 import { useUpdateProjectDates } from "@/hooks/useOverviewMutations";
 import { certifiedProgress, formatMoney, formatPercent } from "@/lib/payments/interimCertificate";
+import { FolderIcon } from "@/components/checklist/FileIcons";
 
 export function ProjectInfoBar({ data }: { data: ProjectChecklistData }) {
   const updateInfo = useUpdateProjectInfo(data.project.id);
@@ -24,6 +25,7 @@ export function ProjectInfoBar({ data }: { data: ProjectChecklistData }) {
   // Interim Certificates live in project_dates (merged atomically, see useUpdateProjectDates).
   const updateDates = useUpdateProjectDates(data.project.id);
   const dates = data.project.projectDates;
+  const [icFolderOpen, setIcFolderOpen] = useState(false);
   const [icLink, setIcLink] = useState(dates.icLink ?? "");
   const [icNumber, setIcNumber] = useState(dates.icNumber ?? "");
   const [icValueOfWorks, setIcValueOfWorks] = useState(dates.icValueOfWorks ?? "");
@@ -88,34 +90,20 @@ export function ProjectInfoBar({ data }: { data: ProjectChecklistData }) {
       </div>
 
       <div className="pi-row ic-row">
-        {/* A div, not a label: the Open/Copy buttons would otherwise sit inside the input's label. */}
-        <div className="pi-field pi-field-wide">
-          <span id="pi-ic-link-label">IC Folder</span>
-          <input
-            aria-labelledby="pi-ic-link-label"
-            value={icLink}
-            disabled={locked}
-            placeholder="Where the Interim Certificates are kept (path or URL)"
-            onChange={(e) => setIcLink(e.target.value)}
-            onBlur={() => icLink !== (dates.icLink ?? "") && updateDates.mutate({ icLink })}
-          />
-          {/^https?:\/\//i.test(icLink) && (
-            <a className="file-mini-btn" href={icLink} target="_blank" rel="noopener noreferrer">
-              Open ↗
-            </a>
-          )}
-          <button
-            type="button"
-            className="file-mini-btn"
-            disabled={!icLink}
-            onClick={() => navigator.clipboard.writeText(icLink).catch(() => {})}
-          >
-            Copy
-          </button>
-        </div>
-      </div>
-
-      <div className="pi-row ic-row">
+        {/* Same folder toggle as a checklist item's drawing location: hollow when empty,
+            filled once a link is saved; the panel drops onto its own line in the row. */}
+        <button
+          type="button"
+          className={`file-toggle-btn ic-folder-btn${dates.icLink ? " has-file" : ""}${icFolderOpen ? " active" : ""}`}
+          title={dates.icLink ? "Interim Certificates folder — saved" : "Interim Certificates folder — empty"}
+          aria-label={dates.icLink ? "Interim Certificates folder (saved)" : "Interim Certificates folder (empty)"}
+          onClick={() => {
+            setIcFolderOpen((v) => !v);
+            setIcLink(dates.icLink ?? "");
+          }}
+        >
+          <FolderIcon filled={!!dates.icLink} />
+        </button>
         <label className="pi-field">
           <span>Latest IC No.</span>
           <input
@@ -154,6 +142,38 @@ export function ProjectInfoBar({ data }: { data: ProjectChecklistData }) {
             <span className="ov-calc-note">Enter the value of works and the Contract Sum to see % of contract.</span>
           )}
         </div>
+        {icFolderOpen && (
+          <div className="file-panel">
+            <span className="file-panel-title">Interim Certificates folder</span>
+            <button type="button" className="file-panel-close" onClick={() => setIcFolderOpen(false)}>
+              ×
+            </button>
+            <div className="file-panel-row">
+              <input
+                className="file-link-input"
+                aria-label="Interim Certificates folder link"
+                placeholder="Where the Interim Certificates are kept (path or URL)"
+                value={icLink}
+                disabled={locked}
+                onChange={(e) => setIcLink(e.target.value)}
+                onBlur={() => icLink !== (dates.icLink ?? "") && updateDates.mutate({ icLink })}
+              />
+              {/^https?:\/\//i.test(icLink) && (
+                <a className="file-mini-btn" href={icLink} target="_blank" rel="noopener noreferrer">
+                  Open ↗
+                </a>
+              )}
+              <button
+                type="button"
+                className="file-mini-btn"
+                disabled={!icLink}
+                onClick={() => navigator.clipboard.writeText(icLink).catch(() => {})}
+              >
+                Copy
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="pi-row">

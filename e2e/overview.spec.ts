@@ -205,11 +205,15 @@ test.describe("Overview tab", () => {
     const progress = page.locator(".ic-progress");
     await expect(progress).toContainText("Enter the value of works and the Contract Sum");
 
-    await fillAndSave("IC Folder", "https://example.com/project/interim-certificates");
+    // The folder link sits behind a folder icon, like a checklist item's drawing location.
+    await expect(page.getByLabel("Interim Certificates folder link")).toHaveCount(0);
+    await page.getByRole("button", { name: "Interim Certificates folder (empty)" }).click();
+    await fillAndSave("Interim Certificates folder link", "https://example.com/project/interim-certificates");
     await expect(page.getByRole("link", { name: "Open ↗" })).toHaveAttribute(
       "href",
       "https://example.com/project/interim-certificates",
     );
+    await expect(page.getByRole("button", { name: "Interim Certificates folder (saved)" })).toHaveClass(/\bhas-file\b/);
 
     await fillAndSave("Latest IC No.", "12");
     await fillAndSave("Contract Sum", "S$10,000,000.00", "/rest/v1/projects");
@@ -226,7 +230,10 @@ test.describe("Overview tab", () => {
     await expect(progress.locator(".ms-expiry")).toHaveClass(/\bsoon\b/);
 
     await page.reload();
-    await expect(page.getByLabel("IC Folder")).toHaveValue("https://example.com/project/interim-certificates");
+    await page.getByRole("button", { name: "Interim Certificates folder (saved)" }).click();
+    await expect(page.getByLabel("Interim Certificates folder link")).toHaveValue(
+      "https://example.com/project/interim-certificates",
+    );
     await expect(page.getByLabel("Latest IC No.")).toHaveValue("12");
     await expect(page.getByLabel("Value of Works Done")).toHaveValue("12,000,000");
     await expect(page.locator(".ic-progress")).toContainText("120% of Contract Sum");
