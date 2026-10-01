@@ -10,7 +10,7 @@ import { ItemRow } from "./ItemRow";
 import { Highlight } from "./Highlight";
 import { ConsultantsWidget } from "@/components/consultants/ConsultantsWidget";
 import { DesignReviewLog } from "./DesignReviewLog";
-import { pcSumSummaryLine, summarizePcSums } from "@/lib/pcSums/pcSums";
+import { pcSumAwardLine, pcSumSummaryLine, summarizePcSums } from "@/lib/pcSums/pcSums";
 
 export function StepCard({
   projectId,
@@ -54,6 +54,7 @@ export function StepCard({
   const stepIsNa = records.length > 0 && records.every((r) => r?.na);
   const pct = applicable > 0 ? Math.round((cleared / applicable) * 100) : stepIsNa ? 100 : 0;
   const isOpen = !collapsed;
+  const pcSummary = step.isPcSumSchedule ? summarizePcSums(data.pcSums) : null;
 
   const searchBlob = [
     step.code,
@@ -211,7 +212,9 @@ export function StepCard({
         {step.isPcSumSchedule && (
           <div className="pc-step-link">
             <span className="pc-summary">
-              {data.pcSums.length === 0 ? "No PC sums on this project yet." : pcSumSummaryLine(summarizePcSums(data.pcSums))}
+              {data.pcSums.length === 0 || !pcSummary
+                ? "No PC sums on this project yet."
+                : `${pcSumSummaryLine(pcSummary)} · ${pcSumAwardLine(pcSummary)}`}
             </span>
             {onOpenPcSums && (
               <button type="button" className="roles-add-btn" onClick={onOpenPcSums}>

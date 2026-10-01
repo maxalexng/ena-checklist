@@ -26,6 +26,7 @@ const tables = [
   "project_roles",
   "consultants",
   "pc_sums",
+  "pc_sum_quotes",
   "timeline_plan",
   "item_files",
   "template_files",

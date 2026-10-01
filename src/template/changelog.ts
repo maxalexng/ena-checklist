@@ -10,7 +10,7 @@
 // bump n and drop any letter suffix. "R<n><letter>" for a smaller revision within that
 // cycle (a wording tweak, a logo swap, a bug fix) — keep n, advance the letter.
 // Never renumber a revision once published.
-export const TEMPLATE_VERSION = "R19a";
+export const TEMPLATE_VERSION = "R20";
 
 export interface ChangelogEntry {
   rev: string;
@@ -23,6 +23,12 @@ export interface ChangelogEntry {
 // from the HTML prototype (submissions-register-MASTER.html); entries from here on
 // describe changes made in this app.
 export const TEMPLATE_CHANGELOG: ChangelogEntry[] = [
+  {
+    rev: "R20",
+    date: "2026-10-01",
+    summary:
+      'PC sum schedule grouped by when each item has to be decided on site: Structure-critical, M&E first fix, Envelope, Finishes, and Fit-out & external works. The standard list is reordered to match, and items that need early prep (concealed mixers, cabinetry and blind power points, timber floor screed levels, gate motor conduits) start with a note saying so. Existing projects\' rows are sorted into phases by title; anything else shows as Unsorted until a phase is picked. Each item now expands to its supplier quotes (supplier, brand / model, quote, note), one of which can be starred as our recommendation, replacing the single Supplier / brand box (anything already typed there becomes the first quote). New Awarded column and an "Awarded to" pick from the quotes, with a Variance column (awarded − allowance) and a running "Awarded … · S$… under / over the allowances" line.',
+  },
   {
     rev: "R19a",
     date: "2026-10-01",

@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { DEFAULT_PC_SUM_ITEMS, STEPS, defaultRoles, defaultListPresets, defaultStageDurationWeeks } from "@/template";
+import { DEFAULT_PC_SUMS, earlyPrepNote, STEPS, defaultRoles, defaultListPresets, defaultStageDurationWeeks } from "@/template";
 import type { Database } from "@/lib/supabase/database.types";
 
 export interface NewProjectInput {
@@ -99,5 +99,11 @@ export async function findRecentDuplicateProject(
 /** The standard PC sum list as pc_sums rows — used when a project is created, and to load
  * the list into a project created before the PC sum schedule existed. */
 export function pcSumRows(projectId: string) {
-  return DEFAULT_PC_SUM_ITEMS.map((item, i) => ({ project_id: projectId, item, sort_order: i }));
+  return DEFAULT_PC_SUMS.map((d, i) => ({
+    project_id: projectId,
+    item: d.item,
+    phase: d.phase,
+    note: earlyPrepNote(d),
+    sort_order: i,
+  }));
 }

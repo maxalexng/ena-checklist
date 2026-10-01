@@ -1,6 +1,6 @@
 import { useQuery, type QueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
-import type { ItemStatus, PcSumSelection } from "@/template";
+import type { ItemStatus, PcSumPhase, PcSumSelection } from "@/template";
 import type { FeeCalculatorInputsRow, ProjectDates } from "@/lib/supabase/database.types";
 import { missingItemRows } from "@/lib/checklist/reconcileItems";
 
@@ -42,16 +42,32 @@ export interface ConsultantEntry {
   sortOrder: number;
 }
 
+export interface PcSumQuote {
+  id: string;
+  supplier: string;
+  brand: string;
+  amount: number | null;
+  note: string;
+  recommended: boolean;
+  sortOrder: number;
+}
+
 export interface PcSumEntry {
   id: string;
   item: string;
-  supplier: string;
   selection: PcSumSelection;
+  /** The PC sum allowance. */
   amount: number | null;
   clientConfirmed: boolean;
   na: boolean;
   note: string;
   sortOrder: number;
+  /** Null until the row is sorted into a phase. */
+  phase: PcSumPhase | null;
+  awardedAmount: number | null;
+  /** The quote the item was awarded to, if any. */
+  awardedQuoteId: string | null;
+  quotes: PcSumQuote[];
 }
 
 export interface TimelinePlanEntry {
@@ -132,7 +148,17 @@ export function useProjectData(projectId: string) {
     queryFn: async (): Promise<ProjectChecklistData> => {
       const supabase = createClient();
 
-      const [projectRes, itemsRes, rolesRes, milestonesRes, consultantsRes, pcSumsRes, timelinePlanRes, sharedRes] = await Promise.all([
+      const [
+        projectRes,
+        itemsRes,
+        rolesRes,
+        milestonesRes,
+        consultantsRes,
+        pcSumsRes,
+        pcSumQuotesRes,
+        timelinePlanRes,
+        sharedRes,
+      ] = await Promise.all([
         supabase
           .from("projects")
           .select(
@@ -146,7 +172,11 @@ export function useProjectData(projectId: string) {
         supabase.from("consultants").select("id, company, role_id, date_signed, note, sort_order").eq("project_id", projectId),
         supabase
           .from("pc_sums")
-          .select("id, item, supplier, selection, amount, client_confirmed, na, note, sort_order")
+          .select("id, item, selection, amount, client_confirmed, na, note, sort_order, phase, awarded_amount, awarded_quote_id")
+          .eq("project_id", projectId),
+        supabase
+          .from("pc_sum_quotes")
+          .select("id, pc_sum_id, supplier, brand, amount, note, recommended, sort_order")
           .eq("project_id", projectId),
         supabase.from("timeline_plan").select("step_key, start_date, end_date").eq("project_id", projectId),
         supabase.from("shared_settings").select("step_order, step_stage").eq("id", sharedSettingsId()).maybeSingle(),
@@ -158,6 +188,7 @@ export function useProjectData(projectId: string) {
       if (milestonesRes.error) throw milestonesRes.error;
       if (consultantsRes.error) throw consultantsRes.error;
       if (pcSumsRes.error) throw pcSumsRes.error;
+      if (pcSumQuotesRes.error) throw pcSumQuotesRes.error;
       if (timelinePlanRes.error) throw timelinePlanRes.error;
       if (sharedRes.error) throw sharedRes.error;
 
@@ -250,18 +281,34 @@ export function useProjectData(projectId: string) {
         }))
         .sort((a, b) => a.sortOrder - b.sortOrder);
 
+      // PostgREST can hand numeric columns back as strings; normalise to a number.
+      const money = (v: number | string | null) => (v === null ? null : Number(v));
+      const quotesByPcSum: Record<string, PcSumQuote[]> = {};
+      (pcSumQuotesRes.data ?? []).forEach((q) => {
+        (quotesByPcSum[q.pc_sum_id] ??= []).push({
+          id: q.id,
+          supplier: q.supplier,
+          brand: q.brand,
+          amount: money(q.amount),
+          note: q.note,
+          recommended: q.recommended,
+          sortOrder: q.sort_order,
+        });
+      });
       const pcSums: PcSumEntry[] = (pcSumsRes.data ?? [])
         .map((r) => ({
           id: r.id,
           item: r.item,
-          supplier: r.supplier,
           selection: r.selection,
-          // PostgREST can hand numeric columns back as strings; normalise to a number.
-          amount: r.amount === null ? null : Number(r.amount),
+          amount: money(r.amount),
           clientConfirmed: r.client_confirmed,
           na: r.na,
           note: r.note,
           sortOrder: r.sort_order,
+          phase: r.phase,
+          awardedAmount: money(r.awarded_amount),
+          awardedQuoteId: r.awarded_quote_id,
+          quotes: (quotesByPcSum[r.id] ?? []).sort((a, b) => a.sortOrder - b.sortOrder),
         }))
         .sort((a, b) => a.sortOrder - b.sortOrder);
 

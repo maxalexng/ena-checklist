@@ -174,11 +174,33 @@ export interface Database {
           na: boolean;
           note: string;
           sort_order: number;
+          phase: "structure" | "firstFix" | "envelope" | "finishes" | "fitout" | null;
+          awarded_amount: number | null;
+          awarded_quote_id: string | null;
         };
         Insert: Partial<Database["public"]["Tables"]["pc_sums"]["Row"]> & {
           project_id: string;
         };
         Update: Partial<Database["public"]["Tables"]["pc_sums"]["Row"]>;
+        Relationships: [];
+      };
+      pc_sum_quotes: {
+        Row: {
+          id: string;
+          project_id: string;
+          pc_sum_id: string;
+          supplier: string;
+          brand: string;
+          amount: number | null;
+          note: string;
+          recommended: boolean;
+          sort_order: number;
+        };
+        Insert: Partial<Database["public"]["Tables"]["pc_sum_quotes"]["Row"]> & {
+          project_id: string;
+          pc_sum_id: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["pc_sum_quotes"]["Row"]>;
         Relationships: [];
       };
       shared_settings: {
