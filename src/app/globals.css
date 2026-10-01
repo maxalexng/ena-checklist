@@ -875,7 +875,9 @@
   }
   .cp-seg{ position:absolute; top:0; bottom:0; }
   .cp-contract{ background:var(--accent); opacity:0.75; }
-  .cp-eot{ background:var(--brass); opacity:0.8; border-left:1px solid var(--surface); }
+  /* A lighter tint of the contract's blue, so EOTs read as the contract extended. Mixed
+     from the theme tokens, so it follows light/dark mode on its own. */
+  .cp-eot{ background:color-mix(in srgb, var(--accent) 50%, var(--surface)); border-left:1px solid var(--surface); }
   .cp-overrun{
     background:repeating-linear-gradient(135deg, var(--danger-soft) 0 4px, var(--danger) 4px 6px);
     border-left:1px solid var(--surface);

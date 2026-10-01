@@ -274,7 +274,7 @@ test.describe("Overview contract progress bar", () => {
     await page.locator("#eot-add-title").fill("EOT 1 - Adverse Weather");
     await page.locator("#eot-add-days").fill("50");
     await page.getByRole("button", { name: "+ Add EOT" }).click();
-    await expect(row).toContainText("40% of the contract period elapsed");
+    await expect(row).toContainText("40% of the contract period elapsed (incl. 50 days of EOTs)");
     await expect(row.locator(".cp-bar .cp-eot")).toHaveCount(1);
     await expect(row.locator(".cp-legend")).toContainText("EOTs +50 days");
     await expect(row.locator(".cp-marker")).toHaveAttribute("style", /left: 40(\.0+)?%/);

@@ -39,21 +39,24 @@ export function ContractProgressBar({ dates }: { dates: ProjectDates }) {
 
   const percent = Math.round(progress.percent);
   const eotDays = progress.eots.reduce((sum, e) => sum + e.days, 0);
+  // The % and months are measured against the contract period plus every EOT awarded.
+  const incl = eotDays > 0 ? ` (incl. ${eotDays} day${eotDays === 1 ? "" : "s"} of EOTs)` : "";
+  const monthsText = ` · month ${months(progress.monthsElapsed)} of ${months(progress.monthsTotal)}`;
   let summary: React.ReactNode;
   if (progress.notStarted) {
     summary = <>Contract starts {formatDateDMY(dates.contractStart)}</>;
   } else if (progress.completed) {
     summary = (
       <>
-        Completed at <strong>{percent}%</strong> of the contract period · month {months(progress.monthsElapsed)} of{" "}
-        {months(progress.monthsTotal)}
+        Completed at <strong>{percent}%</strong> of the contract period{incl}
+        {monthsText}
       </>
     );
   } else {
     summary = (
       <>
-        <strong>{percent}%</strong> of the contract period elapsed · month {months(progress.monthsElapsed)} of{" "}
-        {months(progress.monthsTotal)}
+        <strong>{percent}%</strong> of the contract period elapsed{incl}
+        {monthsText}
       </>
     );
   }
