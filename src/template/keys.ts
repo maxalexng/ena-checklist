@@ -160,9 +160,11 @@ export function agencyLogoSrc(agencyId: string): string | null {
   return AGENCIES_WITH_LOGO.has(agencyId) ? `/logos/${agencyId}.png` : null;
 }
 
-/** Keep only ids from `saved` that still exist in `validIds` (in that order), then append
- * any valid id not already present — so stale entries drop out and new template content
- * lands at the end instead of vanishing. Used for step_order/overview_section_order. */
+/** Keep only ids from `saved` that still exist in `validIds` (in that order), then slot in
+ * any valid id not already present right after the id that precedes it in `validIds` (or
+ * first, if nothing does) — so stale entries drop out and new template content lands where
+ * the template puts it, instead of vanishing or piling up at the end. Used for step_order
+ * and item_order. */
 export function reconcileOrder(saved: string[] | null | undefined, validIds: string[]): string[] {
   const validSet = new Set(validIds);
   const seen = new Set<string>();
@@ -173,11 +175,12 @@ export function reconcileOrder(saved: string[] | null | undefined, validIds: str
       out.push(id);
     }
   });
-  validIds.forEach((id) => {
-    if (!seen.has(id)) {
-      seen.add(id);
-      out.push(id);
-    }
+  validIds.forEach((id, i) => {
+    if (seen.has(id)) return;
+    seen.add(id);
+    const prev = i > 0 ? validIds[i - 1] : undefined;
+    // validIds is walked in order, so the predecessor is always already in `out`.
+    out.splice(prev === undefined ? 0 : out.indexOf(prev) + 1, 0, id);
   });
   return out;
 }

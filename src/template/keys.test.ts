@@ -57,8 +57,20 @@ describe("reconcileOrder", () => {
     expect(reconcileOrder(["a", "stale", "b"], validIds)).toEqual(["a", "b", "c"]);
   });
 
-  it("appends new valid ids not present in the saved order, at the end", () => {
-    expect(reconcileOrder(["b"], validIds)).toEqual(["b", "a", "c"]);
+  it("slots new valid ids in right after their template predecessor, not at the end", () => {
+    expect(reconcileOrder(["b"], validIds)).toEqual(["a", "b", "c"]);
+    expect(reconcileOrder(["c", "a"], validIds)).toEqual(["c", "a", "b"]);
+    // Consecutive new ids stay together, in template order.
+    expect(reconcileOrder(["a", "e"], ["a", "b", "c", "d", "e"])).toEqual(["a", "b", "c", "d", "e"]);
+    expect(reconcileOrder(["e", "a"], ["a", "b", "c", "d", "e"])).toEqual(["e", "a", "b", "c", "d"]);
+  });
+
+  it("puts a new step added since the shared order was saved where the template places it", () => {
+    // The live case: PC Sums (R17) was added after the shared order was seeded, and used to
+    // land at the very end of Detailed Design, below the Tender Drawing Set.
+    const saved = ["tfcc__PLAN", "admin__TENDERSET", "bca__BP"];
+    const template = ["tfcc__PLAN", "admin__PCSUMS", "admin__TENDERSET", "bca__BP"];
+    expect(reconcileOrder(saved, template)).toEqual(template);
   });
 
   it("de-duplicates repeated ids in the saved order", () => {
@@ -125,11 +137,11 @@ describe("defaultStepOrder", () => {
 // against the legacy prototype's real data (see scripts/migrate-html-import.ts's run for
 // "2 Astrid Hill": 183 items imported vs 183 in source).
 describe("template integrity", () => {
-  it("has exactly 48 steps", () => {
-    expect(STEPS.length).toBe(48);
+  it("has exactly 49 steps", () => {
+    expect(STEPS.length).toBe(49);
   });
 
-  it("has exactly 227 checklist items across all steps", () => {
+  it("has exactly 230 checklist items across all steps", () => {
     // 183 from the original prototype port, +1 for the Consultant Appointments step's own
     // clearable item, +2 for the new Asbestos Survey & Removal step, +2 for the design-lock
     // and construction-drawings checkpoints added to PP/BP, -1 for the NEA grease trap item
@@ -137,9 +149,10 @@ describe("template integrity", () => {
     // the Contract Award & Documents step added in R12, +8 for the two TFCC steps added in R13,
     // +1 for the Concept Design & Client Presentations step added in R14, +17 for the Design
     // Development (8) and Tender Drawing Set (9) steps added in R15, +8 for Tender Calling &
-    // Evaluation added in R16, +4 for the PC Sum Schedule step added in R17.
+    // Evaluation added in R16, +4 for the PC Sum Schedule step added in R17, +3 for the Green Mark
+    // Certification step added in R18.
     const total = STEPS.reduce((sum, s) => sum + s.items.length, 0);
-    expect(total).toBe(227);
+    expect(total).toBe(230);
   });
 
   it("places the TFCC steps after IMDA COPIF and after the gas connection, with the NetLink logo", () => {
@@ -157,9 +170,11 @@ describe("template integrity", () => {
     expect(agencyLogoSrc("tfcc")).toBe("/logos/tfcc.png");
   });
 
-  it("opens Concept Design with the presentation log step", () => {
+  it("opens Concept Design with the Green Mark decision, then the presentation log step", () => {
     const i = STEPS.findIndex((s) => s.id === "admin__DESIGN");
-    expect(STEPS[i - 1].defaultStage).toBe("pre-design");
+    expect(STEPS[i - 1].id).toBe("admin__GREENMARK");
+    expect(STEPS[i - 1].defaultStage).toBe("concept");
+    expect(STEPS[i - 2].defaultStage).toBe("pre-design");
     expect(STEPS[i].defaultStage).toBe("concept");
     expect(STEPS[i].designLog).toBe("concept");
     expect(STEPS[i].items.map((it) => it.id)).toEqual(["admin__DESIGN__0"]);

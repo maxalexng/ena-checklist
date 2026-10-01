@@ -27,7 +27,7 @@ Every feature ships with Vitest and/or Playwright coverage, and both suites must
 - The tests run against the real Supabase project named in `.env.local`. They need `PLAYWRIGHT_TEST_EMAIL`/`PLAYWRIGHT_TEST_PASSWORD` (a dedicated test user) and `SUPABASE_SERVICE_ROLE_KEY`, which is used for seeding and cleanup.
 - `e2e/auth.setup.ts` signs in **once** and saves `playwright/.auth/user.json`. Other specs reuse that session. Do not call `login()` per test, because it trips Supabase's auth rate limit.
 - Specs create throwaway projects with `createTestProject()` and `uniqueE2eReference()` from `e2e/helpers.ts`, then delete them by reference. `createTestProject` reuses the app's own `createProject()` so the seeding can't drift from the app's. Tests run serially (`fullyParallel: false`, `workers: 1`).
-- The step order is shared by every project, real ones included (see Architecture). Specs that assume the default order or move steps wrap themselves in `saveSharedStepOrder()`/`resetSharedStepOrder()` from `e2e/helpers.ts`.
+- The step order is shared by every project (see Architecture). Tests use their own `shared_settings` row, `e2e` (migration 0009), picked by a cookie that `auth.setup.ts` saves into the test session, so a run never touches the `global` order real projects use. Specs that assume the default order or move steps call `resetSharedStepOrder()` from `e2e/helpers.ts`, which resets only the `e2e` row.
 
 ## Architecture
 

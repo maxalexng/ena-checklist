@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, type QueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import type { ItemStatus, PcSumSelection } from "@/template";
 import type { FeeCalculatorInputsRow, ProjectDates } from "@/lib/supabase/database.types";
@@ -99,11 +99,31 @@ export interface ProjectChecklistData {
   itemFilesByItem: Record<string, ItemFileEntry>;
 }
 
-/** The single shared_settings row (migration 0008). */
-export const SHARED_SETTINGS_ID = "global";
+/** The shared_settings row every project reads its step order from (migration 0008).
+ * Browser tests run against the same database, so they use their own "e2e" row (migration
+ * 0009), picked by a cookie that e2e/auth.setup.ts saves into the test session. That keeps
+ * a test run from resetting or reordering the steps on real projects. */
+export const SHARED_SETTINGS_COOKIE = "ena-shared-settings";
+
+export function sharedSettingsId(): "global" | "e2e" {
+  if (typeof document === "undefined") return "global";
+  return document.cookie.split("; ").includes(`${SHARED_SETTINGS_COOKIE}=e2e`) ? "e2e" : "global";
+}
 
 export function projectDataQueryKey(projectId: string) {
   return ["project-data", projectId] as const;
+}
+
+/** Shared by every optimistic project mutation, so a save only refetches the project once
+ * no other save is still in flight. Otherwise the first save's refetch can land before a
+ * later click has been written, and briefly shows that click as undone. */
+export function projectMutationKey(projectId: string) {
+  return ["project-mutation", projectId] as const;
+}
+
+/** Called from onSettled, where the settling mutation still counts as pending. */
+export function isLastProjectMutation(queryClient: QueryClient, projectId: string): boolean {
+  return queryClient.isMutating({ mutationKey: projectMutationKey(projectId) }) <= 1;
 }
 
 export function useProjectData(projectId: string) {
@@ -129,7 +149,7 @@ export function useProjectData(projectId: string) {
           .select("id, item, supplier, selection, amount, client_confirmed, na, note, sort_order")
           .eq("project_id", projectId),
         supabase.from("timeline_plan").select("step_key, start_date, end_date").eq("project_id", projectId),
-        supabase.from("shared_settings").select("step_order, step_stage").eq("id", SHARED_SETTINGS_ID).maybeSingle(),
+        supabase.from("shared_settings").select("step_order, step_stage").eq("id", sharedSettingsId()).maybeSingle(),
       ]);
 
       if (projectRes.error) throw projectRes.error;

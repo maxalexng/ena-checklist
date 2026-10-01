@@ -57,8 +57,10 @@ describe("effectiveStepOrder", () => {
   it("reconciles a saved order against the current template", () => {
     const saved = [STEPS[2].id, STEPS[0].id];
     const result = effectiveStepOrder(saved);
-    expect(result[0]).toBe(STEPS[2].id);
-    expect(result[1]).toBe(STEPS[0].id);
+    // The saved steps keep their relative order...
+    expect(result.indexOf(STEPS[2].id)).toBeLessThan(result.indexOf(STEPS[0].id));
+    // ...and a step missing from it slots in after its template predecessor.
+    expect(result.indexOf(STEPS[1].id)).toBe(result.indexOf(STEPS[0].id) + 1);
     expect(result).toHaveLength(STEPS.length);
   });
 });

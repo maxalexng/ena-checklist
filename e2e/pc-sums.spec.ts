@@ -66,6 +66,55 @@ test.describe("PC sum schedule", () => {
     await expect(page.locator(".pc-summary")).toContainText("0 of 17 decided");
   });
 
+  test("clicking quickly down the confirmed column never flickers a tick back off", async ({ page }) => {
+    const rows = DEFAULT_PC_SUM_ITEMS.slice(0, 6);
+    const boxes = rows.map((item) => page.getByLabel(`${item} confirmed by client`));
+
+    // Slow each save down like a laggy connection, so a click's save is still in flight when
+    // the one before it finishes and refetches.
+    await page.route(/\/rest\/v1\/pc_sums/, async (route) => {
+      if (route.request().method() === "PATCH") await new Promise((r) => setTimeout(r, 700));
+      await route.continue();
+    });
+
+    // Watch every frame for a ticked box going unticked, which is what an early refetch
+    // (landing before a later click was saved) used to do.
+    await page.evaluate((labels) => {
+      const w = window as unknown as { __pcFlicker: string[] };
+      w.__pcFlicker = [];
+      const seen = new Set<string>();
+      const tick = () => {
+        for (const label of labels) {
+          const box = document.querySelector<HTMLInputElement>(`input[aria-label="${label}"]`);
+          if (box?.checked) seen.add(label);
+          else if (seen.has(label)) w.__pcFlicker.push(label);
+        }
+        requestAnimationFrame(tick);
+      };
+      tick();
+    }, rows.map((item) => `${item} confirmed by client`));
+
+    let savesDone = 0;
+    page.on("response", (res) => {
+      if (/\/rest\/v1\/pc_sums/.test(res.url()) && res.request().method() === "PATCH") savesDone++;
+    });
+
+    // At a person's pace: each earlier save finishes and refetches while the next is in flight.
+    for (const box of boxes) {
+      await box.click();
+      await page.waitForTimeout(400);
+    }
+    await expect(page.locator(".pc-summary")).toContainText("6 confirmed by client");
+    // Reloading with a (deliberately delayed) save still held back would cancel it.
+    await expect.poll(() => savesDone).toBe(rows.length);
+    await page.waitForLoadState("networkidle");
+    expect(await page.evaluate(() => (window as unknown as { __pcFlicker: string[] }).__pcFlicker)).toEqual([]);
+
+    await page.reload();
+    await openStep(page);
+    for (const box of boxes) await expect(box).toBeChecked();
+  });
+
   test("rows can be added and removed", async ({ page }) => {
     await page.getByRole("button", { name: "+ Add PC sum" }).click();
     await expect(page.locator(".pc-row")).toHaveCount(19);

@@ -1,7 +1,13 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { pcSumRows } from "@/lib/projects/createProject";
-import { projectDataQueryKey, type PcSumEntry, type ProjectChecklistData } from "./useProjectData";
+import {
+  isLastProjectMutation,
+  projectDataQueryKey,
+  projectMutationKey,
+  type PcSumEntry,
+  type ProjectChecklistData,
+} from "./useProjectData";
 import type { Database } from "@/lib/supabase/database.types";
 
 type PcSumUpdate = Database["public"]["Tables"]["pc_sums"]["Update"];
@@ -16,7 +22,9 @@ function useProjectMutation<TVars>(
 ) {
   const queryClient = useQueryClient();
   const queryKey = projectDataQueryKey(projectId);
+  const mutationKey = projectMutationKey(projectId);
   return useMutation({
+    mutationKey,
     mutationFn,
     onMutate: async (vars: TVars) => {
       if (!options?.optimisticUpdate) return undefined;
@@ -30,7 +38,7 @@ function useProjectMutation<TVars>(
       if (previous) queryClient.setQueryData(queryKey, previous);
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey });
+      if (isLastProjectMutation(queryClient, projectId)) queryClient.invalidateQueries({ queryKey });
     },
   });
 }

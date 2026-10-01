@@ -303,6 +303,8 @@ export const AGENCIES: Agency[] = [
       {
         code: "ACCESS",
         name: "Vehicular access & road works",
+        conditional: true,
+        when: "A new, widened or relocated driveway crossing, or any works, hoarding or material storage on the public road, drain or footpath. Not needed when the existing access is kept and all works stay within the site boundary.",
         items: [
           "Vehicular crossover / driveway access application and layout",
           "Road Opening Permit / Works within Road Reserve (WRR) permit",
@@ -512,6 +514,20 @@ export const AGENCIES: Agency[] = [
         items: ["Concept design confirmed by the client, ready for Design Development"],
       },
       {
+        code: "GREENMARK",
+        name: "Green Mark Certification — Client Decision",
+        stepCode: "GM",
+        stepName: "Green Mark Certification — Client Decision",
+        stepBlurb:
+          "Asking the client early whether they want BCA Green Mark certification, and at what rating. A target rating shapes the design itself (orientation, façade and shading, glazing, AC efficiency, solar PV), so it needs settling before the concept is fixed.",
+        when: "At the start of Concept Design, before the concept is developed. Green Mark is mandatory only for developments of 2,000 m² GFA or more, or on Government Land Sales sites; for most houses it is the client's choice.",
+        items: [
+          "Client asked whether they want BCA Green Mark certification, with the rating levels explained (Gold, GoldPLUS, Platinum, and Super Low Energy on top) and what each means for design, cost and programme",
+          "Client's decision recorded in writing: target rating, or not pursuing Green Mark",
+          "If pursuing: Green Mark / ESD consultant appointed and the target rating written into the design brief for the consultants",
+        ],
+      },
+      {
         code: "DEV",
         name: "Design Development & Client Sign-off",
         stepCode: "DEV",
@@ -695,6 +711,8 @@ export const AGENCIES: Agency[] = [
       {
         code: "COPIF",
         name: "Info-communications facilities compliance",
+        conditional: true,
+        when: "Always for a new house or reconstruction (a lead-in pipe from the boundary and a telecom termination point, per COPIF). For A&A, only where the works move or affect the existing telecom lead-in or termination point. Compliance is shown through the TFCC telecom plans submission.",
         items: [
           "Compliance with the Code of Practice for Info-communications Facilities in Buildings (COPIF)",
           "Fibre / broadband termination point coordinated with the telco",

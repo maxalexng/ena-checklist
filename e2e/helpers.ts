@@ -48,7 +48,7 @@ export async function deleteProjectByReference(reference: string) {
   await supabase.from("projects").delete().eq("reference", reference);
 }
 
-/** Seeds a full project (227 checklist items, 11 default roles and the standard PC sum list)
+/** Seeds a full project (every template checklist item, 11 default roles and the standard PC sum list)
  * the same way the app's own "New Project" flow does — reuses createProject() directly rather
  * than duplicating its seeding logic, so a future change to that flow can't silently drift
  * out of sync with what these tests set up. Runs with the service-role client, bypassing RLS
@@ -58,35 +58,22 @@ export async function createTestProject(input: NewProjectInput) {
   return createProject(adminClient(), input, null);
 }
 
-/** The step order is shared by every project (shared_settings, migration 0008) — including
- * the real ones in the same Supabase project these tests run against. Specs that assume the
- * template's default order, or that move steps, save the live order first, reset it to the
- * default, and put the saved one back afterwards. Real users see the default order for the
- * length of those specs. */
-export async function saveSharedStepOrder(): Promise<() => Promise<void>> {
-  const supabase = adminClient();
-  const { data, error } = await supabase
-    .from("shared_settings")
-    .select("step_order, step_stage")
-    .eq("id", "global")
-    .maybeSingle();
-  if (error) throw error;
-  return async () => {
-    const { error: restoreError } = await supabase.from("shared_settings").upsert({
-      id: "global",
-      step_order: data?.step_order ?? null,
-      step_stage: data?.step_stage ?? {},
-      updated_at: new Date().toISOString(),
-    });
-    if (restoreError) throw restoreError;
-  };
-}
+/** The step order is shared by every project (shared_settings, migration 0008). Tests use
+ * their own "e2e" row (migration 0009), selected by this cookie in the saved test session
+ * (auth.setup.ts), so moving steps here never touches the real projects' "global" order. */
+export const E2E_SHARED_SETTINGS_ID = "e2e";
+export const SHARED_SETTINGS_COOKIE = "ena-shared-settings";
 
+/** Puts the tests' shared step order back to the template default. Specs that assume the
+ * default order, or that move steps, call this first. */
 export async function resetSharedStepOrder() {
   const supabase = adminClient();
-  const { error } = await supabase
-    .from("shared_settings")
-    .upsert({ id: "global", step_order: null, step_stage: {}, updated_at: new Date().toISOString() });
+  const { error } = await supabase.from("shared_settings").upsert({
+    id: E2E_SHARED_SETTINGS_ID,
+    step_order: null,
+    step_stage: {},
+    updated_at: new Date().toISOString(),
+  });
   if (error) throw error;
 }
 

@@ -5,7 +5,6 @@ import {
   createTestProject,
   deleteProjectByReference,
   resetSharedStepOrder,
-  saveSharedStepOrder,
   uniqueE2eReference,
 } from "./helpers";
 
@@ -21,15 +20,6 @@ function sharedOrderSaved(page: Page) {
 test.describe("Checklist rail navigation and step reordering", () => {
   let reference: string;
   let projectId: string;
-  let restoreSharedStepOrder: () => Promise<void>;
-
-  test.beforeAll(async () => {
-    restoreSharedStepOrder = await saveSharedStepOrder();
-  });
-
-  test.afterAll(async () => {
-    await restoreSharedStepOrder();
-  });
 
   test.beforeEach(async ({ page }) => {
     // Every test starts from the template's default order — the order is shared, so a
@@ -114,6 +104,25 @@ test.describe("Checklist rail navigation and step reordering", () => {
     } finally {
       await deleteProjectByReference(otherReference);
     }
+  });
+
+  test("moving a step in a test session leaves the real projects' shared order untouched", async ({ page }) => {
+    const readGlobal = async () => {
+      const { data, error } = await adminClient()
+        .from("shared_settings")
+        .select("step_order, step_stage, updated_at")
+        .eq("id", "global")
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    };
+    const before = await readGlobal();
+
+    const saved = sharedOrderSaved(page);
+    await page.locator(".agency").first().locator(".step-move-btn").nth(1).click(); // ▼
+    await saved;
+
+    expect(await readGlobal()).toEqual(before);
   });
 
   test("moving a step renumbers step N sequentially with no gaps", async ({ page }) => {

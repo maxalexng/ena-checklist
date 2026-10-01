@@ -10,7 +10,7 @@
 // bump n and drop any letter suffix. "R<n><letter>" for a smaller revision within that
 // cycle (a wording tweak, a logo swap, a bug fix) — keep n, advance the letter.
 // Never renumber a revision once published.
-export const TEMPLATE_VERSION = "R17";
+export const TEMPLATE_VERSION = "R18";
 
 export interface ChangelogEntry {
   rev: string;
@@ -23,6 +23,12 @@ export interface ChangelogEntry {
 // from the HTML prototype (submissions-register-MASTER.html); entries from here on
 // describe changes made in this app.
 export const TEMPLATE_CHANGELOG: ChangelogEntry[] = [
+  {
+    rev: "R18",
+    date: "2026-09-29",
+    summary:
+      'New Practice Administration step at the start of Concept Design, "Green Mark Certification — Client Decision" (GREENMARK): ask the client whether they want BCA Green Mark and at what rating, record the decision, and if pursuing, appoint a Green Mark consultant and put the target rating in the design brief. LTA "Vehicular access & road works" and IMDA "Info-communications facilities compliance" are now marked If applicable, each with a note on when it is needed. New template steps and items now appear where the template places them in a saved order, instead of at the end of their stage.',
+  },
   {
     rev: "R17",
     date: "2026-09-25",

@@ -24,13 +24,13 @@ describe("effectiveItemOrder", () => {
     expect(effectiveItemOrder(null)).toEqual(defaultItemOrder());
   });
 
-  it("reconciles a saved order: keeps valid entries, drops stale ones, appends new ones", () => {
+  it("reconciles a saved order: keeps valid entries, drops stale ones, slots in new ones", () => {
     const saved = [itemB.id, "stale__item__99", itemA.id];
     const result = effectiveItemOrder(saved);
-    expect(result[0]).toBe(itemB.id);
-    expect(result[1]).toBe(itemA.id);
+    expect(result.indexOf(itemB.id)).toBeLessThan(result.indexOf(itemA.id));
     expect(result).not.toContain("stale__item__99");
     expect(result).toContain(itemC.id);
+    expect(result).toHaveLength(defaultItemOrder().length);
   });
 });
 

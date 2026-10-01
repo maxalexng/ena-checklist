@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
-import { SHARED_SETTINGS_ID, projectDataQueryKey } from "./useProjectData";
+import { isLastProjectMutation, projectDataQueryKey, projectMutationKey, sharedSettingsId } from "./useProjectData";
 import type { ItemRecord, ProjectChecklistData } from "./useProjectData";
 import type { ItemStatus } from "@/template";
 import { applyStepMove } from "@/lib/checklist/grouping";
@@ -19,7 +19,9 @@ function useProjectMutation<TVars>(
 ) {
   const queryClient = useQueryClient();
   const queryKey = projectDataQueryKey(projectId);
+  const mutationKey = projectMutationKey(projectId);
   return useMutation({
+    mutationKey,
     mutationFn,
     onMutate: async (vars: TVars) => {
       if (!options?.optimisticUpdate) return undefined;
@@ -35,7 +37,7 @@ function useProjectMutation<TVars>(
       if (previous) queryClient.setQueryData(queryKey, previous);
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey });
+      if (isLastProjectMutation(queryClient, projectId)) queryClient.invalidateQueries({ queryKey });
     },
   });
 }
@@ -172,13 +174,13 @@ export function useMoveSharedStep(projectId: string) {
       const { data: current, error: readError } = await supabase
         .from("shared_settings")
         .select("step_order, step_stage")
-        .eq("id", SHARED_SETTINGS_ID)
+        .eq("id", sharedSettingsId())
         .maybeSingle();
       if (readError) throw readError;
       const next = applyStepMove(current?.step_order ?? null, current?.step_stage ?? {}, stepId, direction);
       if (!next) return;
       const { error } = await supabase.from("shared_settings").upsert({
-        id: SHARED_SETTINGS_ID,
+        id: sharedSettingsId(),
         step_order: next.order,
         step_stage: next.stepStage,
         updated_at: new Date().toISOString(),

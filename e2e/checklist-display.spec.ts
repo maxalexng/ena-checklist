@@ -3,22 +3,15 @@ import {
   createTestProject,
   deleteProjectByReference,
   resetSharedStepOrder,
-  saveSharedStepOrder,
   uniqueE2eReference,
 } from "./helpers";
 
 test.describe("Checklist item labels and conditional badges", () => {
   let reference: string;
-  let restoreSharedStepOrder: () => Promise<void>;
 
   // Step numbers and stage contents below assume the template's default step order.
   test.beforeAll(async () => {
-    restoreSharedStepOrder = await saveSharedStepOrder();
     await resetSharedStepOrder();
-  });
-
-  test.afterAll(async () => {
-    await restoreSharedStepOrder();
   });
 
   test.beforeEach(async ({ page }) => {
@@ -98,6 +91,28 @@ test.describe("Checklist item labels and conditional badges", () => {
     await page.getByPlaceholder("Search checklist…").fill("PL checklist and application via CORENET");
     const submissionHead = page.locator(".submission-head").filter({ hasText: "Plan Lodgement" });
     await expect(submissionHead.getByText("If applicable")).toBeVisible();
+  });
+
+  test("LTA vehicular access & road works is tagged 'If applicable' with when it applies", async ({ page }) => {
+    await page.getByPlaceholder("Search checklist…").fill("Reinstatement of road / footpath bond");
+    const submissionHead = page.locator(".submission-head").filter({ hasText: "Vehicular access & road works" });
+    await expect(submissionHead.getByText("If applicable")).toBeVisible();
+    await expect(page.getByText(/existing access is kept/)).toBeVisible();
+  });
+
+  test("IMDA info-communications compliance is tagged 'If applicable' with when it applies", async ({ page }) => {
+    await page.getByPlaceholder("Search checklist…").fill("Fibre / broadband termination point coordinated");
+    const submissionHead = page.locator(".submission-head").filter({ hasText: "Info-communications facilities compliance" });
+    await expect(submissionHead.getByText("If applicable")).toBeVisible();
+    await expect(page.getByText(/Always for a new house or reconstruction/)).toBeVisible();
+  });
+
+  test("Concept Design opens with the client's Green Mark decision", async ({ page }) => {
+    const conceptGroup = page.locator(".stage").filter({ has: page.locator(".stage-label", { hasText: "Stage 2" }) });
+    const firstStep = conceptGroup.locator(".agency").first();
+    await expect(firstStep).toContainText("Green Mark Certification — Client Decision");
+    await expect(firstStep.locator(".item")).toHaveCount(3);
+    await expect(firstStep.locator(".submission-head").getByText("If applicable")).toHaveCount(0);
   });
 
   test("Asbestos Survey & Removal sits first in the Construction stage and is conditional", async ({

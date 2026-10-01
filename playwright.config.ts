@@ -15,9 +15,9 @@ if (existsSync(".env.local")) {
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: false,
-  // One file at a time too: the step order is shared by every project, and specs that save,
-  // reset and restore it (e2e/helpers.ts saveSharedStepOrder) would otherwise clobber each
-  // other mid-run.
+  // One file at a time too: the tests' step order is shared by every test project (the "e2e"
+  // shared_settings row), and specs that reset it (e2e/helpers.ts resetSharedStepOrder)
+  // would otherwise clobber each other mid-run.
   workers: 1,
   retries: process.env.CI ? 1 : 0,
   reporter: "list",
