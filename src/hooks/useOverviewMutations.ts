@@ -1,7 +1,12 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
-import { projectDataQueryKey, type ProjectChecklistData } from "./useProjectData";
-import type { ProjectDates } from "@/lib/supabase/database.types";
+import {
+  isLastProjectMutation,
+  projectDataQueryKey,
+  projectMutationKey,
+  type ProjectChecklistData,
+} from "./useProjectData";
+import type { ProjectDates, SubmissionMapStatus } from "@/lib/supabase/database.types";
 
 function useProjectMutation<TVars>(projectId: string, mutationFn: (vars: TVars) => Promise<void>) {
   const queryClient = useQueryClient();
@@ -101,5 +106,45 @@ export function useUpdateListPresets(projectId: string) {
       p_patch: { [stepKey]: presets },
     });
     if (error) throw error;
+  });
+}
+
+/** Sets a submission-map node's status by hand, or returns it to its automatic status with
+ * `status: null`. Optimistic, like the checklist's status chips, so a run of quick picks
+ * across several nodes each land on screen straight away. */
+export function useSetMapNodeStatus(projectId: string) {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+  const queryKey = projectDataQueryKey(projectId);
+  return useMutation({
+    mutationKey: projectMutationKey(projectId),
+    mutationFn: async ({ nodeId, status }: { nodeId: string; status: SubmissionMapStatus | null }) => {
+      const { error } = await supabase.rpc("merge_submission_map", {
+        p_project_id: projectId,
+        p_patch: { [nodeId]: { status } },
+      });
+      if (error) throw error;
+    },
+    onMutate: async ({ nodeId, status }) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<ProjectChecklistData>(queryKey);
+      if (previous) {
+        const { [nodeId]: current, ...rest } = previous.project.submissionMap;
+        const next = { ...current };
+        if (status) next.status = status;
+        else delete next.status;
+        queryClient.setQueryData<ProjectChecklistData>(queryKey, {
+          ...previous,
+          project: { ...previous.project, submissionMap: { ...rest, [nodeId]: next } },
+        });
+      }
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(queryKey, context.previous);
+    },
+    onSettled: () => {
+      if (isLastProjectMutation(queryClient, projectId)) queryClient.invalidateQueries({ queryKey });
+    },
   });
 }

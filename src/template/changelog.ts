@@ -10,7 +10,7 @@
 // bump n and drop any letter suffix. "R<n><letter>" for a smaller revision within that
 // cycle (a wording tweak, a logo swap, a bug fix) — keep n, advance the letter.
 // Never renumber a revision once published.
-export const TEMPLATE_VERSION = "R20";
+export const TEMPLATE_VERSION = "R21";
 
 export interface ChangelogEntry {
   rev: string;
@@ -23,6 +23,12 @@ export interface ChangelogEntry {
 // from the HTML prototype (submissions-register-MASTER.html); entries from here on
 // describe changes made in this app.
 export const TEMPLATE_CHANGELOG: ChangelogEntry[] = [
+  {
+    rev: "R21",
+    date: "2026-10-01",
+    summary:
+      "New Submission map at the top of the Overview tab, after CORENET's process diagram: one row per agency (URA, BCA, NEA, LTA, PUB, NParks, SCDF, SLA and TFCC, with their logos), each agency's stages left to right (URA OPP → PP → WP; DC → BP → TOP → CSC for the others, with Lodgement and Self-declaration routes marked), under Site, Planning permission, Plan approval, Construction and Completion bands. Each stage shows Not started, In progress, Done or N/A, worked out from its checklist step, and for URA PP/WP and BCA piling from the submission log. A stage with no checklist step is set by hand, and any stage can be overridden. A stage turns late once its planned end date on the Timeline tab has passed. Late, In progress and Up next stages are listed under the map, and clicking an agency or stage jumps to its checklist step.",
+  },
   {
     rev: "R20",
     date: "2026-10-01",

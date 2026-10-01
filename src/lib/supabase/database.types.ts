@@ -42,6 +42,14 @@ export type FeeCalculatorInputsRow = Partial<{
   scdfWaivers: number;
 }>;
 
+/** projects.submission_map (migration 0012): manual statuses on the Overview tab's
+ * submission map, keyed by node id (src/template/submissionMap.ts). A node with no entry,
+ * or no status, works its status out from the checklist. */
+export type SubmissionMapStatus = "pending" | "progress" | "done" | "na";
+export type SubmissionMapRow = Record<string, { status?: SubmissionMapStatus }>;
+/** A null field clears it (merge_submission_map strips nulls). */
+export type SubmissionMapPatch = Record<string, { status: SubmissionMapStatus | null }>;
+
 export interface Database {
   public: {
     Tables: {
@@ -65,6 +73,7 @@ export interface Database {
           step_stage: Record<string, string>;
           stage_duration_weeks: Record<string, number>;
           fee_calculator_inputs: FeeCalculatorInputsRow;
+          submission_map: SubmissionMapRow;
           assignments_locked: boolean;
           archived: boolean;
           created_at: string;
@@ -285,6 +294,10 @@ export interface Database {
       };
       merge_stage_duration_weeks: {
         Args: { p_project_id: string; p_patch: Record<string, number> };
+        Returns: void;
+      };
+      merge_submission_map: {
+        Args: { p_project_id: string; p_patch: SubmissionMapPatch };
         Returns: void;
       };
       merge_fee_calculator_inputs: {

@@ -24,7 +24,7 @@ test.describe("smoke: login, dashboard, project creation", () => {
 
     await expect(page.getByText(reference)).toBeVisible();
     await expect(page.getByText("230", { exact: true })).toBeVisible();
-    await expect(page.getByText("NOT STARTED")).toBeVisible();
+    await expect(page.locator(".summary-stats").getByText("NOT STARTED")).toBeVisible();
 
     const supabase = adminClient();
     const { data: project } = await supabase.from("projects").select("id").eq("reference", reference).single();

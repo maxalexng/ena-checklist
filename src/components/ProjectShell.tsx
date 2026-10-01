@@ -17,6 +17,7 @@ type Tab = "overview" | "checklist" | "timeline" | "pcSums" | "fees";
 export function ProjectShell({ projectId }: { projectId: string }) {
   const [tab, setTab] = useState<Tab>("overview");
   const [rolesOpen, setRolesOpen] = useState(false);
+  const [focusStepId, setFocusStepId] = useState<string | null>(null);
   const { data, isLoading, error } = useProjectData(projectId);
 
   if (isLoading) {
@@ -56,7 +57,12 @@ export function ProjectShell({ projectId }: { projectId: string }) {
           <button type="button" className={`seg-btn${tab === "overview" ? " active" : ""}`} onClick={() => setTab("overview")}>
             Overview
           </button>
-          <button type="button" className={`seg-btn${tab === "checklist" ? " active" : ""}`} onClick={() => setTab("checklist")}>
+          <button type="button" className={`seg-btn${tab === "checklist" ? " active" : ""}`}
+            onClick={() => {
+              setFocusStepId(null);
+              setTab("checklist");
+            }}
+          >
             Checklist
           </button>
           <button type="button" className={`seg-btn${tab === "timeline" ? " active" : ""}`} onClick={() => setTab("timeline")}>
@@ -77,9 +83,23 @@ export function ProjectShell({ projectId }: { projectId: string }) {
       {rolesOpen && <RolesPanel projectId={projectId} roles={data.roles} onClose={() => setRolesOpen(false)} />}
 
       {tab === "checklist" && (
-        <ChecklistTab projectId={projectId} data={data} onOpenPcSums={() => setTab("pcSums")} />
+        <ChecklistTab
+          projectId={projectId}
+          data={data}
+          onOpenPcSums={() => setTab("pcSums")}
+          focusStepId={focusStepId}
+        />
       )}
-      {tab === "overview" && <OverviewTab projectId={projectId} data={data} />}
+      {tab === "overview" && (
+        <OverviewTab
+          projectId={projectId}
+          data={data}
+          onOpenStep={(stepKey) => {
+            setFocusStepId(stepKey);
+            setTab("checklist");
+          }}
+        />
+      )}
       {tab === "timeline" && <TimelineTab projectId={projectId} data={data} />}
       {tab === "pcSums" && <PcSumsTab projectId={projectId} data={data} />}
       {tab === "fees" && <FeesTab projectId={projectId} data={data} />}

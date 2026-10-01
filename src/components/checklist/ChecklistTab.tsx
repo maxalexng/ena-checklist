@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { flattenSteps, orderedStageGroups } from "@/lib/checklist/grouping";
 import type { ProjectChecklistData } from "@/hooks/useProjectData";
 import { STAGES } from "@/template";
@@ -8,14 +8,28 @@ import { useMoveSharedStep } from "@/hooks/useChecklistMutations";
 import { StepCard } from "./StepCard";
 import { ChecklistRail } from "./ChecklistRail";
 
+/** Scrolls a step card into view and flashes it. */
+function scrollToStep(stepId: string) {
+  requestAnimationFrame(() => {
+    const el = document.getElementById(`step-${stepId}`);
+    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+    el?.classList.add("jump-flash");
+    setTimeout(() => el?.classList.remove("jump-flash"), 1400);
+  });
+}
+
 export function ChecklistTab({
   projectId,
   data,
   onOpenPcSums,
+  focusStepId,
 }: {
   projectId: string;
   data: ProjectChecklistData;
   onOpenPcSums?: () => void;
+  /** Step to scroll to on opening, e.g. from the Overview tab's submission map. Every step
+   * starts expanded, so scrolling is all it takes. */
+  focusStepId?: string | null;
 }) {
   const [search, setSearch] = useState("");
   const [collapsedSteps, setCollapsedSteps] = useState<Record<string, boolean>>({});
@@ -88,13 +102,12 @@ export function ChecklistTab({
 
   function expandAndScrollTo(stepId: string) {
     updateCollapsed((prev) => ({ ...prev, [stepId]: false }));
-    requestAnimationFrame(() => {
-      const el = document.getElementById(`step-${stepId}`);
-      el?.scrollIntoView({ behavior: "smooth", block: "start" });
-      el?.classList.add("jump-flash");
-      setTimeout(() => el?.classList.remove("jump-flash"), 1400);
-    });
+    scrollToStep(stepId);
   }
+
+  useEffect(() => {
+    if (focusStepId) scrollToStep(focusStepId);
+  }, [focusStepId]);
 
   function toggleCollapsed(stepId: string) {
     updateCollapsed((prev) => ({ ...prev, [stepId]: !prev[stepId] }));

@@ -70,6 +70,7 @@
     --st-submitted:#8a97c8; --st-submitted-soft:#20263a;
     --st-cleared:#69b586; --st-cleared-soft:#1b2c22;
     --st-na:#6c7166; --st-na-soft:#20241f;
+    --danger:#e08585; --danger-soft:#3a2020;
     --role-red:#e08585; --role-red-soft:#3a2020;
     --role-blue:#8fb2d4; --role-blue-soft:#23303b;
     --role-violet:#c3a8e0; --role-violet-soft:#2e2438;
@@ -782,6 +783,116 @@
   }
   .ov-section-head{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:4px; }
   .ov-section-head h3{ font-size:15.5px; }
+  /* Submission map (Overview): one row per agency, its stages left to right as nodes on a
+     line, after CORENET's own process diagram. Nodes sit at fixed column positions
+     (MAP_COLUMNS) as percentages across the track, so every agency's DC, BP, TOP and CSC
+     line up. The track keeps a minimum width and scrolls sideways on narrow screens, with
+     the agency column pinned. */
+  .smap-tally{ font-size:12.5px; color:var(--ink-soft); white-space:nowrap; }
+  .smap-tally strong{ color:var(--ink); }
+  .smap-tally-late{ color:var(--danger); font-weight:600; }
+  .smap-legend{ display:flex; flex-wrap:wrap; gap:6px 14px; margin-bottom:10px; font-size:11.5px; color:var(--ink-soft); }
+  .smap-legend-item{ display:inline-flex; align-items:center; gap:6px; }
+  .smap-scroll{ overflow-x:auto; margin:0 -4px; padding:0 4px 4px; }
+  .smap-grid{ display:grid; grid-template-columns:176px minmax(820px, 1fr); }
+  .smap-corner{ position:sticky; left:0; z-index:3; background:var(--surface); }
+  .smap-phases{ position:relative; height:38px; }
+  .smap-phase{
+    position:absolute; top:0; bottom:6px; display:flex; flex-direction:column; align-items:center;
+    justify-content:center; background:var(--surface-2); border-left:2px solid var(--surface);
+    border-right:2px solid var(--surface); border-radius:7px; color:var(--ink-soft); line-height:1.15;
+  }
+  .smap-phase-name{ font-size:11px; font-weight:600; text-align:center; }
+  .smap-phase-count{ font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--ink-faint); }
+  .smap-phase.is-complete{ background:var(--st-cleared-soft); color:var(--st-cleared); }
+  .smap-phase.is-current{ background:var(--accent-soft); color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent); }
+  .smap-phase.is-current .smap-phase-count, .smap-phase.is-complete .smap-phase-count{ color:inherit; }
+  .smap-row{ display:contents; }
+  .smap-agency{
+    position:sticky; left:0; z-index:3; display:flex; align-items:center; gap:9px; min-width:0;
+    padding:6px 8px 6px 2px; background:var(--surface); border:none; border-top:1px solid var(--line-soft);
+    color:var(--ink); text-align:left; cursor:pointer; font:inherit;
+  }
+  .smap-agency:hover:not(:disabled) .smap-agency-code{ color:var(--accent); text-decoration:underline; }
+  .smap-agency:disabled{ cursor:default; }
+  .smap-agency:focus-visible{ outline:2px solid var(--accent); outline-offset:-2px; }
+  /* Most logos are wide wordmarks, so the box is wide too, like the checklist's own. */
+  .smap-logo{ flex:none; width:76px; height:34px; object-fit:contain; border-radius:6px; background:#fff; padding:3px 4px; border:1px solid var(--line-soft); }
+  span.smap-logo{ background:var(--surface-2); }
+  .smap-agency-text{ display:flex; flex-direction:column; min-width:0; }
+  .smap-agency-code{ font-family:'Archivo', system-ui, sans-serif; font-weight:700; font-size:13.5px; }
+  .smap-agency-scope{ font-size:10.5px; font-style:italic; color:var(--ink-faint); line-height:1.25; }
+  .smap-track{ position:relative; height:74px; border-top:1px solid var(--line-soft); }
+  .smap-row.is-na > *{ opacity:0.55; }
+  /* Every agency's TOP and CSC clearance feeds BCA's overall TOP and CSC: a faint guide
+     down those two columns ties them together, like the vertical lines on CORENET's chart. */
+  .smap-feed{ position:absolute; top:0; bottom:0; border-left:1px dashed var(--line); }
+  .smap-seg{ position:absolute; bottom:26px; height:3px; background:var(--line); border-radius:2px; }
+  .smap-seg.is-passed{ background:var(--st-cleared); }
+  .smap-route{
+    position:absolute; left:50%; top:7px; transform:translateX(-50%); font-size:9.5px; font-style:italic;
+    color:var(--ink-faint); white-space:nowrap;
+  }
+  .smap-node-wrap{
+    position:absolute; top:0; bottom:16px; width:84px; transform:translateX(-50%); display:flex;
+    flex-direction:column; align-items:center; justify-content:flex-end; gap:8px; pointer-events:none;
+  }
+  .smap-node-label{
+    font-size:10.5px; font-weight:600; line-height:1.15; text-align:center; color:var(--ink-soft);
+    background:var(--surface); padding:0 3px; border-radius:3px;
+  }
+  .smap-node-label.is-na{ color:var(--ink-faint); text-decoration:line-through; }
+  .smap-node, .smap-dot{
+    display:inline-grid; place-items:center; border-radius:50%; border:3px solid var(--st-pending);
+    background:var(--surface); color:var(--surface); padding:0; flex:none;
+  }
+  .smap-node{
+    position:relative; z-index:1; width:22px; height:22px; cursor:pointer; pointer-events:auto;
+    font-size:11px; font-weight:800; line-height:1; transition:transform .1s ease;
+  }
+  .smap-node:hover{ transform:scale(1.15); }
+  .smap-node:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  .smap-dot{ width:12px; height:12px; border-width:2px; }
+  .smap-st-done{ background:var(--st-cleared); border-color:var(--st-cleared); }
+  .smap-st-progress{ border-color:var(--st-progress); background:linear-gradient(90deg, var(--st-progress) 50%, var(--surface) 50%); }
+  .smap-st-na{ border-style:dashed; border-color:var(--st-na); }
+  .smap-next{ border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+  .smap-late{ border-color:var(--danger); background:var(--danger-soft); color:var(--danger); }
+  .smap-st-progress.smap-late{ background:linear-gradient(90deg, var(--danger) 50%, var(--danger-soft) 50%); color:transparent; }
+  .smap-selected{ outline:2px solid var(--ink); outline-offset:3px; }
+  .smap-foot{ display:block; margin-top:8px; }
+  .smap-detail{
+    margin-top:12px; padding:12px 14px; border:1px solid var(--line); border-radius:10px; background:var(--paper);
+  }
+  .smap-detail-head{ display:flex; align-items:center; gap:8px; font-size:13.5px; }
+  .smap-detail-head .roles-panel-close{ margin-left:auto; }
+  .smap-late-tag{
+    font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--danger);
+    background:var(--danger-soft); border-radius:4px; padding:1px 6px;
+  }
+  .smap-detail-source{ font-size:12px; color:var(--ink-soft); margin:6px 0 0; }
+  .smap-status-toggle{ display:inline-flex; flex-wrap:wrap; margin-top:10px; }
+  .smap-detail-links{ display:flex; flex-wrap:wrap; gap:4px 12px; margin-top:8px; }
+  .smap-detail-links .ov-jump{ white-space:normal; text-align:left; }
+  .smap-chips{ display:flex; flex-direction:column; gap:8px; margin-top:14px; padding-top:12px; border-top:1px solid var(--line-soft); }
+  .smap-chip-group{ display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
+  .smap-chip-group .ov-label{ flex:none; min-width:90px; }
+  .smap-chip{
+    font:inherit; font-size:12px; font-weight:600; color:var(--ink); background:var(--surface);
+    border:1px solid var(--line); border-radius:999px; padding:3px 10px; cursor:pointer;
+  }
+  .smap-chip:hover{ background:var(--surface-2); }
+  .smap-chip.is-selected{ border-color:var(--ink); }
+  .smap-chip-late .smap-chip{ color:var(--danger); background:var(--danger-soft); border-color:transparent; }
+  .smap-chip-progress .smap-chip{ color:var(--st-progress); background:var(--st-progress-soft); border-color:transparent; }
+  .smap-chip-next .smap-chip{ color:var(--accent); background:var(--accent-soft); border-color:transparent; }
+  .smap-chip-due{ font-weight:400; }
+  @media (max-width:560px){
+    .smap-grid{ grid-template-columns:76px minmax(760px, 1fr); }
+    .smap-agency{ flex-direction:column; align-items:flex-start; gap:3px; }
+    .smap-agency-scope{ display:none; }
+    .smap-logo{ width:64px; height:28px; }
+  }
   .ov-sortable{ display:flex; flex-direction:column; gap:18px; }
   /* A section's drag handle used to float absolute at top-right of the card â€” which is
      exactly where every section's own "Full timeline â†’" jump button already sits (see
