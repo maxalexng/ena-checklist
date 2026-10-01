@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   adjustedCompletionDate,
   completionDelay,
+  contractProgress,
   eotTotalDays,
   formatDateDMY,
   loaSuggestedStart,
@@ -264,5 +265,70 @@ describe("ppWpExpiryInfo", () => {
       expect(info?.status).toBe("urgent");
       expect(info?.daysRemaining).toBeGreaterThan(0);
     });
+  });
+});
+
+describe("contractProgress", () => {
+  // 100-day contract (01 Jan → 11 Apr 2026) plus a 50-day EOT: 150 days in all.
+  const running = (overrides: Partial<ProjectDates> = {}) =>
+    baseDates({
+      contractStart: "2026-01-01",
+      practicalCompletion: "2026-04-11",
+      eot: [{ title: "EOT 1 - Adverse Weather", days: 50 }],
+      ...overrides,
+    });
+
+  it("returns null until both the contract start and TPC are set, in that order", () => {
+    expect(contractProgress(baseDates({ practicalCompletion: "2026-04-11" }))).toBeNull();
+    expect(contractProgress(baseDates({ contractStart: "2026-01-01" }))).toBeNull();
+    expect(contractProgress(baseDates({ contractStart: "2026-04-11", practicalCompletion: "2026-01-01" }))).toBeNull();
+  });
+
+  it("measures elapsed time against the contract period plus EOTs", () => {
+    const p = contractProgress(running(), new Date("2026-03-02T00:00:00Z"))!; // day 60
+    expect(p.percent).toBeCloseTo(40);
+    expect(p.marker).toBeCloseTo(0.4);
+    expect(p.completed).toBe(false);
+    expect(p.notStarted).toBe(false);
+    expect(p.monthsElapsed).toBeCloseTo(60 / (365.25 / 12));
+    expect(p.monthsTotal).toBeCloseTo(150 / (365.25 / 12));
+    expect(p.overrun).toBeNull();
+  });
+
+  it("lays the EOTs out after the contract period, one segment each", () => {
+    const p = contractProgress(
+      running({ eot: [{ title: "EOT 1", days: 30 }, { title: "EOT 2", days: 20 }] }),
+      new Date("2026-03-02T00:00:00Z"),
+    )!;
+    expect(p.contract.width).toBeCloseTo(100 / 150);
+    expect(p.eots.map((e) => e.label)).toEqual(["EOT 1", "EOT 2"]);
+    expect(p.eots[0].start).toBeCloseTo(100 / 150);
+    expect(p.eots[0].width).toBeCloseTo(30 / 150);
+    expect(p.eots[1].start).toBeCloseTo(130 / 150);
+    expect(p.eots[1].width).toBeCloseTo(20 / 150);
+  });
+
+  it("grows the bar with an overrun past the extended completion date", () => {
+    const p = contractProgress(running(), new Date("2026-06-30T00:00:00Z"))!; // day 180
+    expect(p.percent).toBeCloseTo(120);
+    expect(p.marker).toBeCloseTo(1);
+    expect(p.contract.width).toBeCloseTo(100 / 180);
+    expect(p.overrun!.start).toBeCloseTo(150 / 180);
+    expect(p.overrun!.width).toBeCloseTo(30 / 180);
+    expect(p.overrun!.days).toBe(30);
+  });
+
+  it("stops at the actual completion date once it is recorded", () => {
+    const p = contractProgress(running({ actualCompletion: "2026-03-02" }), new Date("2027-01-01T00:00:00Z"))!;
+    expect(p.completed).toBe(true);
+    expect(p.percent).toBeCloseTo(40);
+    expect(p.overrun).toBeNull();
+  });
+
+  it("sits at 0% before the contract starts", () => {
+    const p = contractProgress(running(), new Date("2025-12-01T00:00:00Z"))!;
+    expect(p.notStarted).toBe(true);
+    expect(p.percent).toBe(0);
+    expect(p.marker).toBe(0);
   });
 });

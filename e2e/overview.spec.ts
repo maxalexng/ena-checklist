@@ -239,3 +239,58 @@ test.describe("Overview tab", () => {
     await expect(page.locator(".ic-progress")).toContainText("120% of Contract Sum");
   });
 });
+
+test.describe("Overview contract progress bar", () => {
+  let reference: string;
+
+  /** YYYY-MM-DD, `days` from today (UTC, matching the app's date maths). */
+  function daysFromToday(days: number): string {
+    const d = new Date();
+    d.setUTCHours(0, 0, 0, 0);
+    d.setUTCDate(d.getUTCDate() + days);
+    return d.toISOString().slice(0, 10);
+  }
+
+  test.beforeEach(async ({ page }) => {
+    reference = uniqueE2eReference("progress");
+    const project = await createTestProject({ reference, title: "Progress Test Project" });
+    await page.goto(`/projects/${project.id}`);
+    await expect(page.getByRole("heading", { name: "Progress Test Project" })).toBeVisible();
+  });
+
+  test.afterEach(async () => {
+    await deleteProjectByReference(reference);
+  });
+
+  test("shows elapsed time against the contract period plus EOTs, and an overrun once late", async ({ page }) => {
+    const row = overviewRow(page, "Contract Progress");
+    await expect(row).toContainText("Set the Actual Contract Start and Target Practical Completion");
+
+    // Started 60 days ago on a 100-day contract, plus a 50-day EOT: 60 of 150 days = 40%.
+    await overviewRow(page, "Actual Contract Start").locator("input[type=date]").fill(daysFromToday(-60));
+    await overviewRow(page, "Target Practical Completion").locator("input[type=date]").fill(daysFromToday(40));
+    await expect(row).toContainText("60% of the contract period elapsed");
+
+    await page.locator("#eot-add-title").fill("EOT 1 - Adverse Weather");
+    await page.locator("#eot-add-days").fill("50");
+    await page.getByRole("button", { name: "+ Add EOT" }).click();
+    await expect(row).toContainText("40% of the contract period elapsed");
+    await expect(row.locator(".cp-bar .cp-eot")).toHaveCount(1);
+    await expect(row.locator(".cp-legend")).toContainText("EOTs +50 days");
+    await expect(row.locator(".cp-marker")).toHaveAttribute("style", /left: 40(\.0+)?%/);
+    await expect(row.locator(".cp-bar .cp-overrun")).toHaveCount(0);
+
+    // Past the extended date: the bar grows an overrun segment.
+    await overviewRow(page, "Actual Contract Start").locator("input[type=date]").fill(daysFromToday(-180));
+    await overviewRow(page, "Target Practical Completion").locator("input[type=date]").fill(daysFromToday(-80));
+    await expect(row).toContainText("120% of the contract period elapsed");
+    await expect(row.locator(".cp-bar .cp-overrun")).toHaveCount(1);
+    await expect(row.locator(".cp-legend")).toContainText("Overrun 30 days");
+
+    // Recording actual completion stops the marker there.
+    await overviewRow(page, "Actual Completion").locator("input[type=date]").fill(daysFromToday(-60));
+    await expect(row).toContainText("Completed at 80% of the contract period");
+    await expect(row.locator(".cp-bar .cp-overrun")).toHaveCount(0);
+    await expect(row.locator(".cp-legend")).toContainText("Actual completion");
+  });
+});

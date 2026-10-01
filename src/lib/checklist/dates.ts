@@ -103,6 +103,79 @@ export function completionDelay(dates: ProjectDates, today: Date = todayUtcMidni
   return { extendedDate, completed, daysLate, status };
 }
 
+/** Average month length, for showing elapsed time as "month 7.2 of 18". */
+const DAYS_PER_MONTH = 365.25 / 12;
+
+function isoToDay(iso: string): number {
+  return Math.round(new Date(iso + "T00:00:00Z").getTime() / 86_400_000);
+}
+
+export interface ContractProgressSegment {
+  /** Left edge and width as fractions (0–1) of the whole bar. */
+  start: number;
+  width: number;
+  /** Shown on hover: the EOT's title, for EOT segments. */
+  label: string;
+  days: number;
+}
+
+export interface ContractProgress {
+  /** True once an actual completion date is recorded; the marker then stops there. */
+  completed: boolean;
+  notStarted: boolean;
+  /** Elapsed time (contract start → today or actual completion) as a percentage of the
+   * extended contract period (contract start → TPC + EOTs). Past 100 once overrunning. */
+  percent: number;
+  monthsElapsed: number;
+  monthsTotal: number;
+  /** Marker position, as a fraction (0–1) of the whole bar. */
+  marker: number;
+  /** The original contract period, contract start → Target Practical Completion. */
+  contract: ContractProgressSegment;
+  /** One segment per EOT, in order, appended after the contract period. */
+  eots: ContractProgressSegment[];
+  /** Time past the extended completion date, if any — the bar grows to fit it. */
+  overrun: ContractProgressSegment | null;
+}
+
+/** The contract period as a bar: contract start → TPC, then each EOT appended, with a
+ * marker for today (or the actual completion date, once set). Null until both the actual
+ * contract start and the target practical completion are set, in that order. */
+export function contractProgress(dates: ProjectDates, today: Date = todayUtcMidnight()): ContractProgress | null {
+  if (!dates.contractStart || !dates.practicalCompletion) return null;
+  const start = isoToDay(dates.contractStart);
+  const tpc = isoToDay(dates.practicalCompletion);
+  const contractDays = tpc - start;
+  if (contractDays <= 0) return null;
+
+  const eotDays = (dates.eot || []).map((e) => Math.max(0, e.days || 0));
+  const totalDays = contractDays + eotDays.reduce((sum, d) => sum + d, 0);
+  const completed = !!dates.actualCompletion;
+  const now = completed ? isoToDay(dates.actualCompletion!) : Math.round(today.getTime() / 86_400_000);
+  const elapsed = Math.max(0, now - start);
+  const overrunDays = Math.max(0, elapsed - totalDays);
+  const scale = totalDays + overrunDays;
+
+  let offset = contractDays;
+  const eots = (dates.eot || []).map((e, i) => {
+    const segment = { start: offset / scale, width: eotDays[i] / scale, label: e.title, days: eotDays[i] };
+    offset += eotDays[i];
+    return segment;
+  });
+
+  return {
+    completed,
+    notStarted: now < start,
+    percent: (elapsed / totalDays) * 100,
+    monthsElapsed: elapsed / DAYS_PER_MONTH,
+    monthsTotal: totalDays / DAYS_PER_MONTH,
+    marker: elapsed / scale,
+    contract: { start: 0, width: contractDays / scale, label: "Contract period", days: contractDays },
+    eots,
+    overrun: overrunDays > 0 ? { start: totalDays / scale, width: overrunDays / scale, label: "Overrun", days: overrunDays } : null,
+  };
+}
+
 // "urgent" covers both "in the final red window before expiry" and "actually past expiry"
 // — same red treatment for both, per how this is meant to read at a glance (see
 // ppWpExpiryInfo's warningDate/urgentDate). Whether it's literally overdue is a separate

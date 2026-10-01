@@ -864,6 +864,32 @@
   .ov-sub-label{ font-size:11.5px; color:var(--ink-soft); flex:none; }
   .completion-delay{ font-size:11.5px; font-weight:600; padding:3px 8px; }
   .ov-ext-ord{ font-family:'IBM Plex Mono',monospace; color:var(--ink-faint); min-width:44px; }
+
+  /* Contract progress: contract period + EOTs as one bar, red line for today. */
+  .cp-summary{ font-size:12.3px; color:var(--ink-soft); }
+  .cp-summary strong{ color:var(--ink); }
+  .cp-summary.over strong{ color:var(--danger); }
+  .cp-bar{
+    position:relative; height:14px; margin:8px 0 6px; border-radius:4px;
+    background:var(--surface-2); border:1px solid var(--line);
+  }
+  .cp-seg{ position:absolute; top:0; bottom:0; }
+  .cp-contract{ background:var(--accent); opacity:0.75; }
+  .cp-eot{ background:var(--brass); opacity:0.8; border-left:1px solid var(--surface); }
+  .cp-overrun{
+    background:repeating-linear-gradient(135deg, var(--danger-soft) 0 4px, var(--danger) 4px 6px);
+    border-left:1px solid var(--surface);
+  }
+  .cp-bar > .cp-seg:first-child{ border-radius:3px 0 0 3px; }
+  .cp-marker{
+    position:absolute; top:-5px; bottom:-5px; width:2px; margin-left:-1px;
+    background:var(--danger); border-radius:1px;
+  }
+  .cp-legend{ display:flex; flex-wrap:wrap; gap:4px 14px; font-size:11px; color:var(--ink-faint); }
+  .cp-legend span{ display:inline-flex; align-items:center; gap:5px; }
+  .cp-swatch{ display:inline-block; width:10px; height:10px; border-radius:2px; }
+  .cp-swatch.cp-overrun{ border-left:none; }
+  .cp-marker-swatch{ width:2px; height:12px; background:var(--danger); }
   .ov-hint{ font-size:11px; color:var(--ink-faint); margin-top:6px; }
   .ov-amend-wrap{
     flex-basis:100%; margin-top:8px; padding-top:8px; padding-left:14px;

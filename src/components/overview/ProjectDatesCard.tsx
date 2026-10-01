@@ -12,6 +12,7 @@ import {
   tpcSuggestedDate,
   type CompletionDelay,
 } from "@/lib/checklist/dates";
+import { ContractProgressBar } from "./ContractProgressBar";
 
 function days(n: number): string {
   return `${n} day${n === 1 ? "" : "s"}`;
@@ -231,6 +232,8 @@ export function ProjectDatesCard({ data }: { data: ProjectChecklistData }) {
           <span className="ov-calc-note">Set a Target Practical Completion to track days late.</span>
         )}
       </div>
+
+      <ContractProgressBar dates={dates} />
     </div>
   );
 }
