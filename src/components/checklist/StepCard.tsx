@@ -10,7 +10,7 @@ import { ItemRow } from "./ItemRow";
 import { Highlight } from "./Highlight";
 import { ConsultantsWidget } from "@/components/consultants/ConsultantsWidget";
 import { DesignReviewLog } from "./DesignReviewLog";
-import { PcSumsWidget } from "@/components/pcSums/PcSumsWidget";
+import { pcSumSummaryLine, summarizePcSums } from "@/lib/pcSums/pcSums";
 
 export function StepCard({
   projectId,
@@ -24,6 +24,7 @@ export function StepCard({
   canMoveDown,
   onMove,
   query,
+  onOpenPcSums,
 }: {
   projectId: string;
   step: TemplateStep;
@@ -37,6 +38,8 @@ export function StepCard({
   onMove: (direction: -1 | 1) => void;
   /** The live checklist search text; matches are highlighted in the card. */
   query: string;
+  /** Switches to the PC Sums tab, where the PC sum step's schedule lives. */
+  onOpenPcSums?: () => void;
 }) {
   const toggleStepNa = useToggleStepNa(projectId);
   const updateItemOrder = useUpdateItemOrder(projectId);
@@ -205,7 +208,18 @@ export function StepCard({
             locked={locked}
           />
         )}
-        {step.isPcSumSchedule && <PcSumsWidget projectId={projectId} pcSums={data.pcSums} locked={locked} />}
+        {step.isPcSumSchedule && (
+          <div className="pc-step-link">
+            <span className="pc-summary">
+              {data.pcSums.length === 0 ? "No PC sums on this project yet." : pcSumSummaryLine(summarizePcSums(data.pcSums))}
+            </span>
+            {onOpenPcSums && (
+              <button type="button" className="roles-add-btn" onClick={onOpenPcSums}>
+                Open the PC sum schedule →
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

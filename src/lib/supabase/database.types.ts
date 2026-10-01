@@ -168,7 +168,7 @@ export interface Database {
           project_id: string;
           item: string;
           supplier: string;
-          selection: "tbc" | "client" | "recommended";
+          selection: "tbc" | "client" | "recommended" | "contract";
           amount: number | null;
           client_confirmed: boolean;
           na: boolean;

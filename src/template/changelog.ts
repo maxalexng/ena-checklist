@@ -10,7 +10,7 @@
 // bump n and drop any letter suffix. "R<n><letter>" for a smaller revision within that
 // cycle (a wording tweak, a logo swap, a bug fix) — keep n, advance the letter.
 // Never renumber a revision once published.
-export const TEMPLATE_VERSION = "R18";
+export const TEMPLATE_VERSION = "R19";
 
 export interface ChangelogEntry {
   rev: string;
@@ -23,6 +23,12 @@ export interface ChangelogEntry {
 // from the HTML prototype (submissions-register-MASTER.html); entries from here on
 // describe changes made in this app.
 export const TEMPLATE_CHANGELOG: ChangelogEntry[] = [
+  {
+    rev: "R19",
+    date: "2026-10-01",
+    summary:
+      'The PC sum schedule moves to its own "PC Sums" tab, between Timeline and Fees. The "PC Sum Schedule & Client Selections" step stays in the checklist and shows the schedule\'s roll-up with a link to the tab. New fourth selection, "Specified in contract", for an item fully specified in the contract documents and priced within the contract sum: it counts as decided, but has no allowance and stays out of the allowance total.',
+  },
   {
     rev: "R18",
     date: "2026-09-29",

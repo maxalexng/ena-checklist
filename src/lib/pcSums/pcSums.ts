@@ -11,24 +11,41 @@ export interface PcSumLike {
 export interface PcSumSummary {
   /** Rows still part of this project (not N/A). */
   applicable: number;
-  /** Applicable rows with a selection made (client's choice or our recommendation). */
+  /** Applicable rows with a selection made (anything but "To discuss"). */
   decided: number;
   confirmed: number;
-  /** Sum of the applicable rows' allowances; rows with no amount count as zero. */
+  /** Applicable rows specified in the contract instead of carried as a PC sum. */
+  inContract: number;
+  /** Sum of the PC sum allowances (applicable rows not specified in the contract); rows
+   * with no amount count as zero. */
   total: number;
-  /** Applicable rows with no amount set yet. */
+  /** Applicable rows that need an allowance and don't have one yet. */
   unpriced: number;
 }
 
 export function summarizePcSums(rows: PcSumLike[]): PcSumSummary {
   const live = rows.filter((r) => !r.na);
+  // A row specified in the contract keeps any amount it had (so switching back restores
+  // it), but it isn't a PC sum allowance, so it stays out of the total.
+  const allowances = live.filter((r) => r.selection !== "contract");
   return {
     applicable: live.length,
     decided: live.filter((r) => r.selection !== "tbc").length,
     confirmed: live.filter((r) => r.clientConfirmed).length,
-    total: live.reduce((sum, r) => sum + (r.amount ?? 0), 0),
-    unpriced: live.filter((r) => r.amount === null).length,
+    inContract: live.length - allowances.length,
+    total: allowances.reduce((sum, r) => sum + (r.amount ?? 0), 0),
+    unpriced: allowances.filter((r) => r.amount === null).length,
   };
+}
+
+/** The roll-up line under the schedule, also shown on the checklist step. */
+export function pcSumSummaryLine(s: PcSumSummary): string {
+  return [
+    `${s.decided} of ${s.applicable} decided`,
+    `${s.confirmed} confirmed by client`,
+    ...(s.inContract > 0 ? [`${s.inContract} specified in contract`] : []),
+    `Total allowances ${formatSgd(s.total)}${s.unpriced > 0 ? ` (${s.unpriced} not priced yet)` : ""}`,
+  ].join(" · ");
 }
 
 /** "12,500" / "12,500.50": thousands separators, cents only when there are any. */

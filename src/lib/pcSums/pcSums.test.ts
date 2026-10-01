@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_PC_SUM_ITEMS } from "@/template/pcSums";
-import { formatAmountInput, formatSgd, parseSgdInput, summarizePcSums, type PcSumLike } from "./pcSums";
+import {
+  formatAmountInput,
+  formatSgd,
+  parseSgdInput,
+  pcSumSummaryLine,
+  summarizePcSums,
+  type PcSumLike,
+} from "./pcSums";
 
 function row(p: Partial<PcSumLike> = {}): PcSumLike {
   return { selection: "tbc", amount: null, clientConfirmed: false, na: false, ...p };
@@ -14,11 +21,38 @@ describe("summarizePcSums", () => {
       row(),
       row({ na: true, selection: "client", amount: 99999, clientConfirmed: true }),
     ]);
-    expect(s).toEqual({ applicable: 3, decided: 2, confirmed: 1, total: 20000.5, unpriced: 1 });
+    expect(s).toEqual({ applicable: 3, decided: 2, confirmed: 1, inContract: 0, total: 20000.5, unpriced: 1 });
+  });
+
+  it("counts a row specified in the contract as decided but leaves it out of the allowances", () => {
+    const s = summarizePcSums([
+      row({ selection: "contract", amount: 5000, clientConfirmed: true }),
+      row({ selection: "contract" }),
+      row({ selection: "client", amount: 1000 }),
+    ]);
+    expect(s).toEqual({ applicable: 3, decided: 3, confirmed: 1, inContract: 2, total: 1000, unpriced: 0 });
   });
 
   it("is all zeros for an empty schedule", () => {
-    expect(summarizePcSums([])).toEqual({ applicable: 0, decided: 0, confirmed: 0, total: 0, unpriced: 0 });
+    expect(summarizePcSums([])).toEqual({
+      applicable: 0,
+      decided: 0,
+      confirmed: 0,
+      inContract: 0,
+      total: 0,
+      unpriced: 0,
+    });
+  });
+});
+
+describe("pcSumSummaryLine", () => {
+  it("mentions contract-specified rows and unpriced allowances only when there are any", () => {
+    expect(pcSumSummaryLine(summarizePcSums([row({ selection: "client", amount: 18500 })]))).toBe(
+      "1 of 1 decided · 0 confirmed by client · Total allowances S$18,500"
+    );
+    expect(pcSumSummaryLine(summarizePcSums([row({ selection: "contract" }), row()]))).toBe(
+      "1 of 2 decided · 0 confirmed by client · 1 specified in contract · Total allowances S$0 (1 not priced yet)"
+    );
   });
 });
 

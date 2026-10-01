@@ -3,12 +3,16 @@
 // copy as pc_sums rows (createProject); after that the rows are the project's own, so
 // renaming, removing or adding lines here never touches existing projects.
 
-export type PcSumSelection = "tbc" | "client" | "recommended";
+// "contract" means the item isn't carried as a PC sum after all: it's fully specified in the
+// contract documents (make, model, finish), so the contractor prices it within the contract
+// sum and there's no separate allowance.
+export type PcSumSelection = "tbc" | "client" | "recommended" | "contract";
 
 export const PC_SUM_SELECTION_LABELS: Record<PcSumSelection, string> = {
   tbc: "To discuss",
   client: "Client's choice",
   recommended: "Our recommendation",
+  contract: "Specified in contract",
 };
 
 export const DEFAULT_PC_SUM_ITEMS: string[] = [

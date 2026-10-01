@@ -8,7 +8,15 @@ import { useMoveSharedStep } from "@/hooks/useChecklistMutations";
 import { StepCard } from "./StepCard";
 import { ChecklistRail } from "./ChecklistRail";
 
-export function ChecklistTab({ projectId, data }: { projectId: string; data: ProjectChecklistData }) {
+export function ChecklistTab({
+  projectId,
+  data,
+  onOpenPcSums,
+}: {
+  projectId: string;
+  data: ProjectChecklistData;
+  onOpenPcSums?: () => void;
+}) {
   const [search, setSearch] = useState("");
   const [collapsedSteps, setCollapsedSteps] = useState<Record<string, boolean>>({});
   // While searching, every matching step opens so the highlighted items are visible. The
@@ -184,6 +192,7 @@ export function ChecklistTab({ projectId, data }: { projectId: string; data: Pro
                     canMoveDown={step.id !== isGlobalLast}
                     onMove={(direction) => moveStep(step.id, direction)}
                     query={query}
+                    onOpenPcSums={onOpenPcSums}
                   />
                 ))}
               </div>

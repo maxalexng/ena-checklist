@@ -10,7 +10,7 @@ import {
   useUpdatePcSum,
 } from "@/hooks/usePcSumMutations";
 import { PC_SUM_SELECTION_LABELS, type PcSumSelection } from "@/template/pcSums";
-import { formatAmountInput, formatSgd, parseSgdInput, summarizePcSums } from "@/lib/pcSums/pcSums";
+import { formatAmountInput, parseSgdInput, pcSumSummaryLine, summarizePcSums } from "@/lib/pcSums/pcSums";
 
 // The PC sum schedule: one row per PC sum item, run through with the client — who the
 // selection comes from, the supplier/brand agreed, the allowance, and whether the client
@@ -131,23 +131,31 @@ function PcSumRow({
         />
       </td>
       <td>
-        <input
-          className={`pc-input pc-amount${amountInvalid ? " pc-invalid" : ""}`}
-          aria-label={`${label} amount`}
-          aria-invalid={amountInvalid}
-          inputMode="decimal"
-          placeholder="S$"
-          value={amount}
-          disabled={locked || na}
-          onChange={(e) => setAmount(e.target.value)}
-          onBlur={() => {
-            const parsed = parseSgdInput(amount);
-            setAmountInvalid(parsed === undefined);
-            if (parsed === undefined) return;
-            setAmount(formatAmountInput(parsed));
-            if (parsed !== row.amount) update({ id: row.id, amount: parsed });
-          }}
-        />
+        {selection === "contract" ? (
+          // Priced within the contract sum, so there's no allowance to fill in. Any amount
+          // already saved is kept, and comes back if the row is switched back to a PC sum.
+          <span className="pc-in-contract" aria-label={`${label} amount`}>
+            In contract
+          </span>
+        ) : (
+          <input
+            className={`pc-input pc-amount${amountInvalid ? " pc-invalid" : ""}`}
+            aria-label={`${label} amount`}
+            aria-invalid={amountInvalid}
+            inputMode="decimal"
+            placeholder="S$"
+            value={amount}
+            disabled={locked || na}
+            onChange={(e) => setAmount(e.target.value)}
+            onBlur={() => {
+              const parsed = parseSgdInput(amount);
+              setAmountInvalid(parsed === undefined);
+              if (parsed === undefined) return;
+              setAmount(formatAmountInput(parsed));
+              if (parsed !== row.amount) update({ id: row.id, amount: parsed });
+            }}
+          />
+        )}
       </td>
       <td className="pc-cell-center">
         <input
@@ -276,11 +284,7 @@ export function PcSumsWidget({
               </tbody>
             </table>
           </div>
-          <p className="pc-summary">
-            {s.decided} of {s.applicable} decided · {s.confirmed} confirmed by client · Total allowances{" "}
-            <strong>{formatSgd(s.total)}</strong>
-            {s.unpriced > 0 && ` (${s.unpriced} not priced yet)`}
-          </p>
+          <p className="pc-summary">{pcSumSummaryLine(s)}</p>
         </>
       )}
       {!locked && (

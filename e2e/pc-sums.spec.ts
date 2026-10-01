@@ -11,6 +11,11 @@ async function openStep(page: Page) {
   await expect(page.getByRole("heading", { name: STEP }).first()).toBeVisible();
 }
 
+async function openTab(page: Page) {
+  await page.getByRole("button", { name: "PC Sums", exact: true }).click();
+  await expect(page.getByRole("heading", { name: STEP })).toBeVisible();
+}
+
 test.describe("PC sum schedule", () => {
   let reference: string;
   let projectId: string;
@@ -20,7 +25,7 @@ test.describe("PC sum schedule", () => {
     const project = await createTestProject({ reference, title: "PC Sums Test Project" });
     projectId = project.id;
     await page.goto(`/projects/${project.id}`);
-    await openStep(page);
+    await openTab(page);
   });
 
   test.afterEach(async () => {
@@ -35,6 +40,43 @@ test.describe("PC sum schedule", () => {
     );
   });
 
+  test("the checklist step shows the roll-up and links to the PC Sums tab", async ({ page }) => {
+    await openStep(page);
+    const step = page.locator("#step-admin__PCSUMS");
+    await expect(step.locator(".pc-row")).toHaveCount(0);
+    await expect(step.locator(".pc-summary")).toHaveText(
+      `0 of ${DEFAULT_PC_SUM_ITEMS.length} decided · 0 confirmed by client · Total allowances S$0 (${DEFAULT_PC_SUM_ITEMS.length} not priced yet)`
+    );
+
+    await step.getByRole("button", { name: "Open the PC sum schedule →" }).click();
+    await expect(page.getByRole("heading", { name: STEP })).toBeVisible();
+    await expect(page.locator(".pc-row")).toHaveCount(DEFAULT_PC_SUM_ITEMS.length);
+  });
+
+  test("specified in contract counts as decided, hides the allowance and leaves it out of the total", async ({
+    page,
+  }) => {
+    const amount = page.getByLabel(`${FIRST} amount`);
+    await amount.fill("5,000");
+    await amount.blur();
+    await expect(page.locator(".pc-summary")).toContainText("Total allowances S$5,000");
+
+    await page.getByLabel(`${FIRST} selection`).selectOption({ label: "Specified in contract" });
+    await expect(amount).toHaveText("In contract");
+    await expect(page.locator(".pc-summary")).toHaveText(
+      `1 of 18 decided · 0 confirmed by client · 1 specified in contract · Total allowances S$0 (17 not priced yet)`
+    );
+
+    await page.reload();
+    await openTab(page);
+    await expect(page.getByLabel(`${FIRST} selection`)).toHaveValue("contract");
+
+    // Switching back to a PC sum brings the saved allowance back.
+    await page.getByLabel(`${FIRST} selection`).selectOption({ label: "Client's choice" });
+    await expect(page.getByLabel(`${FIRST} amount`)).toHaveValue("5,000");
+    await expect(page.locator(".pc-summary")).toContainText("Total allowances S$5,000");
+  });
+
   test("a selection, supplier, allowance and confirmation persist across reload", async ({ page }) => {
     await page.getByLabel(`${FIRST} selection`).selectOption({ label: "Our recommendation" });
     await page.getByLabel(`${FIRST} supplier`).fill("Hansgrohe via Sanitary Supplies Pte Ltd");
@@ -47,7 +89,7 @@ test.describe("PC sum schedule", () => {
     await expect(page.locator(".pc-summary")).toContainText("S$18,500");
 
     await page.reload();
-    await openStep(page);
+    await openTab(page);
     await expect(page.getByLabel(`${FIRST} selection`)).toHaveValue("recommended");
     await expect(page.getByLabel(`${FIRST} supplier`)).toHaveValue("Hansgrohe via Sanitary Supplies Pte Ltd");
     await expect(page.getByLabel(`${FIRST} amount`)).toHaveValue("18,500");
@@ -111,7 +153,7 @@ test.describe("PC sum schedule", () => {
     expect(await page.evaluate(() => (window as unknown as { __pcFlicker: string[] }).__pcFlicker)).toEqual([]);
 
     await page.reload();
-    await openStep(page);
+    await openTab(page);
     for (const box of boxes) await expect(box).toBeChecked();
   });
 
@@ -131,7 +173,7 @@ test.describe("PC sum schedule", () => {
     const { error } = await adminClient().from("pc_sums").delete().eq("project_id", projectId);
     expect(error).toBeNull();
     await page.reload();
-    await openStep(page);
+    await openTab(page);
     await expect(page.getByText("No PC sums on this project yet.")).toBeVisible();
 
     // Locked, the load button is hidden, so the empty state says how to get it back.
