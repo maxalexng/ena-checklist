@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { MS_TYPE_PRESETS } from "@/template";
+import { CHECKPOINT_SORT_BASE, MS_TYPE_PRESETS } from "@/template";
+import type { LogCheckpoint } from "@/template";
 import type { MilestoneEntry } from "@/hooks/useProjectData";
 import {
   useAddMilestone,
@@ -16,8 +17,9 @@ export function MilestoneLog({
   stepKey,
   label,
   blurb,
-  entries,
+  entries: allEntries,
   presets,
+  checkpoints = [],
 }: {
   projectId: string;
   stepKey: string;
@@ -25,7 +27,25 @@ export function MilestoneLog({
   blurb?: string;
   entries: MilestoneEntry[];
   presets: string[];
+  /** Fixed rows after the rounds (e.g. "WP Granted"); they can't be moved or deleted. */
+  checkpoints?: LogCheckpoint[];
 }) {
+  const checkpointTypes = new Set(checkpoints.map((c) => c.type));
+  const entries = allEntries.filter((e) => !checkpointTypes.has(e.type));
+
+  /** Fills in a checkpoint, creating its row the first time. */
+  function saveCheckpoint(checkpoint: LogCheckpoint, index: number, patch: { date?: string | null; note?: string }) {
+    const existing = allEntries.find((e) => e.type === checkpoint.type);
+    if (existing) updateMilestone.mutate({ id: existing.id, ...patch });
+    else
+      addMilestone.mutate({
+        stepKey,
+        type: checkpoint.type,
+        date: patch.date ?? null,
+        note: patch.note ?? "",
+        sortOrder: CHECKPOINT_SORT_BASE + index,
+      });
+  }
   const addMilestone = useAddMilestone(projectId);
   const updateMilestone = useUpdateMilestone(projectId);
   const deleteMilestone = useDeleteMilestone(projectId);
@@ -141,6 +161,38 @@ export function MilestoneLog({
           </div>
         ))}
         {entries.length === 0 && <span className="ov-empty">No entries yet.</span>}
+        {checkpoints.map((checkpoint, i) => {
+          const entry = allEntries.find((e) => e.type === checkpoint.type);
+          return (
+            <div
+              className={`sl-row ms-checkpoint${entry?.date ? " is-reached" : ""}`}
+              key={checkpoint.type}
+              data-checkpoint={checkpoint.type}
+            >
+              <span className="ms-checkpoint-mark" aria-hidden="true">
+                {entry?.date ? "✓" : "◆"}
+              </span>
+              <span className="sl-label">{checkpoint.label}</span>
+              <input
+                type="date"
+                className="ov-amend-date-input"
+                aria-label={`${checkpoint.label} date`}
+                value={entry?.date ?? ""}
+                onChange={(e) => saveCheckpoint(checkpoint, i, { date: e.target.value || null })}
+              />
+              <input
+                className="ov-amend-note-input"
+                placeholder="Note"
+                aria-label={`${checkpoint.label} note`}
+                defaultValue={entry?.note ?? ""}
+                key={entry?.id ?? "new"}
+                onBlur={(e) => {
+                  if (e.target.value !== (entry?.note ?? "")) saveCheckpoint(checkpoint, i, { note: e.target.value });
+                }}
+              />
+            </div>
+          );
+        })}
       </div>
 
       <div className="milestone-form">

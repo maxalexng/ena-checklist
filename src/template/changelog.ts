@@ -10,7 +10,7 @@
 // bump n and drop any letter suffix. "R<n><letter>" for a smaller revision within that
 // cycle (a wording tweak, a logo swap, a bug fix) — keep n, advance the letter.
 // Never renumber a revision once published.
-export const TEMPLATE_VERSION = "R22b";
+export const TEMPLATE_VERSION = "R22d";
 
 export interface ChangelogEntry {
   rev: string;
@@ -23,6 +23,18 @@ export interface ChangelogEntry {
 // from the HTML prototype (submissions-register-MASTER.html); entries from here on
 // describe changes made in this app.
 export const TEMPLATE_CHANGELOG: ChangelogEntry[] = [
+  {
+    rev: "R22d",
+    date: "2026-10-02",
+    summary:
+      "Overview submission logs end with fixed checkpoints: PP Granted and WP Granted on URA's PP / WP log, and BP & HS Approval (BP01) on BCA's BP & HS log. They always sit below the rounds, can't be moved or deleted, and turn green once dated. A dated checkpoint marks its Submission Map stages done (WP Granted clears both PP and WP), and the PP / WP expiry runs from them.",
+  },
+  {
+    rev: "R22c",
+    date: "2026-10-02",
+    summary:
+      "Submission Map: a URA Advice, or a PP with No Commencement of Works (NCW), logged against PP / WP no longer counts as PP or WP cleared; it shows PP as in progress. WP straight away is the aim, a plain PP is acceptable. PP and WP keep sharing one target date.",
+  },
   {
     rev: "R22b",
     date: "2026-10-02",

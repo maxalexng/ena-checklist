@@ -104,11 +104,44 @@ test.describe("Overview tab", () => {
     await uraSection.getByRole("button", { name: "+ Add" }).click();
 
     await expect(uraSection.getByText("PP Submitted", { exact: true })).toBeVisible();
-    await expect(uraSection.locator(".sl-row")).toHaveCount(1);
+    await expect(uraSection.locator(".sl-row:not(.ms-checkpoint)")).toHaveCount(1);
 
     await page.reload();
     const reloadedSection = page.locator(".ov-section").filter({ hasText: "URA — Provisional Permission" });
-    await expect(reloadedSection.locator(".sl-row")).toHaveCount(1);
+    await expect(reloadedSection.locator(".sl-row:not(.ms-checkpoint)")).toHaveCount(1);
+  });
+
+  test("PP / WP Granted and BP01 are fixed checkpoints that clear the map and start the expiry clock", async ({ page }) => {
+    const uraSection = page.locator(".ov-section").filter({ hasText: "URA — Provisional Permission" });
+    const wp = uraSection.locator('[data-checkpoint="WP Granted"]');
+    await expect(uraSection.locator(".ms-checkpoint")).toHaveCount(2);
+    // Fixed rows: no move or delete buttons.
+    await expect(wp.locator(".ms-del, .row-move-btn")).toHaveCount(0);
+
+    // A round logged afterwards still sits above the checkpoints.
+    await uraSection.locator('[data-field="type"]').fill("PP Submitted");
+    await uraSection.getByRole("button", { name: "+ Add" }).click();
+    await expect(uraSection.locator(".sl-row").first()).toContainText("PP Submitted");
+
+    await wp.getByLabel("WP Granted date").fill("2026-05-04");
+    await expect(wp).toHaveClass(/is-reached/);
+    const map = page.getByTestId("submission-map");
+    await expect(map.locator('[data-node="ura-pp"]')).toHaveAttribute("data-status", "done");
+    await expect(map.locator('[data-node="ura-wp"]')).toHaveAttribute("data-status", "done");
+    await expect(uraSection.locator(".ms-expiry")).toContainText("WP Expiry — 04 05 2028");
+
+    const bp = page.locator('[data-checkpoint="BP & HS Approval (BP01)"]');
+    await bp.getByLabel("BP & HS Approval (BP01) date").fill("2026-08-01");
+    await expect(map.locator('[data-node="bca-bp"]')).toHaveAttribute("data-status", "done");
+
+    await page.reload();
+    await expect(page.locator('[data-checkpoint="WP Granted"]').getByLabel("WP Granted date")).toHaveValue("2026-05-04");
+    await expect(page.locator(".sl-row", { hasText: "PP Submitted" })).toHaveCount(1);
+    await expect(uraSection.locator(".sl-row").last()).toHaveAttribute("data-checkpoint", "WP Granted");
+
+    // Clearing the date un-reaches it: the only round left is a PP submission, so WP is back to not started.
+    await page.locator('[data-checkpoint="WP Granted"]').getByLabel("WP Granted date").fill("");
+    await expect(page.getByTestId("submission-map").locator('[data-node="ura-wp"]')).toHaveAttribute("data-status", "pending");
   });
 
   test("logging a PP grant shows a PP Expiry bubble with an extension reminder", async ({ page }) => {

@@ -1063,6 +1063,12 @@
     display:flex; align-items:center; flex-wrap:wrap; gap:8px;
     background:var(--surface-2); border-radius:6px; padding:6px 8px;
   }
+  /* A log's fixed checkpoint (e.g. WP Granted): the approval the rounds above lead to. Set
+     apart with a dashed outline until it has a date, then green once reached. */
+  .sl-row.ms-checkpoint{ background:transparent; border:1px dashed var(--line); }
+  .sl-row.ms-checkpoint.is-reached{ background:var(--st-cleared-soft); border-style:solid; border-color:var(--st-cleared); }
+  .ms-checkpoint-mark{ flex:none; width:16px; text-align:center; font-size:11px; color:var(--ink-faint); }
+  .ms-checkpoint.is-reached .ms-checkpoint-mark{ color:var(--st-cleared); font-weight:700; }
   .sl-label{
     font-family:'IBM Plex Sans', sans-serif; font-size:12.3px; font-weight:600; color:var(--ink);
     background:var(--paper); border:1px solid var(--line); border-radius:5px; padding:4px 7px;

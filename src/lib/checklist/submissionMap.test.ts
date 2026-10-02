@@ -151,9 +151,39 @@ describe("autoNodeStatus", () => {
     expect(autoNodeStatus(def("ura-wp"), inputs)).toBe("done");
   });
 
+  it("doesn't count an Advice or a PP with No Commencement of Works as cleared", () => {
+    const inputs = freshInputs();
+    for (const type of ["PP with NCW", "Provisional Permission (No Commencement of Works)", "Advice issued"]) {
+      inputs.milestonesByStep["ura__PP"] = [{ type }];
+      expect(autoNodeStatus(def("ura-pp"), inputs), type).toBe("progress");
+      expect(autoNodeStatus(def("ura-wp"), inputs), type).toBe("pending");
+    }
+    // A plain PP afterwards still clears it.
+    inputs.milestonesByStep["ura__PP"]!.push({ type: "Provisional Permission" });
+    expect(autoNodeStatus(def("ura-pp"), inputs)).toBe("done");
+  });
+
+  it("completes stages from a dated Overview checkpoint, and ignores an empty one", () => {
+    const inputs = freshInputs();
+    // A checkpoint row saved with only a note: no date, so not reached.
+    inputs.milestonesByStep["ura__PP"] = [{ type: "PP Granted", date: null }];
+    expect(autoNodeStatus(def("ura-pp"), inputs)).toBe("pending");
+
+    inputs.milestonesByStep["ura__PP"] = [{ type: "PP Granted", date: "2026-03-02" }];
+    expect(autoNodeStatus(def("ura-pp"), inputs)).toBe("done");
+    expect(autoNodeStatus(def("ura-wp"), inputs)).toBe("pending");
+
+    inputs.milestonesByStep["ura__PP"] = [{ type: "WP Granted", date: "2026-05-04" }];
+    expect(autoNodeStatus(def("ura-pp"), inputs)).toBe("done");
+    expect(autoNodeStatus(def("ura-wp"), inputs)).toBe("done");
+
+    inputs.milestonesByStep["bca__BP"] = [{ type: "BP & HS Approval (BP01)", date: "2026-08-01" }];
+    expect(autoNodeStatus(def("bca-bp"), inputs)).toBe("done");
+  });
+
   it("treats a WP grant as PP done too", () => {
     const inputs = freshInputs();
-    inputs.milestonesByStep["ura__PP"] = [{ type: "WP Granted" }];
+    inputs.milestonesByStep["ura__PP"] = [{ type: "WP Granted", date: "2026-05-04" }];
     expect(autoNodeStatus(def("ura-pp"), inputs)).toBe("done");
     expect(autoNodeStatus(def("ura-wp"), inputs)).toBe("done");
   });

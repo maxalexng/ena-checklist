@@ -7,6 +7,7 @@ import {
   type ProjectChecklistData,
 } from "./useProjectData";
 import type { ProjectDates, SubmissionMapPatch } from "@/lib/supabase/database.types";
+import { CHECKPOINT_SORT_BASE } from "@/template";
 
 function useProjectMutation<TVars>(projectId: string, mutationFn: (vars: TVars) => Promise<void>) {
   const queryClient = useQueryClient();
@@ -40,9 +41,9 @@ export function useUpdateProjectDates(projectId: string) {
 export function useAddMilestone(projectId: string) {
   const supabase = createClient();
   const queryClient = useQueryClient();
-  return useProjectMutation<{ stepKey: string; type: string; date: string | null; note: string }>(
+  return useProjectMutation<{ stepKey: string; type: string; date: string | null; note: string; sortOrder?: number }>(
     projectId,
-    async ({ stepKey, type, date, note }) => {
+    async ({ stepKey, type, date, note, sortOrder }) => {
       const existing = currentData(queryClient, projectId)?.milestonesByStep[stepKey] ?? [];
       const { error } = await supabase.from("milestones").insert({
         project_id: projectId,
@@ -51,8 +52,13 @@ export function useAddMilestone(projectId: string) {
         date,
         note,
         // Max + 1 rather than length: after a delete, length can equal a surviving row's
-        // sort_order, and two rows sharing one would sort in no fixed order.
-        sort_order: existing.reduce((max, m) => Math.max(max, m.sortOrder + 1), 0),
+        // sort_order, and two rows sharing one would sort in no fixed order. Checkpoint rows
+        // pass their own, and are left out of the max so rounds always sort before them.
+        sort_order:
+          sortOrder ??
+          existing
+            .filter((m) => m.sortOrder < CHECKPOINT_SORT_BASE)
+            .reduce((max, m) => Math.max(max, m.sortOrder + 1), 0),
       });
       if (error) throw error;
     }

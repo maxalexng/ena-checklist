@@ -1,3 +1,4 @@
+import { LOG_CHECKPOINTS_BY_STEP, SUBMISSION_MAP } from "./index";
 import { describe, expect, it } from "vitest";
 import { STATUSES, defaultListPresets, defaultRoles, nextStatus, slugify, uniqueRoleId } from "./defaults";
 import { ROLE_PALETTE } from "./keys";
@@ -77,6 +78,21 @@ describe("defaultListPresets", () => {
   it("covers exactly the 8 curated Overview-tab log keys", () => {
     expect(Object.keys(defaultListPresets()).sort()).toEqual(
       ["bca__BP", "bca__ST", "lta__ACCESS", "nparks__TREE", "pub__SS", "pub__SW", "scdf__FS", "ura__PP"].sort()
+    );
+  });
+});
+
+describe("log checkpoints", () => {
+  it("only complete Submission Map stages that read the checkpoint's own step", () => {
+    const nodes = SUBMISSION_MAP.flatMap((r) => r.nodes);
+    Object.entries(LOG_CHECKPOINTS_BY_STEP).forEach(([stepKey, checkpoints]) =>
+      checkpoints.forEach((c) =>
+        c.completes.forEach((id) => {
+          const node = nodes.find((n) => n.id === id);
+          expect(node, `${c.type} → ${id}`).toBeDefined();
+          expect(node!.links.map((l) => l.step), `${c.type} → ${id}`).toContain(stepKey);
+        })
+      )
     );
   });
 });

@@ -72,8 +72,8 @@ export interface MapNodeDef {
   by?: string;
   links: MapNodeLink[];
   /** Read the linked step's submission log too, for nodes that share one step: done once
-   * a log entry matches `done`, under way once one matches `started`. */
-  log?: { done: RegExp; started?: RegExp };
+   * a log entry matches `done` (and not `notDone`), under way once one matches `started`. */
+  log?: { done: RegExp; started?: RegExp; notDone?: RegExp };
 }
 
 export interface MapRowDef {
@@ -87,6 +87,9 @@ export interface MapRowDef {
 
 // Log entries that mean the permission was actually given, not just applied for.
 const GRANTED = "(grant|approv|clear|issu|obtain|receiv)";
+// URA outcomes that aren't the clearance we're after: an Advice, or a PP with No
+// Commencement of Works. WP straight away is best and a plain PP is acceptable; these aren't.
+const NOT_CLEARED = /\bncw\b|no commencement|advice/i;
 
 export const SUBMISSION_MAP: MapRowDef[] = [
   {
@@ -112,6 +115,7 @@ export const SUBMISSION_MAP: MapRowDef[] = [
         log: {
           done: new RegExp(`provisional permission|written permission|\\b[pw]p\\b.*${GRANTED}|${GRANTED}.*\\b[pw]p\\b`, "i"),
           started: /./,
+          notDone: NOT_CLEARED,
         },
       },
       {
@@ -123,6 +127,7 @@ export const SUBMISSION_MAP: MapRowDef[] = [
         log: {
           done: new RegExp(`written permission|\\bwp\\b.*${GRANTED}|${GRANTED}.*\\bwp\\b`, "i"),
           started: /\bwp\b/i,
+          notDone: NOT_CLEARED,
         },
       },
       { id: "ura-top", column: "top", label: "TOP", name: "URA clearance for TOP", links: [] },

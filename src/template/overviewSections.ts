@@ -2,11 +2,21 @@
 // agency sections and their submission logs. Ported from the prototype's OV_SECTION_DEFS
 // and renderOvSection* functions (each of which combined a heading, a blurb, and one or
 // two milestone-log widgets keyed by `keys`).
+/** A fixed row at the end of a submission log: the approval the rounds above lead to. It
+ * can't be moved or deleted, and once it has a date it marks its Submission Map stages done. */
+export interface LogCheckpoint {
+  /** Stored milestone `type`. Existing rows are matched on it, so never change it once shipped. */
+  type: string;
+  label: string;
+  /** Submission Map node ids (template/submissionMap.ts) this approval completes. */
+  completes: string[];
+}
+
 export interface OverviewSectionDef {
   id: string;
   heading: string;
   /** One milestone-log widget per key; a label is shown when a section has more than one. */
-  logs: { key: string; label: string; blurb: string }[];
+  logs: { key: string; label: string; blurb: string; checkpoints?: LogCheckpoint[] }[];
   sectionBlurb?: string;
 }
 
@@ -18,6 +28,11 @@ export const OV_SECTION_DEFS: OverviewSectionDef[] = [
       {
         key: "ura__PP",
         label: "PP / WP submissions",
+        // WP straight away is the aim; a PP is acceptable on the way. A WP grant clears both.
+        checkpoints: [
+          { type: "PP Granted", label: "PP Granted", completes: ["ura-pp"] },
+          { type: "WP Granted", label: "WP Granted", completes: ["ura-pp", "ura-wp"] },
+        ],
         blurb:
           "Track each Provisional Permission (PP) submission round as it actually happens — cleared straight away, sent back with a Written Direction (WD), lapsed to No Commencement of Works (NCW), rejected outright, or carried straight into Written Permission (WP). Add one row per round; the label is free text, with suggestions.",
       },
@@ -30,6 +45,7 @@ export const OV_SECTION_DEFS: OverviewSectionDef[] = [
       {
         key: "bca__BP",
         label: "BP & HS submissions",
+        checkpoints: [{ type: "BP & HS Approval (BP01)", label: "BP & HS Approval (BP01)", completes: ["bca-bp"] }],
         blurb: "Submitted, then cleared, or received back with comments or a Written Direction — track each round.",
       },
       {
@@ -93,6 +109,14 @@ export const OV_SECTION_DEFS: OverviewSectionDef[] = [
 export const OV_SECTION_BY_ID: Record<string, OverviewSectionDef> = Object.fromEntries(
   OV_SECTION_DEFS.map((s) => [s.id, s])
 );
+
+/** Each submission log's fixed checkpoints, by step key. */
+export const LOG_CHECKPOINTS_BY_STEP: Record<string, LogCheckpoint[]> = Object.fromEntries(
+  OV_SECTION_DEFS.flatMap((s) => s.logs.filter((l) => l.checkpoints).map((l) => [l.key, l.checkpoints!]))
+);
+
+/** Checkpoint rows sort after every ordinary round (see useAddMilestone). */
+export const CHECKPOINT_SORT_BASE = 1_000_000;
 
 export function defaultOverviewSectionOrder(): string[] {
   return OV_SECTION_DEFS.map((s) => s.id);

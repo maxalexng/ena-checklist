@@ -33,6 +33,7 @@ export function OverviewSection({
           blurb={log.blurb}
           entries={data.milestonesByStep[log.key] ?? []}
           presets={data.project.listPresets[log.key] ?? []}
+          checkpoints={log.checkpoints}
         />
       ))}
 
@@ -55,8 +56,8 @@ export function OverviewSection({
               <span className="ov-label">PP / WP Expiry</span>
               <span className="ov-empty">Not enough data to calculate.</span>
               <span className="ov-hint" style={{ flexBasis: "100%" }}>
-                Standard validity: 6 months from PP grant, or 2 years from WP grant. Log a &quot;PP Cleared /
-                Granted&quot; or &quot;WP Granted&quot; row above (with a date) once one comes through.
+                Standard validity: 6 months from PP grant, or 2 years from WP grant. Fill in the PP Granted
+                or WP Granted date above once one comes through.
               </span>
             </>
           )}

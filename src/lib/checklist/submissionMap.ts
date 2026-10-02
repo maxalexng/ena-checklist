@@ -5,7 +5,15 @@
 //
 // Each node also has a plan for the Timeline tab: a target date (by default, the end of the
 // office stage its checklist step sits in) and, once someone sets one, a start date.
-import { MAP_COLUMNS, MAP_COLUMN_STAGE, MAP_PHASES, STAGE_BY_ID, STEP_BY_ID, SUBMISSION_MAP } from "@/template";
+import {
+  LOG_CHECKPOINTS_BY_STEP,
+  MAP_COLUMNS,
+  MAP_COLUMN_STAGE,
+  MAP_PHASES,
+  STAGE_BY_ID,
+  STEP_BY_ID,
+  SUBMISSION_MAP,
+} from "@/template";
 import type { MapNodeDef, MapRowDef, StageId } from "@/template";
 import type { SubmissionMapRow, SubmissionMapStatus } from "@/lib/supabase/database.types";
 import { formatDateDMY } from "./dates";
@@ -16,7 +24,7 @@ export type MapStatus = SubmissionMapStatus;
 
 export interface MapInputs {
   itemsByKey: Record<string, { status: string; na: boolean } | undefined>;
-  milestonesByStep: Record<string, { type: string }[] | undefined>;
+  milestonesByStep: Record<string, { type: string; date?: string | null }[] | undefined>;
   /** The older per-step planned dates (timeline_plan), read where a node has none of its own. */
   timelinePlanByStep: Record<string, { startDate?: string | null; endDate: string | null } | undefined>;
   overrides: SubmissionMapRow;
@@ -120,24 +128,43 @@ function checklistStatus(records: { status: string; na: boolean }[]): MapStatus 
   return "pending";
 }
 
+function logShowsDone(node: MapNodeDef, entries: { type: string }[]): boolean {
+  const log = node.log;
+  return !!log && entries.some((e) => log.done.test(e.type) && !log.notDone?.test(e.type));
+}
+
+/** A dated checkpoint row (e.g. "WP Granted" on the Overview tab) that completes this node. */
+function checkpointDone(node: MapNodeDef, inputs: MapInputs): boolean {
+  return node.links.some((link) =>
+    (LOG_CHECKPOINTS_BY_STEP[link.step] ?? [])
+      .filter((c) => c.completes.includes(node.id))
+      .some((c) => (inputs.milestonesByStep[link.step] ?? []).some((e) => e.type === c.type && !!e.date))
+  );
+}
+
 /** The node's status from the checklist and the linked steps' submission logs, ignoring
  * any manual status. Null when the node links to nothing. */
 export function autoNodeStatus(node: MapNodeDef, inputs: MapInputs): MapStatus | null {
   if (node.links.length === 0) return null;
+  if (checkpointDone(node, inputs)) return "done";
   const records = itemKeysFor(node)
     .map((key) => inputs.itemsByKey[key])
     .filter((r): r is { status: string; na: boolean } => !!r);
   let status = checklistStatus(records);
 
-  const entries = node.links.flatMap((link) => inputs.milestonesByStep[link.step] ?? []);
+  // An empty checkpoint row (no date yet) is a placeholder, not a logged round.
+  const entries = node.links.flatMap((link) => {
+    const checkpointTypes = new Set((LOG_CHECKPOINTS_BY_STEP[link.step] ?? []).map((c) => c.type));
+    return (inputs.milestonesByStep[link.step] ?? []).filter((e) => !checkpointTypes.has(e.type) || !!e.date);
+  });
   if (status === "na" && node.required) {
     // Only optional parts of the stage are N/A, not the stage itself, so it's tracked by
     // hand, unless the submission log already shows it moving.
-    if (node.log && entries.some((e) => node.log!.done.test(e.type))) return "done";
+    if (logShowsDone(node, entries)) return "done";
     return entries.length > 0 ? "progress" : null;
   }
   if (node.log) {
-    if (entries.some((e) => node.log!.done.test(e.type))) return "done";
+    if (logShowsDone(node, entries)) return "done";
     if (status === "pending" && node.log.started && entries.some((e) => node.log!.started!.test(e.type))) {
       status = "progress";
     }
