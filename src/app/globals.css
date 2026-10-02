@@ -1382,6 +1382,10 @@
     border:1px solid var(--line); border-radius:5px; padding:3px 5px;
   }
   .timeline-app .tl-band-row, .timeline-app .tl-row{ grid-template-columns:260px var(--tl-track-w, 1fr) 196px; }
+  /* As wide as the whole timeline, not just the visible part: a pinned (sticky) label can
+     only stay pinned inside its own row, so a window-wide row let the labels slide away
+     once you scrolled past the first screenful. */
+  .timeline-app .tl-rows, .timeline-app .tl-band-row{ width:max-content; min-width:100%; }
   .tl-rows-overlay{ position:absolute; top:0; bottom:0; pointer-events:none; z-index:5; }
   .tl-stage-line{ position:absolute; top:0; bottom:0; border-left:1px solid var(--line-soft); }
   .tl-rows-overlay .tl-today{ opacity:0.55; }

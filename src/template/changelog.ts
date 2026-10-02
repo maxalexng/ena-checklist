@@ -10,7 +10,7 @@
 // bump n and drop any letter suffix. "R<n><letter>" for a smaller revision within that
 // cycle (a wording tweak, a logo swap, a bug fix) — keep n, advance the letter.
 // Never renumber a revision once published.
-export const TEMPLATE_VERSION = "R22a";
+export const TEMPLATE_VERSION = "R22b";
 
 export interface ChangelogEntry {
   rev: string;
@@ -23,6 +23,12 @@ export interface ChangelogEntry {
 // from the HTML prototype (submissions-register-MASTER.html); entries from here on
 // describe changes made in this app.
 export const TEMPLATE_CHANGELOG: ChangelogEntry[] = [
+  {
+    rev: "R22b",
+    date: "2026-10-02",
+    summary:
+      "Submission Map agency descriptions capitalised (Planning, Building Control, Traffic · Rail · Parking, …). The Timeline grid is now as tall as the window, and its stage labels stay pinned on the left however far right you scroll (they used to slide away around Construction).",
+  },
   {
     rev: "R22a",
     date: "2026-10-02",

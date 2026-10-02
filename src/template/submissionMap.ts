@@ -92,7 +92,7 @@ export const SUBMISSION_MAP: MapRowDef[] = [
   {
     agencyId: "ura",
     label: "URA",
-    scope: ["planning"],
+    scope: ["Planning"],
     nodes: [
       {
         id: "ura-opp",
@@ -132,7 +132,7 @@ export const SUBMISSION_MAP: MapRowDef[] = [
   {
     agencyId: "bca",
     label: "BCA",
-    scope: ["building control"],
+    scope: ["Building Control"],
     nodes: [
       {
         id: "bca-demo",
@@ -181,7 +181,7 @@ export const SUBMISSION_MAP: MapRowDef[] = [
   {
     agencyId: "nea",
     label: "NEA",
-    scope: ["environment", "pollution"],
+    scope: ["Environment", "Pollution"],
     nodes: [
       { id: "nea-dc", column: "dc", label: "DC", name: "NEA development control", links: [{ step: "nea__ENV" }] },
       { id: "nea-bp", column: "bp", label: "BP", name: "NEA building plan clearance", links: [] },
@@ -192,7 +192,7 @@ export const SUBMISSION_MAP: MapRowDef[] = [
   {
     agencyId: "lta",
     label: "LTA",
-    scope: ["traffic", "rail", "parking"],
+    scope: ["Traffic", "Rail", "Parking"],
     nodes: [
       {
         id: "lta-dc",
@@ -209,7 +209,7 @@ export const SUBMISSION_MAP: MapRowDef[] = [
   {
     agencyId: "pub",
     label: "PUB",
-    scope: ["drainage", "sewerage"],
+    scope: ["Drainage", "Sewerage"],
     nodes: [
       {
         id: "pub-dc",
@@ -232,7 +232,7 @@ export const SUBMISSION_MAP: MapRowDef[] = [
   {
     agencyId: "nparks",
     label: "NParks",
-    scope: ["trees", "greenery"],
+    scope: ["Trees", "Greenery"],
     nodes: [
       { id: "nparks-dc", column: "dc", label: "DC", name: "NParks development control", links: [{ step: "nparks__TREE" }] },
       {
@@ -250,7 +250,7 @@ export const SUBMISSION_MAP: MapRowDef[] = [
   {
     agencyId: "scdf",
     label: "SCDF",
-    scope: ["fire safety"],
+    scope: ["Fire Safety"],
     nodes: [
       { id: "scdf-bp", column: "bp", label: "BP", name: "Fire safety plan approval", links: [{ step: "scdf__FS" }] },
       {
@@ -265,7 +265,7 @@ export const SUBMISSION_MAP: MapRowDef[] = [
   {
     agencyId: "sla",
     label: "SLA",
-    scope: ["land", "survey"],
+    scope: ["Land", "Survey"],
     nodes: [
       {
         id: "sla-survey",
@@ -289,7 +289,7 @@ export const SUBMISSION_MAP: MapRowDef[] = [
   {
     agencyId: "tfcc",
     label: "TFCC",
-    scope: ["telecom", "fibre"],
+    scope: ["Telecom", "Fibre"],
     nodes: [
       { id: "tfcc-plans", column: "dc", label: "Plans", name: "Telecom facility plans", links: [{ step: "tfcc__PLAN" }] },
       { id: "tfcc-fibre", column: "top", label: "Fibre", name: "Fibre lead-in, before TOP", links: [{ step: "tfcc__FIBRE" }] },

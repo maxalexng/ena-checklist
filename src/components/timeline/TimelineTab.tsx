@@ -14,20 +14,19 @@ import { MAP_STATUS_LABEL } from "@/components/overview/SubmissionMap";
 /** The track column starts after the 260px label column and its 10px gap (.tl-row). */
 const TRACK_OFFSET_PX = 270;
 
-/** Fits the scrolling grid between where it starts on the page and the bottom of the
- * window, so its sideways scrollbar is on screen without scrolling the page first. */
-function useFitToWindow(ref: React.RefObject<HTMLDivElement | null>, enabled: boolean, layoutKey: unknown) {
+/** Makes the scrolling grid as tall as the window, so once the page is scrolled down to it
+ * the whole grid, sideways scrollbar included, is on screen. */
+function useFitToWindow(ref: React.RefObject<HTMLDivElement | null>, enabled: boolean) {
   useEffect(() => {
     const el = ref.current;
     if (!enabled || !el) return;
     const fit = () => {
-      const top = el.getBoundingClientRect().top + window.scrollY;
-      el.style.maxHeight = `${Math.max(360, window.innerHeight - top - 16)}px`;
+      el.style.maxHeight = `${Math.max(360, window.innerHeight - 24)}px`;
     };
     fit();
     window.addEventListener("resize", fit);
     return () => window.removeEventListener("resize", fit);
-  }, [ref, enabled, layoutKey]);
+  }, [ref, enabled]);
 }
 
 function bubbleClass(n: MapNodeState, extra: string): string {
@@ -167,8 +166,7 @@ export function TimelineTab({ projectId, data }: { projectId: string; data: Proj
   const start = timelineStart(dates, data.project.stageDurationWeeks);
   const span = start ? projectSpan(start.date, data.project.stageDurationWeeks) : null;
   const rows = useMemo(() => submissionMapState(mapInputsFor(data)), [data]);
-  // Re-fit when the durations editor opens or closes above the grid.
-  useFitToWindow(scaleRef, !!span, durationsOpen);
+  useFitToWindow(scaleRef, !!span);
 
   const projectStartInput = (
     <label className="tl-project-start">

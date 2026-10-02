@@ -114,6 +114,21 @@ test.describe("Timeline tab", () => {
     await expect(pp.locator('[data-bubble="end"]')).toHaveAttribute("data-typical", "true");
   });
 
+  test("stage labels stay pinned on the left when scrolled all the way right", async ({ page }) => {
+    reference = uniqueE2eReference("timeline-sticky");
+    const project = await createTestProject({ reference, title: "Timeline Sticky" });
+    await setProjectFields(project.id, { project_dates: { ...PROJECT_DATES_WITH_START, projectStart: "2026-01-05" } });
+
+    await page.goto(`/projects/${project.id}`);
+    await page.getByRole("button", { name: "Timeline" }).click();
+    const wrap = page.locator(".tl-scale-wrap");
+    const label = page.locator('.tl-stage-row[data-node="ura-pp"] .tl-row-label');
+    const before = (await label.boundingBox())!.x;
+    await wrap.evaluate((el) => (el.scrollLeft = el.scrollWidth));
+    await expect(label).toBeInViewport();
+    expect((await label.boundingBox())!.x).toBeCloseTo(before, 0);
+  });
+
   test("only a target someone has set makes a stage late", async ({ page }) => {
     reference = uniqueE2eReference("timeline-late");
     const project = await createTestProject({ reference, title: "Timeline Late" });
