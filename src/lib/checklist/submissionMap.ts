@@ -74,7 +74,7 @@ export interface MapNodeState {
   cleared: number;
   applicable: number;
   plan: MapNodePlan;
-  /** Past its target date and not yet done. */
+  /** Past a target someone has set (not just the typical one) and not yet done. */
   late: boolean;
   /** The agency's first unfinished stage, when it hasn't started yet: what to pick up next. */
   isNext: boolean;
@@ -234,7 +234,9 @@ export function submissionMapState(inputs: MapInputs, today: string = todayIso()
     // N/A never spreads along a row: an agency's optional checklist steps being N/A says
     // nothing about its other stages (no traffic study, but LTA's BP and CSC still happen).
     nodes.forEach((n) => {
-      n.late = !!n.plan.end && n.plan.end < today && (n.status === "pending" || n.status === "progress");
+      // A typical target is only a guide, so it never makes a stage late on its own.
+      const target = n.plan.endSource === "typical" ? null : n.plan.end;
+      n.late = !!target && target < today && (n.status === "pending" || n.status === "progress");
     });
     const firstOpen = nodes.find((n) => n.status === "pending" || n.status === "progress");
     if (firstOpen && firstOpen.status === "pending") firstOpen.isNext = true;

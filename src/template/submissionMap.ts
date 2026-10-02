@@ -97,7 +97,7 @@ export const SUBMISSION_MAP: MapRowDef[] = [
       {
         id: "ura-opp",
         column: "opp",
-        label: "OPP",
+        label: "Outline",
         name: "Outline Planning Permission",
         optional: true,
         links: [{ step: "ura__OP" }],

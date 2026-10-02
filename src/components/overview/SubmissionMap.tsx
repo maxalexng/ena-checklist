@@ -120,7 +120,7 @@ export function SubmissionMap({
   return (
     <div className="ov-section smap" data-testid="submission-map">
       <div className="ov-section-head">
-        <h3>Submission map</h3>
+        <h3>Submission Map</h3>
         <span className="smap-tally">
           <strong>{summary.done}</strong> of {summary.total} stages done
           {summary.late.length > 0 && <span className="smap-tally-late"> · {summary.late.length} late</span>}
@@ -190,7 +190,7 @@ export function SubmissionMap({
                   title={`Go to ${row.def.label} steps in the checklist`}
                 >
                   {logo ? (
-                    <Image src={logo} alt="" width={76} height={34} className="smap-logo" />
+                    <Image src={logo} alt="" width={76} height={34} className="smap-logo" loading="eager" />
                   ) : (
                     <span className="smap-logo" />
                   )}
@@ -254,8 +254,8 @@ export function SubmissionMap({
         </div>
       </div>
       <p className="ov-hint smap-foot">
-        * Only some projects need these (OPP, demolition). Every agency&apos;s TOP and CSC clearances feed BCA&apos;s overall TOP and CSC.
-        A stage turns late once its target date on the Timeline tab has passed.
+        * Only some projects need these (Outline, Demolition). Every agency&apos;s TOP and CSC clearances feed BCA&apos;s overall TOP and CSC.
+        A stage turns late once a target date set on the Timeline tab has passed.
       </p>
 
       {selected && (

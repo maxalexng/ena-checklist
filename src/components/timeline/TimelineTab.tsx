@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { STAGES, STAGE_BY_ID, agencyLogoSrc } from "@/template";
 import type { ProjectChecklistData } from "@/hooks/useProjectData";
@@ -13,6 +13,22 @@ import { MAP_STATUS_LABEL } from "@/components/overview/SubmissionMap";
 
 /** The track column starts after the 260px label column and its 10px gap (.tl-row). */
 const TRACK_OFFSET_PX = 270;
+
+/** Fits the scrolling grid between where it starts on the page and the bottom of the
+ * window, so its sideways scrollbar is on screen without scrolling the page first. */
+function useFitToWindow(ref: React.RefObject<HTMLDivElement | null>, enabled: boolean, layoutKey: unknown) {
+  useEffect(() => {
+    const el = ref.current;
+    if (!enabled || !el) return;
+    const fit = () => {
+      const top = el.getBoundingClientRect().top + window.scrollY;
+      el.style.maxHeight = `${Math.max(360, window.innerHeight - top - 16)}px`;
+    };
+    fit();
+    window.addEventListener("resize", fit);
+    return () => window.removeEventListener("resize", fit);
+  }, [ref, enabled, layoutKey]);
+}
 
 function bubbleClass(n: MapNodeState, extra: string): string {
   return ["tl-dot", `smap-st-${n.status}`, n.late ? "smap-late" : "", n.isNext ? "smap-next" : "", extra]
@@ -145,11 +161,14 @@ export function TimelineTab({ projectId, data }: { projectId: string; data: Proj
   const updateNode = useUpdateMapNode(projectId);
   const [durationsOpen, setDurationsOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const scaleRef = useRef<HTMLDivElement>(null);
 
   const dates = data.project.projectDates;
   const start = timelineStart(dates, data.project.stageDurationWeeks);
   const span = start ? projectSpan(start.date, data.project.stageDurationWeeks) : null;
   const rows = useMemo(() => submissionMapState(mapInputsFor(data)), [data]);
+  // Re-fit when the durations editor opens or closes above the grid.
+  useFitToWindow(scaleRef, !!span, durationsOpen);
 
   const projectStartInput = (
     <label className="tl-project-start">
@@ -223,7 +242,7 @@ export function TimelineTab({ projectId, data }: { projectId: string; data: Proj
         </div>
       )}
 
-      <div className="tl-scale-wrap" style={{ ["--tl-track-w" as string]: `${span.trackWidthPx}px` }}>
+      <div ref={scaleRef} className="tl-scale-wrap" style={{ ["--tl-track-w" as string]: `${span.trackWidthPx}px` }}>
         <div className="tl-band-row">
           <div />
           <div className="tl-bands-track" style={{ width: span.trackWidthPx }}>
@@ -262,7 +281,7 @@ export function TimelineTab({ projectId, data }: { projectId: string; data: Proj
               <Fragment key={row.def.agencyId}>
                 <div className="tl-row tl-group-head" data-agency={row.def.agencyId}>
                   <div className="tl-row-label tl-group-label">
-                    {logo && <Image src={logo} alt="" width={64} height={26} className="tl-logo" />}
+                    {logo && <Image src={logo} alt="" width={64} height={26} className="tl-logo" loading="eager" />}
                     <span className="tl-group-code">{row.def.label}</span>
                   </div>
                   <div />

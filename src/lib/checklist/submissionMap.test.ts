@@ -341,10 +341,12 @@ describe("nodePlan", () => {
     });
   });
 
-  it("turns a stage late from its typical target", () => {
+  it("only turns a stage late from a target someone has set, not the typical one", () => {
     const inputs = planned();
-    expect(node(inputs, "ura-pp", "2026-10-12").late).toBe(false);
-    expect(node(inputs, "ura-pp", "2026-10-13").late).toBe(true);
+    expect(node(inputs, "ura-pp", "2027-01-01").late).toBe(false);
+    inputs.overrides = { "ura-pp": { end: "2026-09-15" } };
+    expect(node(inputs, "ura-pp", "2026-09-15").late).toBe(false);
+    expect(node(inputs, "ura-pp", "2026-09-16").late).toBe(true);
   });
 
   it("describes where the target came from", () => {

@@ -1271,7 +1271,7 @@
   }
   .op-add-btn:hover{ opacity:0.9; }
 
-  .timeline-app{ display:flex; flex-direction:column; gap:16px; max-width:1100px; }
+  .timeline-app{ display:flex; flex-direction:column; gap:16px; }
   .tl-toolbar{
     display:flex; align-items:center; flex-wrap:wrap; gap:12px;
     background:var(--surface); border:1px solid var(--line); border-radius:10px;
@@ -1307,10 +1307,14 @@
     letter-spacing:0.04em; color:var(--ink-faint);
   }
   .tl-dur-total{ font-size:11px; color:var(--ink-faint); margin-top:2px; }
+  /* Scrolls both ways inside a box no taller than the window, so its sideways scrollbar is
+     always on screen instead of below a tall list of rows; the stage bands stay pinned on top. */
   .tl-scale-wrap{
     background:var(--surface); border:1px solid var(--line); border-radius:12px;
-    padding:14px 16px 16px; box-shadow:var(--shadow); overflow-x:auto;
+    padding:0 16px 16px; box-shadow:var(--shadow); overflow:auto;
+    max-height:calc(100vh - 32px); overscroll-behavior:contain;
   }
+  .tl-scale-wrap > .tl-band-row{ position:sticky; top:0; z-index:8; padding-top:14px; padding-bottom:10px; margin-bottom:0; background:var(--surface); }
   .tl-band-row, .tl-row{
     display:grid; grid-template-columns:170px var(--tl-track-w, 1fr) 128px; column-gap:10px;
     align-items:center;

@@ -10,7 +10,7 @@
 // bump n and drop any letter suffix. "R<n><letter>" for a smaller revision within that
 // cycle (a wording tweak, a logo swap, a bug fix) — keep n, advance the letter.
 // Never renumber a revision once published.
-export const TEMPLATE_VERSION = "R22";
+export const TEMPLATE_VERSION = "R22a";
 
 export interface ChangelogEntry {
   rev: string;
@@ -23,6 +23,12 @@ export interface ChangelogEntry {
 // from the HTML prototype (submissions-register-MASTER.html); entries from here on
 // describe changes made in this app.
 export const TEMPLATE_CHANGELOG: ChangelogEntry[] = [
+  {
+    rev: "R22a",
+    date: "2026-10-02",
+    summary:
+      "A stage only shows late once a target someone has set has passed; typical targets are a guide and never make it late. URA's OPP stage is now labelled Outline, and the Overview heading reads Submission Map. The Timeline fills the page width and fits the window, with its own scrollbars and the stage bands pinned on top, so the sideways scrollbar is always on screen.",
+  },
   {
     rev: "R22",
     date: "2026-10-02",

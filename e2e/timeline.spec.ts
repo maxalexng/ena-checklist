@@ -114,14 +114,20 @@ test.describe("Timeline tab", () => {
     await expect(pp.locator('[data-bubble="end"]')).toHaveAttribute("data-typical", "true");
   });
 
-  test("a stage past its target shows late on the timeline and the map", async ({ page }) => {
+  test("only a target someone has set makes a stage late", async ({ page }) => {
     reference = uniqueE2eReference("timeline-late");
     const project = await createTestProject({ reference, title: "Timeline Late" });
-    // A project that started in 2020 is well past every pre-construction target.
-    await setProjectFields(project.id, { project_dates: { ...PROJECT_DATES_WITH_START, projectStart: "2020-01-06" } });
+    // A project that started in 2020 is past every typical target, but those don't count.
+    await setProjectFields(project.id, {
+      project_dates: { ...PROJECT_DATES_WITH_START, projectStart: "2020-01-06" },
+      submission_map: { "ura-pp": { end: "2020-06-01" } },
+    });
 
     await page.goto(`/projects/${project.id}`);
-    await expect(page.getByTestId("submission-map").locator('[data-node="ura-pp"]')).toHaveClass(/smap-late/);
+    const map = page.getByTestId("submission-map");
+    await expect(map.locator('[data-node="ura-pp"]')).toHaveClass(/smap-late/);
+    await expect(map.locator('[data-node="ura-wp"]')).not.toHaveClass(/smap-late/);
+    await expect(map.locator(".smap-tally")).toContainText("1 late");
     await page.getByRole("button", { name: "Timeline" }).click();
     await expect(page.locator('.tl-stage-row[data-node="ura-pp"] [data-bubble="end"]')).toHaveClass(/smap-late/);
   });
