@@ -21,6 +21,9 @@ export interface ProjectDates {
   icLink?: string;
   icNumber?: string;
   icValueOfWorks?: string;
+  /** When the project started (Timeline tab), so typical dates show before there's a
+   * building contract. Optional for the same reason as actualCompletion. */
+  projectStart?: string;
 }
 
 // Partial because fee_calculator_inputs starts as '{}' — see defaultFeeCalculatorInputs()
@@ -46,9 +49,19 @@ export type FeeCalculatorInputsRow = Partial<{
  * submission map, keyed by node id (src/template/submissionMap.ts). A node with no entry,
  * or no status, works its status out from the checklist. */
 export type SubmissionMapStatus = "pending" | "progress" | "done" | "na";
-export type SubmissionMapRow = Record<string, { status?: SubmissionMapStatus }>;
+export interface SubmissionMapNode {
+  status?: SubmissionMapStatus;
+  /** Timeline tab: when preparation starts, as a date or as the end of an office stage
+   * (e.g. "dev" for "after Design Development"). A date wins if both are set. */
+  start?: string;
+  startAfter?: string;
+  /** Timeline tab: the target / confirm-by date, replacing the typical one (the end of
+   * the stage's own office stage). */
+  end?: string;
+}
+export type SubmissionMapRow = Record<string, SubmissionMapNode>;
 /** A null field clears it (merge_submission_map strips nulls). */
-export type SubmissionMapPatch = Record<string, { status: SubmissionMapStatus | null }>;
+export type SubmissionMapPatch = Record<string, { [K in keyof SubmissionMapNode]?: SubmissionMapNode[K] | null }>;
 
 export interface Database {
   public: {

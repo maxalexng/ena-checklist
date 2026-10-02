@@ -94,12 +94,6 @@ export const OV_SECTION_BY_ID: Record<string, OverviewSectionDef> = Object.fromE
   OV_SECTION_DEFS.map((s) => [s.id, s])
 );
 
-/** The 8 curated steps shown as Gantt rows on the Timeline tab — same set the Overview
- * tab's sections cover, flattened. */
-export function timelineKeys(): string[] {
-  return OV_SECTION_DEFS.flatMap((s) => s.logs.map((l) => l.key));
-}
-
 export function defaultOverviewSectionOrder(): string[] {
   return OV_SECTION_DEFS.map((s) => s.id);
 }

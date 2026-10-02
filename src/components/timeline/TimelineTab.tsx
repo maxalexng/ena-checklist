@@ -1,40 +1,196 @@
 "use client";
 
-import { useState } from "react";
-import { STAGES, STEP_BY_ID } from "@/template";
-import { timelineKeys } from "@/template";
+import { Fragment, useMemo, useState } from "react";
+import Image from "next/image";
+import { STAGES, STAGE_BY_ID, agencyLogoSrc } from "@/template";
 import type { ProjectChecklistData } from "@/hooks/useProjectData";
-import { useUpdateStageDurationWeeks, useUpdateTimelinePlanField } from "@/hooks/useTimelineMutations";
-import { aggregateStatus, projectSpan, pxForDate, stageBands, todayPx } from "@/lib/checklist/timeline";
+import { useUpdateStageDurationWeeks } from "@/hooks/useTimelineMutations";
+import { useUpdateMapNode, useUpdateProjectDates } from "@/hooks/useOverviewMutations";
+import { projectSpan, pxForDate, stageBands, timelineStart, todayPx, type ProjectSpan } from "@/lib/checklist/timeline";
 import { formatDateDMY } from "@/lib/checklist/dates";
+import { mapInputsFor, planEndText, submissionMapState, type MapNodeState } from "@/lib/checklist/submissionMap";
+import { MAP_STATUS_LABEL } from "@/components/overview/SubmissionMap";
+
+/** The track column starts after the 260px label column and its 10px gap (.tl-row). */
+const TRACK_OFFSET_PX = 270;
+
+function bubbleClass(n: MapNodeState, extra: string): string {
+  return ["tl-dot", `smap-st-${n.status}`, n.late ? "smap-late" : "", n.isNext ? "smap-next" : "", extra]
+    .filter(Boolean)
+    .join(" ");
+}
+
+/** A stage's bubbles on its row: one circle at the target, or, once a start is set, a
+ * circle at each end joined by a pill. A typical target (not set by anyone yet) is dotted. */
+function StageBubbles({ n, span }: { n: MapNodeState; span: ProjectSpan }) {
+  const clamp = (px: number | null) => (px === null ? null : Math.min(Math.max(px, 0), span.trackWidthPx));
+  const end = clamp(pxForDate(n.plan.end, span));
+  const start = clamp(pxForDate(n.plan.start, span));
+  if (end === null && start === null) return null;
+  const typical = n.plan.endSource === "typical";
+  const status = n.late ? `${MAP_STATUS_LABEL[n.status]}, late` : MAP_STATUS_LABEL[n.status];
+
+  return (
+    <>
+      {start !== null && end !== null && (
+        <span
+          className="tl-pill"
+          data-status={n.late ? "late" : n.status}
+          style={{ left: Math.min(start, end), width: Math.abs(end - start) }}
+        />
+      )}
+      {start !== null && (
+        <span
+          className={bubbleClass(n, "tl-dot-start")}
+          style={{ left: start }}
+          title={`${n.def.name}: start ${formatDateDMY(n.plan.start)}`}
+          data-bubble="start"
+        />
+      )}
+      {end !== null && (
+        <span
+          className={bubbleClass(n, typical ? "is-typical" : "")}
+          style={{ left: end }}
+          title={`${n.def.name}: ${status}, target ${planEndText(n.plan)}`}
+          data-bubble="end"
+          data-typical={typical || undefined}
+        />
+      )}
+    </>
+  );
+}
+
+function StageEditor({
+  n,
+  data,
+  onChange,
+}: {
+  n: MapNodeState;
+  data: ProjectChecklistData;
+  onChange: (patch: { start?: string | null; startAfter?: string | null; end?: string | null }) => void;
+}) {
+  const own = data.project.submissionMap[n.def.id] ?? {};
+  const startMode = own.start ? "date" : own.startAfter ?? "";
+  const typical = n.plan.typicalEnd;
+
+  return (
+    <div className="tl-editor" data-testid="timeline-editor">
+      <div className="tl-editor-inner">
+        <div className="tl-editor-field">
+          <label htmlFor={`tl-start-${n.def.id}`}>Start preparing</label>
+          <select
+            id={`tl-start-${n.def.id}`}
+            value={startMode}
+            onChange={(e) => {
+              const v = e.target.value;
+              if (v === "") onChange({ start: null, startAfter: null });
+              // Start from whatever date the stage already shows, then let it be edited.
+              else if (v === "date") onChange({ start: n.plan.start ?? n.plan.end, startAfter: null });
+              else onChange({ startAfter: v, start: null });
+            }}
+          >
+            <option value="">Not set</option>
+            {STAGES.map((s) => (
+              <option key={s.id} value={s.id}>
+                After {s.name}
+              </option>
+            ))}
+            <option value="date">On a date…</option>
+          </select>
+          {startMode === "date" && (
+            <input
+              type="date"
+              aria-label="Start date"
+              value={own.start ?? ""}
+              onChange={(e) => onChange({ start: e.target.value || null })}
+            />
+          )}
+          {startMode && startMode !== "date" && n.plan.start && (
+            <span className="tl-editor-hint">{formatDateDMY(n.plan.start)}</span>
+          )}
+        </div>
+        <div className="tl-editor-field">
+          <label htmlFor={`tl-end-${n.def.id}`}>Target / confirm by</label>
+          <input
+            id={`tl-end-${n.def.id}`}
+            type="date"
+            value={own.end ?? ""}
+            onChange={(e) => onChange({ end: e.target.value || null })}
+          />
+          <span className="tl-editor-hint">
+            {own.end
+              ? typical && `Typical: ${formatDateDMY(typical)}, end of ${STAGE_BY_ID[n.plan.stageId].name}.`
+              : n.plan.end
+                ? `Now ${planEndText(n.plan)}.`
+                : "No target yet."}
+          </span>
+          {own.end && (
+            <button type="button" className="ov-jump" onClick={() => onChange({ end: null })}>
+              Use typical
+            </button>
+          )}
+        </div>
+        <p className="tl-editor-hint">
+          {MAP_STATUS_LABEL[n.status]}
+          {n.late && ", late"}. Status comes from the checklist, or set it on the Overview tab&apos;s map.
+        </p>
+      </div>
+    </div>
+  );
+}
 
 export function TimelineTab({ projectId, data }: { projectId: string; data: ProjectChecklistData }) {
-  const updateTimelinePlanField = useUpdateTimelinePlanField(projectId);
   const updateStageDuration = useUpdateStageDurationWeeks(projectId);
+  const updateProjectDates = useUpdateProjectDates(projectId);
+  const updateNode = useUpdateMapNode(projectId);
   const [durationsOpen, setDurationsOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const span = projectSpan(data.project.projectDates.contractStart, data.project.stageDurationWeeks);
+  const dates = data.project.projectDates;
+  const start = timelineStart(dates, data.project.stageDurationWeeks);
+  const span = start ? projectSpan(start.date, data.project.stageDurationWeeks) : null;
+  const rows = useMemo(() => submissionMapState(mapInputsFor(data)), [data]);
 
-  if (!span) {
+  const projectStartInput = (
+    <label className="tl-project-start">
+      Project start
+      <input
+        type="date"
+        value={dates.projectStart ?? ""}
+        // "" clears it: the patch is merged into project_dates, so a missing key would keep the old date.
+        onChange={(e) => updateProjectDates.mutate({ projectStart: e.target.value })}
+      />
+    </label>
+  );
+
+  if (!span || !start) {
     return (
       <div className="tl-empty-prompt">
-        Set an <strong>Actual Contract Start</strong> date on the Overview tab (Project Dates) to see the
-        timeline — it&apos;s calculated from that date plus each stage&apos;s duration.
+        <p>
+          Set a project start to see the timeline. Each stage runs for its typical duration from there, and every
+          submission gets a typical target date from the stage it sits in.
+        </p>
+        {projectStartInput}
+        <p className="tl-editor-hint">
+          Or set the <strong>Actual Contract Start</strong> on the Overview tab, and the stages before construction are
+          counted back from it.
+        </p>
       </div>
     );
   }
 
   const bands = stageBands(span, data.project.stageDurationWeeks);
   const todayLeft = todayPx(span);
-  const rows = timelineKeys()
-    .map((key) => STEP_BY_ID[key])
-    .filter(Boolean);
 
   return (
     <div className="timeline-app">
       <div className="tl-toolbar">
+        {projectStartInput}
         <span className="tl-toolbar-range">
-          <strong>{span.totalWeeks}</strong> weeks from {formatDateDMY(data.project.projectDates.contractStart)}
+          <strong>{span.totalWeeks}</strong> weeks from {formatDateDMY(start.date)}
+          {start.basis === "contract" && (
+            <> · counted back from the Actual Contract Start ({formatDateDMY(dates.contractStart)})</>
+          )}
         </span>
         <button
           type="button"
@@ -91,80 +247,107 @@ export function TimelineTab({ projectId, data }: { projectId: string; data: Proj
         </div>
 
         <div className="tl-rows">
-          {rows.map((step) => {
-            const statuses = step.items.map((it) => data.itemsByKey[it.id]).filter(Boolean);
-            const status = aggregateStatus(statuses);
-            const plan = data.timelinePlanByStep[step.id];
-            const milestones = data.milestonesByStep[step.id] ?? [];
-            const left = pxForDate(plan?.startDate, span);
-            const right = pxForDate(plan?.endDate, span);
-            const tooltip = milestones
-              .map((m) => `${m.type}${m.date ? ` — ${formatDateDMY(m.date)}` : ""}`)
-              .join("\n");
+          <div className="tl-rows-overlay" style={{ left: TRACK_OFFSET_PX, width: span.trackWidthPx }} aria-hidden="true">
+            {bands.slice(1).map((b) => (
+              <span key={b.stage.id} className="tl-stage-line" style={{ left: b.leftPx }} />
+            ))}
+            {todayLeft >= 0 && todayLeft <= span.trackWidthPx && (
+              <span className="tl-today" style={{ left: todayLeft }} />
+            )}
+          </div>
 
+          {rows.map((row) => {
+            const logo = agencyLogoSrc(row.def.agencyId);
             return (
-              <div className="tl-row" key={step.id}>
-                <div className="tl-row-label">
-                  <span className="tl-row-code">{step.code}</span>
-                  <span className="tl-row-name">{step.submission.name}</span>
+              <Fragment key={row.def.agencyId}>
+                <div className="tl-row tl-group-head" data-agency={row.def.agencyId}>
+                  <div className="tl-row-label tl-group-label">
+                    {logo && <Image src={logo} alt="" width={64} height={26} className="tl-logo" />}
+                    <span className="tl-group-code">{row.def.label}</span>
+                  </div>
+                  <div />
+                  <div />
                 </div>
-                <div className="tl-row-track" style={{ width: span.trackWidthPx }} title={tooltip || undefined}>
-                  {left !== null && right !== null && (
-                    <div
-                      className={`tl-bar tl-st-${status}`}
-                      style={{ left: Math.max(0, left), width: Math.max(3, right - left) }}
-                    />
-                  )}
-                </div>
-                <div className="tl-row-dates">
-                  <input
-                    type="date"
-                    value={plan?.startDate ?? ""}
-                    onChange={(e) =>
-                      updateTimelinePlanField.mutate({
-                        stepKey: step.id,
-                        field: "start_date",
-                        value: e.target.value || null,
-                      })
-                    }
-                  />
-                  <span>–</span>
-                  <input
-                    type="date"
-                    value={plan?.endDate ?? ""}
-                    onChange={(e) =>
-                      updateTimelinePlanField.mutate({
-                        stepKey: step.id,
-                        field: "end_date",
-                        value: e.target.value || null,
-                      })
-                    }
-                  />
-                </div>
-              </div>
+                {row.nodes.map((n) => {
+                  const selected = selectedId === n.def.id;
+                  return (
+                    <Fragment key={n.def.id}>
+                      <div
+                        className={`tl-row tl-stage-row${n.status === "na" ? " is-na" : ""}${selected ? " is-selected" : ""}`}
+                        data-node={n.def.id}
+                        data-status={n.status}
+                      >
+                        <button
+                          type="button"
+                          className="tl-row-label tl-stage-btn"
+                          aria-expanded={selected}
+                          onClick={() => setSelectedId(selected ? null : n.def.id)}
+                        >
+                          <span className="tl-stage-code">{n.def.label}</span>
+                          <span className="tl-row-name">{n.def.name}</span>
+                        </button>
+                        <div
+                          className="tl-row-track tl-stage-track"
+                          style={{ width: span.trackWidthPx }}
+                          onClick={() => setSelectedId(selected ? null : n.def.id)}
+                        >
+                          <StageBubbles n={n} span={span} />
+                        </div>
+                        <div className="tl-row-dates tl-stage-dates">
+                          {n.plan.start && <span>{formatDateDMY(n.plan.start)} →</span>}
+                          <span className={n.plan.endSource === "typical" ? "is-typical" : ""}>
+                            {n.plan.end ? formatDateDMY(n.plan.end) : "—"}
+                          </span>
+                        </div>
+                      </div>
+                      {selected && (
+                        <StageEditor
+                          n={n}
+                          data={data}
+                          onChange={(patch) => updateNode.mutate({ nodeId: n.def.id, patch })}
+                        />
+                      )}
+                    </Fragment>
+                  );
+                })}
+              </Fragment>
             );
           })}
         </div>
       </div>
 
-      <div className="tl-legend">
-        <span className="tl-legend-item">
-          <span className="tl-legend-dot" style={{ background: "var(--st-pending)", opacity: 0.6 }} />
-          Not started
+      <div className="tl-legend smap-legend">
+        {(["pending", "progress", "done", "na"] as const).map((s) => (
+          <span key={s} className="smap-legend-item">
+            <span className={`smap-dot smap-st-${s}`} />
+            {MAP_STATUS_LABEL[s]}
+          </span>
+        ))}
+        <span className="smap-legend-item">
+          <span className="smap-dot smap-st-pending smap-late" />
+          Late
         </span>
-        <span className="tl-legend-item">
-          <span className="tl-legend-dot" style={{ background: "var(--st-progress)" }} />
-          In progress / submitted
+        <span className="smap-legend-item">
+          <span className="smap-dot smap-st-pending is-typical" />
+          Typical target (from the stage)
         </span>
-        <span className="tl-legend-item">
-          <span className="tl-legend-dot" style={{ background: "var(--st-cleared)" }} />
-          Cleared
+        <span className="smap-legend-item">
+          <span className="tl-legend-range">
+            <span className="smap-dot smap-st-progress" />
+            <span className="tl-legend-pill" />
+            <span className="smap-dot smap-st-progress" />
+          </span>
+          Start → target
         </span>
-        <span className="tl-legend-item">
-          <span className="tl-legend-dot" style={{ background: "var(--danger)" }} />
+        <span className="smap-legend-item">
+          <span className="tl-legend-today" />
           Today
         </span>
       </div>
+      <p className="ov-hint">
+        Click a stage to set when preparation starts and when it has to be confirmed by. Until then, its target is the end
+        of the office stage its checklist step sits in, and moves with the step on the Checklist tab.
+      </p>
     </div>
   );
 }

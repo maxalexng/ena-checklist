@@ -8,18 +8,37 @@
 // with no link is tracked by hand from the Overview tab. Node ids are stored in
 // projects.submission_map (migration 0012), so never rename or reuse one.
 
+import type { StageId } from "./types";
+
 /** Left-to-right positions on the map. Each agency only has nodes in some of them. */
-export const MAP_COLUMNS = ["survey", "opp", "pp", "wp", "dc", "st", "bp", "permit", "top", "csc"] as const;
+export const MAP_COLUMNS = ["survey", "opp", "pp", "wp", "demo", "dc", "st", "bp", "permit", "top", "csc"] as const;
 export type MapColumnId = (typeof MAP_COLUMNS)[number];
 
 /** The bands across the top of the map, each spanning a run of columns. */
 export const MAP_PHASES: { id: string; label: string; columns: MapColumnId[] }[] = [
   { id: "site", label: "Site", columns: ["survey"] },
   { id: "planning", label: "Planning permission", columns: ["opp", "pp", "wp"] },
-  { id: "plans", label: "Plan approval", columns: ["dc", "st", "bp"] },
+  { id: "plans", label: "Plan approval", columns: ["demo", "dc", "st", "bp"] },
   { id: "construction", label: "Construction", columns: ["permit"] },
   { id: "completion", label: "Completion", columns: ["top", "csc"] },
 ];
+
+/** The office stage whose end is a stage's typical target date on the Timeline tab, for
+ * stages with no checklist step to follow. A linked stage follows its step's own stage
+ * (including any stage moves on the Checklist tab). */
+export const MAP_COLUMN_STAGE: Record<MapColumnId, StageId> = {
+  survey: "pre-design",
+  opp: "concept",
+  pp: "detailed",
+  wp: "detailed",
+  demo: "construction",
+  dc: "detailed",
+  st: "tender",
+  bp: "tender",
+  permit: "construction",
+  top: "top",
+  csc: "csc",
+};
 
 export interface MapNodeLink {
   /** Step key, e.g. "ura__PP". */
@@ -38,8 +57,19 @@ export interface MapNodeDef {
   name: string;
   /** How this stage is reached from the one before, when it isn't a full submission. */
   route?: "Lodgement" | "Self-declaration";
-  /** Only some projects need it (URA's OPP). */
+  /** Only some projects need it (URA's OPP, demolition). */
   optional?: boolean;
+  /** The stage always happens, and its linked checklist items are only optional parts of
+   * it (LTA's DC links to vehicular access and traffic impact, which many projects skip).
+   * When every linked item is N/A, the stage is tracked by hand instead of going N/A. */
+  required?: boolean;
+  /** The office stage whose end is this stage's typical target, when that isn't its linked
+   * step's stage (SLA's as-built lodgement reads an item of the pre-design survey step,
+   * but happens at CSC). */
+  stage?: StageId;
+  /** Who makes the submission, when it isn't us. Consecutive stages with the same `by`
+   * are bracketed together on the map. */
+  by?: string;
   links: MapNodeLink[];
   /** Read the linked step's submission log too, for nodes that share one step: done once
    * a log entry matches `done`, under way once one matches `started`. */
@@ -105,10 +135,20 @@ export const SUBMISSION_MAP: MapRowDef[] = [
     scope: ["building control"],
     nodes: [
       {
+        id: "bca-demo",
+        column: "demo",
+        label: "Demolition",
+        name: "Demolition permit",
+        optional: true,
+        by: "C&S engineer",
+        links: [{ step: "bca__DEMO" }],
+      },
+      {
         id: "bca-st-piling",
         column: "dc",
         label: "ST (piling)",
         name: "Structural plan — piling",
+        by: "C&S engineer",
         links: [{ step: "bca__ST" }],
         log: { done: new RegExp(`pil.*${GRANTED}|${GRANTED}.*pil`, "i"), started: /pil/i },
       },
@@ -117,6 +157,7 @@ export const SUBMISSION_MAP: MapRowDef[] = [
         column: "st",
         label: "ST (other)",
         name: "Structural plan — other structural works",
+        by: "C&S engineer",
         links: [{ step: "bca__ST" }],
       },
       { id: "bca-bp", column: "bp", label: "BP", name: "Building Plan approval", links: [{ step: "bca__BP" }] },
@@ -158,6 +199,7 @@ export const SUBMISSION_MAP: MapRowDef[] = [
         column: "dc",
         label: "DC",
         name: "LTA development control",
+        required: true,
         links: [{ step: "lta__ACCESS" }, { step: "lta__TIA" }],
       },
       { id: "lta-bp", column: "bp", label: "BP", name: "LTA building plan clearance", route: "Lodgement", links: [] },
@@ -199,6 +241,7 @@ export const SUBMISSION_MAP: MapRowDef[] = [
         label: "BP",
         name: "NParks building plan (greenery)",
         route: "Self-declaration",
+        required: true,
         links: [{ step: "nparks__GREEN" }],
       },
       { id: "nparks-csc", column: "csc", label: "CSC", name: "NParks clearance for CSC", route: "Self-declaration", links: [] },
@@ -237,6 +280,8 @@ export const SUBMISSION_MAP: MapRowDef[] = [
         label: "As-built",
         name: "As-built survey plan lodgement",
         route: "Lodgement",
+        required: true,
+        stage: "csc",
         links: [{ step: "sla__SURVEY", items: [4] }],
       },
     ],

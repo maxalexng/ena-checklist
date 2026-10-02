@@ -5,10 +5,12 @@ import Image from "next/image";
 import { MAP_COLUMNS, MAP_PHASES, STEP_BY_ID, agencyLogoSrc } from "@/template";
 import type { MapColumnId } from "@/template";
 import type { ProjectChecklistData } from "@/hooks/useProjectData";
-import { useSetMapNodeStatus } from "@/hooks/useOverviewMutations";
+import { useUpdateMapNode } from "@/hooks/useOverviewMutations";
 import { formatDateDMY } from "@/lib/checklist/dates";
 import { flattenSteps, orderedStageGroups } from "@/lib/checklist/grouping";
 import {
+  mapInputsFor,
+  planEndText,
   submissionMapState,
   submissionMapSummary,
   type MapNodeState,
@@ -31,7 +33,7 @@ function columnPct(column: MapColumnId): number {
 
 function nodeTitle(n: MapNodeState): string {
   const status = n.late ? `${MAP_STATUS_LABEL[n.status]}, late` : MAP_STATUS_LABEL[n.status];
-  return `${n.def.name}: ${status}${n.due ? ` (planned by ${formatDateDMY(n.due)})` : ""}`;
+  return `${n.def.name}: ${status}${n.plan.end ? ` (target ${formatDateDMY(n.plan.end)})` : ""}`;
 }
 
 function nodeClass(n: MapNodeState, selected: boolean): string {
@@ -46,6 +48,19 @@ function nodeClass(n: MapNodeState, selected: boolean): string {
     .join(" ");
 }
 
+/** Runs of consecutive stages made by the same outside party, for the bracket under them. */
+function byGroups(nodes: MapNodeState[]): { by: string; first: string; from: number; to: number }[] {
+  const groups: { by: string; first: string; from: number; to: number }[] = [];
+  nodes.forEach((n, i) => {
+    const by = n.def.by;
+    if (!by) return;
+    const last = groups[groups.length - 1];
+    if (last && nodes[i - 1]?.def.by === by) last.to = columnPct(n.def.column);
+    else groups.push({ by, first: n.def.id, from: columnPct(n.def.column), to: columnPct(n.def.column) });
+  });
+  return groups;
+}
+
 function sourceText(n: MapNodeState): string {
   switch (n.source) {
     case "manual":
@@ -56,10 +71,10 @@ function sourceText(n: MapNodeState): string {
       return n.applicable > 0
         ? `From the checklist: ${n.cleared} of ${n.applicable} items cleared.`
         : "From the checklist: every item is N/A.";
-    case "inherited":
-      return "N/A because this agency's checklist steps are all N/A.";
     default:
-      return "No checklist step covers this stage, so it's tracked here by hand.";
+      return n.def.links.length > 0
+        ? "Its checklist items are all N/A, but the stage itself still applies, so it's tracked here by hand."
+        : "No checklist step covers this stage, so it's tracked here by hand.";
   }
 }
 
@@ -72,19 +87,10 @@ export function SubmissionMap({
   data: ProjectChecklistData;
   onOpenStep?: (stepKey: string) => void;
 }) {
-  const setStatus = useSetMapNodeStatus(projectId);
+  const updateNode = useUpdateMapNode(projectId);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const rows = useMemo(
-    () =>
-      submissionMapState({
-        itemsByKey: data.itemsByKey,
-        milestonesByStep: data.milestonesByStep,
-        timelinePlanByStep: data.timelinePlanByStep,
-        overrides: data.project.submissionMap,
-      }),
-    [data.itemsByKey, data.milestonesByStep, data.timelinePlanByStep, data.project.submissionMap]
-  );
+  const rows = useMemo(() => submissionMapState(mapInputsFor(data)), [data]);
   const summary = useMemo(() => submissionMapSummary(rows), [rows]);
   // Where an agency's logo jumps to: its first step in the project's current order.
   const firstStepByAgency = useMemo(() => {
@@ -212,6 +218,15 @@ export function SubmissionMap({
                       </span>
                     );
                   })}
+                  {byGroups(row.nodes).map((g) => (
+                    <span
+                      key={`by-${g.first}`}
+                      className="smap-by"
+                      style={{ left: `calc(${g.from}% - 26px)`, width: `calc(${g.to - g.from}% + 52px)` }}
+                    >
+                      <span className="smap-by-label">by {g.by}</span>
+                    </span>
+                  ))}
                   {row.nodes.map((n) => (
                     <div key={n.def.id} className="smap-node-wrap" style={{ left: `${columnPct(n.def.column)}%` }}>
                       <span className={`smap-node-label${n.status === "na" ? " is-na" : ""}`}>
@@ -239,8 +254,8 @@ export function SubmissionMap({
         </div>
       </div>
       <p className="ov-hint smap-foot">
-        * Only some projects need OPP. Every agency&apos;s TOP and CSC clearances feed BCA&apos;s overall TOP and CSC.
-        A stage turns late once its planned end date on the Timeline tab has passed.
+        * Only some projects need these (OPP, demolition). Every agency&apos;s TOP and CSC clearances feed BCA&apos;s overall TOP and CSC.
+        A stage turns late once its target date on the Timeline tab has passed.
       </p>
 
       {selected && (
@@ -255,18 +270,15 @@ export function SubmissionMap({
               ×
             </button>
           </div>
+          {selected.def.by && <p className="smap-detail-source">Submitted by the {selected.def.by}.</p>}
           <p className="smap-detail-source">{sourceText(selected)}</p>
-          {selected.due && (
-            <p className="smap-detail-source">
-              Planned by {formatDateDMY(selected.due)} on the Timeline tab.
-            </p>
-          )}
+          {selected.plan.end && <p className="smap-detail-source">Target: {planEndText(selected.plan)}.</p>}
           <div className="seg-toggle smap-status-toggle" role="group" aria-label="Status">
             {selected.autoStatus !== null && (
               <button
                 type="button"
                 className={`seg-btn${selected.source !== "manual" ? " active" : ""}`}
-                onClick={() => setStatus.mutate({ nodeId: selected.def.id, status: null })}
+                onClick={() => updateNode.mutate({ nodeId: selected.def.id, patch: { status: null } })}
               >
                 Auto ({MAP_STATUS_LABEL[selected.autoStatus]})
               </button>
@@ -279,10 +291,10 @@ export function SubmissionMap({
                   selected.status === s && (selected.source === "manual" || selected.autoStatus === null) ? " active" : ""
                 }`}
                 onClick={() =>
-                  setStatus.mutate({
+                  updateNode.mutate({
                     nodeId: selected.def.id,
                     // Picking what the checklist already says just returns the node to auto.
-                    status: s === selected.autoStatus ? null : s,
+                    patch: { status: s === selected.autoStatus ? null : s },
                   })
                 }
               >
@@ -317,7 +329,9 @@ export function SubmissionMap({
                   onClick={() => select(n.def.id)}
                 >
                   {agencyLabel(n)} {n.def.label}
-                  {g.key === "late" && n.due && <span className="smap-chip-due"> · due {formatDateDMY(n.due)}</span>}
+                  {g.key === "late" && n.plan.end && (
+                    <span className="smap-chip-due"> · due {formatDateDMY(n.plan.end)}</span>
+                  )}
                 </button>
               ))
             )}

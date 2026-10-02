@@ -10,7 +10,7 @@
 // bump n and drop any letter suffix. "R<n><letter>" for a smaller revision within that
 // cycle (a wording tweak, a logo swap, a bug fix) — keep n, advance the letter.
 // Never renumber a revision once published.
-export const TEMPLATE_VERSION = "R21";
+export const TEMPLATE_VERSION = "R22";
 
 export interface ChangelogEntry {
   rev: string;
@@ -23,6 +23,18 @@ export interface ChangelogEntry {
 // from the HTML prototype (submissions-register-MASTER.html); entries from here on
 // describe changes made in this app.
 export const TEMPLATE_CHANGELOG: ChangelogEntry[] = [
+  {
+    rev: "R22",
+    date: "2026-10-02",
+    summary:
+      "Timeline tab rebuilt around the submission map: one row per map stage, grouped under each agency's logo, with the map's status bubbles placed on the dates. Every stage has a typical target, the end of the office stage its checklist step sits in (it moves if the step is moved to another stage), shown as a faded circle. Click a stage to set when preparation starts (after a stage, e.g. after Design Development, or on a date) and a firm target / confirm-by date; a start and a target show as a circle at each end joined by a pill. Stages past their target show late on both the timeline and the map. New Project start date on the Timeline tab; without one, the stages before construction are counted back from the Actual Contract Start, so Construction begins on it (before, Pre-Design started there). Dates entered with the old per-step date boxes still show until a stage is given its own.",
+  },
+  {
+    rev: "R21a",
+    date: "2026-10-01",
+    summary:
+      "Submission map: an agency's optional checklist steps being N/A no longer makes its other stages N/A. LTA's DC, BP and CSC stay in play when there's no vehicular access or traffic impact work (DC is then tracked by hand), SLA's as-built lodgement stays when there's no initial survey, and the same holds for NParks' BP. New Demolition stage on BCA's row, before ST (piling), from the Demolition Permit step (N/A where nothing is demolished). Demolition, ST (piling) and ST (other) are bracketed \"by C&S engineer\".",
+  },
   {
     rev: "R21",
     date: "2026-10-01",

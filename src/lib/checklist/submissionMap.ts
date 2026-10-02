@@ -2,33 +2,79 @@
 // A node linked to checklist steps reads its status from their items, plus the step's
 // submission log where several nodes share one step (URA PP and WP, BCA's piling ST). A
 // node with no link is tracked by hand. Either kind can be overridden by hand.
-import { MAP_COLUMNS, MAP_PHASES, STEP_BY_ID, SUBMISSION_MAP } from "@/template";
-import type { MapNodeDef, MapRowDef } from "@/template";
+//
+// Each node also has a plan for the Timeline tab: a target date (by default, the end of the
+// office stage its checklist step sits in) and, once someone sets one, a start date.
+import { MAP_COLUMNS, MAP_COLUMN_STAGE, MAP_PHASES, STAGE_BY_ID, STEP_BY_ID, SUBMISSION_MAP } from "@/template";
+import type { MapNodeDef, MapRowDef, StageId } from "@/template";
 import type { SubmissionMapRow, SubmissionMapStatus } from "@/lib/supabase/database.types";
+import { formatDateDMY } from "./dates";
+import { stageOfStep } from "./grouping";
+import { stageWindows, timelineStart } from "./timeline";
 
 export type MapStatus = SubmissionMapStatus;
 
 export interface MapInputs {
   itemsByKey: Record<string, { status: string; na: boolean } | undefined>;
   milestonesByStep: Record<string, { type: string }[] | undefined>;
-  timelinePlanByStep: Record<string, { endDate: string | null } | undefined>;
+  /** The older per-step planned dates (timeline_plan), read where a node has none of its own. */
+  timelinePlanByStep: Record<string, { startDate?: string | null; endDate: string | null } | undefined>;
   overrides: SubmissionMapRow;
+  /** Shared stage moves (Checklist tab), so a stage's typical target follows its step. */
+  stepStage?: Record<string, string>;
+  /** Each office stage's dates, or null when the timeline has no start date yet. */
+  stageWindows?: Record<StageId, { start: string; end: string }> | null;
+}
+
+/** Builds the map's inputs from the loaded project. */
+export function mapInputsFor(data: {
+  itemsByKey: MapInputs["itemsByKey"];
+  milestonesByStep: MapInputs["milestonesByStep"];
+  timelinePlanByStep: MapInputs["timelinePlanByStep"];
+  project: {
+    submissionMap: SubmissionMapRow;
+    step_stage: Record<string, string>;
+    projectDates: { projectStart?: string; contractStart?: string };
+    stageDurationWeeks: Record<string, number>;
+  };
+}): MapInputs {
+  const start = timelineStart(data.project.projectDates, data.project.stageDurationWeeks);
+  return {
+    itemsByKey: data.itemsByKey,
+    milestonesByStep: data.milestonesByStep,
+    timelinePlanByStep: data.timelinePlanByStep,
+    overrides: data.project.submissionMap,
+    stepStage: data.project.step_stage,
+    stageWindows: start ? stageWindows(start.date, data.project.stageDurationWeeks) : null,
+  };
+}
+
+export interface MapNodePlan {
+  /** The office stage whose end is the typical target. */
+  stageId: StageId;
+  /** End of that stage, or null without a timeline start. */
+  typicalEnd: string | null;
+  start: string | null;
+  /** "date": set as a date. "stage": set as "after <stage>". "timeline": the older per-step plan. */
+  startSource: "date" | "stage" | "timeline" | null;
+  /** The target / confirm-by date. */
+  end: string | null;
+  endSource: "date" | "timeline" | "typical" | null;
 }
 
 export interface MapNodeState {
   def: MapNodeDef;
   agencyId: string;
   status: MapStatus;
-  /** What the checklist says, before any manual status. Null for a node with no link. */
+  /** What the checklist says, before any manual status. Null for a node with no link, or
+   * a required node whose linked items are all N/A: both are tracked by hand. */
   autoStatus: MapStatus | null;
-  /** Where `status` came from. "inherited": a hand-tracked node in a row whose linked
-   * nodes are all N/A, so the agency isn't involved in this project. */
-  source: "checklist" | "manual" | "untracked" | "inherited";
+  /** Where `status` came from. */
+  source: "checklist" | "manual" | "untracked";
   cleared: number;
   applicable: number;
-  /** Latest planned end date among the linked steps (Timeline tab), if any. */
-  due: string | null;
-  /** Past its planned end date and not yet done. */
+  plan: MapNodePlan;
+  /** Past its target date and not yet done. */
   late: boolean;
   /** The agency's first unfinished stage, when it hasn't started yet: what to pick up next. */
   isNext: boolean;
@@ -84,6 +130,12 @@ export function autoNodeStatus(node: MapNodeDef, inputs: MapInputs): MapStatus |
   let status = checklistStatus(records);
 
   const entries = node.links.flatMap((link) => inputs.milestonesByStep[link.step] ?? []);
+  if (status === "na" && node.required) {
+    // Only optional parts of the stage are N/A, not the stage itself, so it's tracked by
+    // hand, unless the submission log already shows it moving.
+    if (node.log && entries.some((e) => node.log!.done.test(e.type))) return "done";
+    return entries.length > 0 ? "progress" : null;
+  }
   if (node.log) {
     if (entries.some((e) => node.log!.done.test(e.type))) return "done";
     if (status === "pending" && node.log.started && entries.some((e) => node.log!.started!.test(e.type))) {
@@ -96,11 +148,63 @@ export function autoNodeStatus(node: MapNodeDef, inputs: MapInputs): MapStatus |
   return status;
 }
 
-function dueDate(node: MapNodeDef, inputs: MapInputs): string | null {
-  const dates = node.links
-    .map((link) => inputs.timelinePlanByStep[link.step]?.endDate)
-    .filter((d): d is string => !!d);
-  return dates.length > 0 ? dates.reduce((a, b) => (a > b ? a : b)) : null;
+/** The office stage a node's typical target follows: its own if it names one, else its
+ * first linked step's stage, else the column's default for a hand-tracked node. */
+export function nodeStage(node: MapNodeDef, stepStage: Record<string, string> = {}): StageId {
+  if (node.stage) return node.stage;
+  const step = node.links[0] && STEP_BY_ID[node.links[0].step];
+  return step ? stageOfStep(step, stepStage) : MAP_COLUMN_STAGE[node.column];
+}
+
+function latest(dates: (string | null | undefined)[]): string | null {
+  const set = dates.filter((d): d is string => !!d);
+  return set.length > 0 ? set.reduce((a, b) => (a > b ? a : b)) : null;
+}
+
+function earliest(dates: (string | null | undefined)[]): string | null {
+  const set = dates.filter((d): d is string => !!d);
+  return set.length > 0 ? set.reduce((a, b) => (a < b ? a : b)) : null;
+}
+
+/** A node's start and target: what's set on the node itself first, then the older
+ * per-step plan of its linked steps, then (for the target) the end of its office stage. */
+export function nodePlan(node: MapNodeDef, inputs: MapInputs): MapNodePlan {
+  const own = inputs.overrides[node.id] ?? {};
+  const stageId = nodeStage(node, inputs.stepStage);
+  const windows = inputs.stageWindows ?? null;
+  const typicalEnd = windows ? windows[stageId].end : null;
+  const legacy = node.links.map((l) => inputs.timelinePlanByStep[l.step]);
+  const legacyStart = earliest(legacy.map((p) => p?.startDate));
+  const legacyEnd = latest(legacy.map((p) => p?.endDate));
+  const afterStage = own.startAfter && windows ? windows[own.startAfter as StageId]?.end ?? null : null;
+
+  const [start, startSource]: [string | null, MapNodePlan["startSource"]] = own.start
+    ? [own.start, "date"]
+    : afterStage
+      ? [afterStage, "stage"]
+      : legacyStart
+        ? [legacyStart, "timeline"]
+        : [null, null];
+  const [end, endSource]: [string | null, MapNodePlan["endSource"]] = own.end
+    ? [own.end, "date"]
+    : legacyEnd
+      ? [legacyEnd, "timeline"]
+      : typicalEnd
+        ? [typicalEnd, "typical"]
+        : [null, null];
+  return { stageId, typicalEnd, start, startSource, end, endSource };
+}
+
+/** "12 03 2027 (typical: end of Detailed Design)", or null with no target. */
+export function planEndText(plan: MapNodePlan): string | null {
+  if (!plan.end) return null;
+  const why =
+    plan.endSource === "typical"
+      ? `typical: end of ${STAGE_BY_ID[plan.stageId].name}`
+      : plan.endSource === "timeline"
+        ? "from the step's planned dates"
+        : "set on the Timeline tab";
+  return `${formatDateDMY(plan.end)} (${why})`;
 }
 
 function todayIso(): string {
@@ -121,26 +225,16 @@ export function submissionMapState(inputs: MapInputs, today: string = todayIso()
         source: manual ? "manual" : autoStatus ? "checklist" : "untracked",
         cleared: items.filter((r) => r && !r.na && r.status === "cleared").length,
         applicable: items.filter((r) => r && !r.na).length,
-        due: dueDate(def, inputs),
+        plan: nodePlan(def, inputs),
         late: false,
         isNext: false,
       };
     });
 
-    // An agency whose every linked stage is N/A isn't involved in this project, so its
-    // hand-tracked stages are N/A too, unless someone has set them.
-    const linked = nodes.filter((n) => n.autoStatus !== null);
-    if (linked.length > 0 && linked.every((n) => n.status === "na")) {
-      nodes.forEach((n) => {
-        if (n.source === "untracked") {
-          n.status = "na";
-          n.source = "inherited";
-        }
-      });
-    }
-
+    // N/A never spreads along a row: an agency's optional checklist steps being N/A says
+    // nothing about its other stages (no traffic study, but LTA's BP and CSC still happen).
     nodes.forEach((n) => {
-      n.late = !!n.due && n.due < today && (n.status === "pending" || n.status === "progress");
+      n.late = !!n.plan.end && n.plan.end < today && (n.status === "pending" || n.status === "progress");
     });
     const firstOpen = nodes.find((n) => n.status === "pending" || n.status === "progress");
     if (firstOpen && firstOpen.status === "pending") firstOpen.isNext = true;

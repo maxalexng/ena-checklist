@@ -84,6 +84,33 @@ test.describe("Overview submission map", () => {
     await expect(mapNode(page, "nea-csc")).toHaveAttribute("data-status", "na");
   });
 
+  test("N/A optional steps don't knock out an agency's other stages", async ({ page }) => {
+    await adminClient()
+      .from("checklist_items")
+      .update({ na: true })
+      .eq("project_id", projectId)
+      .in("step_key", ["lta__ACCESS", "lta__TIA", "sla__SURVEY"]);
+    await page.reload();
+
+    for (const id of ["lta-dc", "lta-bp", "lta-csc", "sla-csc"]) {
+      await expect(mapNode(page, id)).toHaveAttribute("data-status", "pending");
+    }
+    await expect(mapNode(page, "sla-survey")).toHaveAttribute("data-status", "na");
+
+    await mapNode(page, "lta-dc").click();
+    await expect(page.getByTestId("submission-map-detail")).toContainText("the stage itself still applies");
+    await statusButton(page, "Done").click();
+    await page.reload();
+    await expect(mapNode(page, "lta-dc")).toHaveAttribute("data-status", "done");
+  });
+
+  test("demolition sits with the engineer's structural stages", async ({ page }) => {
+    const bca = page.getByTestId("submission-map").locator('[data-agency="bca"]');
+    await expect(bca.locator(".smap-by-label")).toHaveText("by C&S engineer");
+    await mapNode(page, "bca-demo").click();
+    await expect(page.getByTestId("submission-map-detail")).toContainText("Submitted by the C&S engineer.");
+  });
+
   test("URA PP and WP read the PP submission log", async ({ page }) => {
     await adminClient()
       .from("milestones")

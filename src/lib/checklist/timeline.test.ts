@@ -7,6 +7,8 @@ import {
   projectSpan,
   pxForDate,
   stageBands,
+  stageWindows,
+  timelineStart,
 } from "./timeline";
 
 const STAGE_WEEKS = { "pre-design": 5, concept: 10, dev: 10, detailed: 14, tender: 8, construction: 108, top: 12, csc: 10 };
@@ -125,5 +127,33 @@ describe("aggregateStatus", () => {
         { status: "pending", na: false },
       ])
     ).toBe("pending");
+  });
+});
+
+describe("timelineStart", () => {
+  it("is the project start when there is one", () => {
+    expect(timelineStart({ projectStart: "2024-01-08", contractStart: "2024-08-06" }, STAGE_WEEKS)).toEqual({
+      date: "2024-01-08",
+      basis: "project",
+    });
+  });
+
+  it("otherwise counts the stages before construction back from the contract start", () => {
+    // pre-design 5 + concept 10 + dev 10 + detailed 14 + tender 8 = 47 weeks before 6 Aug 2024.
+    expect(timelineStart({ contractStart: "2024-08-06" }, STAGE_WEEKS)).toEqual({ date: "2023-09-12", basis: "contract" });
+  });
+
+  it("is null with neither date", () => {
+    expect(timelineStart({}, STAGE_WEEKS)).toBeNull();
+    expect(timelineStart({ projectStart: "", contractStart: "" }, STAGE_WEEKS)).toBeNull();
+  });
+});
+
+describe("stageWindows", () => {
+  it("lays stages end to end", () => {
+    const w = stageWindows("2024-01-01", STAGE_WEEKS);
+    expect(w["pre-design"]).toEqual({ start: "2024-01-01", end: "2024-02-05" });
+    expect(w.concept.start).toBe(w["pre-design"].end);
+    expect(w.csc.end).toBe("2027-05-24");
   });
 });

@@ -6,7 +6,7 @@ import {
   projectMutationKey,
   type ProjectChecklistData,
 } from "./useProjectData";
-import type { ProjectDates, SubmissionMapStatus } from "@/lib/supabase/database.types";
+import type { ProjectDates, SubmissionMapPatch } from "@/lib/supabase/database.types";
 
 function useProjectMutation<TVars>(projectId: string, mutationFn: (vars: TVars) => Promise<void>) {
   const queryClient = useQueryClient();
@@ -109,30 +109,34 @@ export function useUpdateListPresets(projectId: string) {
   });
 }
 
-/** Sets a submission-map node's status by hand, or returns it to its automatic status with
- * `status: null`. Optimistic, like the checklist's status chips, so a run of quick picks
- * across several nodes each land on screen straight away. */
-export function useSetMapNodeStatus(projectId: string) {
+/** Patches one submission-map node: its hand-set status (Overview) or its dates
+ * (Timeline). A null field clears it, so `status: null` returns the node to its automatic
+ * status and `end: null` to its typical target. Optimistic, like the checklist's status
+ * chips, so a run of quick picks across several nodes each land on screen straight away. */
+export function useUpdateMapNode(projectId: string) {
   const supabase = createClient();
   const queryClient = useQueryClient();
   const queryKey = projectDataQueryKey(projectId);
   return useMutation({
     mutationKey: projectMutationKey(projectId),
-    mutationFn: async ({ nodeId, status }: { nodeId: string; status: SubmissionMapStatus | null }) => {
+    mutationFn: async ({ nodeId, patch }: { nodeId: string; patch: SubmissionMapPatch[string] }) => {
       const { error } = await supabase.rpc("merge_submission_map", {
         p_project_id: projectId,
-        p_patch: { [nodeId]: { status } },
+        p_patch: { [nodeId]: patch },
       });
       if (error) throw error;
     },
-    onMutate: async ({ nodeId, status }) => {
+    onMutate: async ({ nodeId, patch }) => {
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData<ProjectChecklistData>(queryKey);
       if (previous) {
         const { [nodeId]: current, ...rest } = previous.project.submissionMap;
-        const next = { ...current };
-        if (status) next.status = status;
-        else delete next.status;
+        // Same as merge_submission_map: set fields merge in, null fields are removed.
+        const next: Record<string, unknown> = { ...current };
+        Object.entries(patch).forEach(([field, value]) => {
+          if (value === null || value === undefined) delete next[field];
+          else next[field] = value;
+        });
         queryClient.setQueryData<ProjectChecklistData>(queryKey, {
           ...previous,
           project: { ...previous.project, submissionMap: { ...rest, [nodeId]: next } },

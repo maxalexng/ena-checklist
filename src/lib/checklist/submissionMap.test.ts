@@ -1,7 +1,17 @@
 import { describe, expect, it } from "vitest";
 import { STEP_BY_ID, SUBMISSION_MAP } from "@/template";
 import type { ItemStatus } from "@/template";
-import { autoNodeStatus, submissionMapState, submissionMapSummary, type MapInputs } from "./submissionMap";
+import { stageWindows } from "./timeline";
+import {
+  autoNodeStatus,
+  mapInputsFor,
+  nodePlan,
+  nodeStage,
+  planEndText,
+  submissionMapState,
+  submissionMapSummary,
+  type MapInputs,
+} from "./submissionMap";
 
 /** Every template item on the map, pending and applicable, as a new project starts. */
 function freshInputs(): MapInputs {
@@ -101,6 +111,20 @@ describe("autoNodeStatus", () => {
     expect(autoNodeStatus(def("sla-csc"), inputs)).toBe("pending");
   });
 
+  it("still reads the log for a required stage whose items are all N/A", () => {
+    const inputs = freshInputs();
+    setStep(inputs, "lta__ACCESS", "pending", { na: true });
+    setStep(inputs, "lta__TIA", "pending", { na: true });
+    expect(autoNodeStatus(def("lta-dc"), inputs)).toBeNull();
+    inputs.milestonesByStep["lta__ACCESS"] = [{ type: "DC submitted" }];
+    expect(autoNodeStatus(def("lta-dc"), inputs)).toBe("progress");
+  });
+
+  it("tags the C&S engineer's stages", () => {
+    const by = SUBMISSION_MAP.flatMap((r) => r.nodes).filter((n) => n.by === "C&S engineer").map((n) => n.id);
+    expect(by).toEqual(["bca-demo", "bca-st-piling", "bca-st"]);
+  });
+
   it("counts a logged submission round as under way", () => {
     const inputs = freshInputs();
     inputs.milestonesByStep["nparks__TREE"] = [{ type: "Submitted" }];
@@ -156,20 +180,47 @@ describe("submissionMapState", () => {
     expect(node(freshInputs(), "lta-bp")).toMatchObject({ status: "pending", source: "untracked" });
   });
 
-  it("makes an uninvolved agency's hand-tracked stages N/A, unless set by hand", () => {
+  it("keeps LTA's DC, BP and CSC when its optional access and traffic steps are N/A", () => {
     const inputs = freshInputs();
     setStep(inputs, "lta__ACCESS", "pending", { na: true });
     setStep(inputs, "lta__TIA", "pending", { na: true });
-    inputs.overrides = { "lta-csc": { status: "done" } };
-    expect(node(inputs, "lta-dc").status).toBe("na");
-    expect(node(inputs, "lta-bp")).toMatchObject({ status: "na", source: "inherited" });
-    expect(node(inputs, "lta-csc").status).toBe("done");
+    expect(node(inputs, "lta-dc")).toMatchObject({ status: "pending", autoStatus: null, source: "untracked" });
+    expect(node(inputs, "lta-bp")).toMatchObject({ status: "pending", source: "untracked" });
+    expect(node(inputs, "lta-csc")).toMatchObject({ status: "pending", source: "untracked" });
+    expect(node(inputs, "lta-dc").isNext).toBe(true);
+
+    inputs.overrides = { "lta-dc": { status: "done" } };
+    expect(node(inputs, "lta-dc")).toMatchObject({ status: "done", source: "manual" });
+  });
+
+  it("keeps SLA's as-built lodgement when the initial survey is N/A", () => {
+    const inputs = freshInputs();
+    setStep(inputs, "sla__SURVEY", "pending", { na: true });
+    expect(node(inputs, "sla-survey").status).toBe("na");
+    expect(node(inputs, "sla-csc")).toMatchObject({ status: "pending", source: "untracked" });
+    expect(node(inputs, "sla-csc").isNext).toBe(true);
+  });
+
+  it("never spreads N/A to an agency's hand-tracked stages", () => {
+    const inputs = freshInputs();
+    setStep(inputs, "nea__ENV", "pending", { na: true });
+    expect(node(inputs, "nea-dc").status).toBe("na");
+    expect(node(inputs, "nea-bp").status).toBe("pending");
+    expect(node(inputs, "nea-csc").status).toBe("pending");
+  });
+
+  it("puts demolition first on BCA's row, N/A when there's nothing to demolish", () => {
+    const inputs = freshInputs();
+    expect(node(inputs, "bca-demo").isNext).toBe(true);
+    setStep(inputs, "bca__DEMO", "pending", { na: true });
+    expect(node(inputs, "bca-demo").status).toBe("na");
+    expect(node(inputs, "bca-st-piling").isNext).toBe(true);
   });
 
   it("flags a node late once its planned end date has passed", () => {
     const inputs = freshInputs();
     inputs.timelinePlanByStep["scdf__FS"] = { endDate: "2026-09-30" };
-    expect(node(inputs, "scdf-bp", "2026-10-01")).toMatchObject({ due: "2026-09-30", late: true });
+    expect(node(inputs, "scdf-bp", "2026-10-01")).toMatchObject({ plan: { end: "2026-09-30" }, late: true });
     expect(node(inputs, "scdf-bp", "2026-09-30").late).toBe(false);
     setStep(inputs, "scdf__FS", "cleared");
     expect(node(inputs, "scdf-bp", "2026-10-01").late).toBe(false);
@@ -179,7 +230,7 @@ describe("submissionMapState", () => {
     const inputs = freshInputs();
     inputs.timelinePlanByStep["pub__SW"] = { endDate: "2026-03-01" };
     inputs.timelinePlanByStep["pub__SS"] = { endDate: "2026-05-01" };
-    expect(node(inputs, "pub-dc").due).toBe("2026-05-01");
+    expect(node(inputs, "pub-dc").plan.end).toBe("2026-05-01");
   });
 
   it("marks each agency's first not-started stage as next", () => {
@@ -216,7 +267,7 @@ describe("submissionMapSummary", () => {
     expect(summary).toMatchObject({ done: 1, total, currentPhaseId: "planning" });
     expect(summary.phases.find((p) => p.id === "site")).toMatchObject({ done: 1, total: 1 });
     expect(summary.inProgress.map((n) => n.def.id)).toEqual(["ura-pp"]);
-    expect(summary.upNext.map((n) => n.def.id)).toContain("bca-st-piling");
+    expect(summary.upNext.map((n) => n.def.id)).toContain("bca-demo");
     expect(summary.upNext.map((n) => n.def.id)).not.toContain("ura-wp");
   });
 
@@ -226,5 +277,98 @@ describe("submissionMapSummary", () => {
     inputs.timelinePlanByStep["nea__ENV"] = { endDate: "2026-01-01" };
     const summary = submissionMapSummary(submissionMapState(inputs, "2026-10-01"));
     expect(summary.late.map((n) => n.def.id)).toEqual(["nea-dc", "bca-top"]);
+  });
+});
+
+// 6+10+10+14+8+138+12+10 weeks, starting Mon 5 Jan 2026.
+const WEEKS = { "pre-design": 6, concept: 10, dev: 10, detailed: 14, tender: 8, construction: 138, top: 12, csc: 10 };
+const WINDOWS = stageWindows("2026-01-05", WEEKS);
+
+describe("nodePlan", () => {
+  function planned(): MapInputs {
+    return { ...freshInputs(), stageWindows: WINDOWS };
+  }
+
+  it("follows the linked step's office stage, including a moved step", () => {
+    expect(nodeStage(def("ura-pp"))).toBe("detailed");
+    expect(nodeStage(def("ura-pp"), { ura__PP: "dev" })).toBe("dev");
+    // Hand-tracked stages follow their column.
+    expect(nodeStage(def("nea-top"))).toBe("top");
+    expect(nodeStage(def("lta-bp"))).toBe("tender");
+    // SLA's as-built lodgement reads a pre-design step's item but happens at CSC.
+    expect(nodeStage(def("sla-survey"))).toBe("pre-design");
+    expect(nodeStage(def("sla-csc"))).toBe("csc");
+  });
+
+  it("targets the end of that stage by default, with no start", () => {
+    // Pre-design to detailed design is 40 weeks: 5 Jan 2026 + 280 days.
+    expect(nodePlan(def("ura-pp"), planned())).toEqual({
+      stageId: "detailed",
+      typicalEnd: "2026-10-12",
+      start: null,
+      startSource: null,
+      end: "2026-10-12",
+      endSource: "typical",
+    });
+  });
+
+  it("has no target without a timeline start", () => {
+    expect(nodePlan(def("ura-pp"), freshInputs())).toMatchObject({ end: null, endSource: null, typicalEnd: null });
+  });
+
+  it("starts after a chosen stage, and a date wins over it", () => {
+    const inputs = planned();
+    inputs.overrides = { "ura-pp": { startAfter: "dev" } };
+    expect(nodePlan(def("ura-pp"), inputs)).toMatchObject({ start: WINDOWS.dev.end, startSource: "stage" });
+    inputs.overrides = { "ura-pp": { startAfter: "dev", start: "2026-06-01", end: "2026-09-15" } };
+    expect(nodePlan(def("ura-pp"), inputs)).toMatchObject({
+      start: "2026-06-01",
+      startSource: "date",
+      end: "2026-09-15",
+      endSource: "date",
+      typicalEnd: "2026-10-12",
+    });
+  });
+
+  it("falls back to the older per-step planned dates before the typical target", () => {
+    const inputs = planned();
+    inputs.timelinePlanByStep["ura__PP"] = { startDate: "2026-02-01", endDate: "2026-04-01" };
+    expect(nodePlan(def("ura-pp"), inputs)).toMatchObject({
+      start: "2026-02-01",
+      startSource: "timeline",
+      end: "2026-04-01",
+      endSource: "timeline",
+    });
+  });
+
+  it("turns a stage late from its typical target", () => {
+    const inputs = planned();
+    expect(node(inputs, "ura-pp", "2026-10-12").late).toBe(false);
+    expect(node(inputs, "ura-pp", "2026-10-13").late).toBe(true);
+  });
+
+  it("describes where the target came from", () => {
+    const inputs = planned();
+    expect(planEndText(nodePlan(def("ura-pp"), inputs))).toBe("12 10 2026 (typical: end of Detailed Design)");
+    inputs.overrides = { "ura-pp": { end: "2026-09-15" } };
+    expect(planEndText(nodePlan(def("ura-pp"), inputs))).toBe("15 09 2026 (set on the Timeline tab)");
+  });
+});
+
+describe("mapInputsFor", () => {
+  it("lays out stage windows from the project start, else back from the contract start", () => {
+    const base = {
+      itemsByKey: {},
+      milestonesByStep: {},
+      timelinePlanByStep: {},
+      project: { submissionMap: {}, step_stage: {}, stageDurationWeeks: WEEKS, projectDates: {} },
+    };
+    expect(mapInputsFor(base).stageWindows).toBeNull();
+    expect(mapInputsFor({ ...base, project: { ...base.project, projectDates: { projectStart: "2026-01-05" } } }).stageWindows)
+      .toEqual(WINDOWS);
+    // Construction starts on the contract start; 48 weeks of stages come before it.
+    const fromContract = mapInputsFor({ ...base, project: { ...base.project, projectDates: { contractStart: "2026-12-07" } } });
+    expect(fromContract.stageWindows!.construction.start).toBe("2026-12-07");
+    expect(fromContract.stageWindows!["pre-design"].start).toBe("2026-01-05");
   });
 });
