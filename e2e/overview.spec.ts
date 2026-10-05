@@ -113,15 +113,39 @@ test.describe("Overview tab", () => {
 
   test("PP / WP Granted and BP01 are fixed checkpoints that clear the map and start the expiry clock", async ({ page }) => {
     const uraSection = page.locator(".ov-section").filter({ hasText: "URA — Provisional Permission" });
-    const wp = uraSection.locator('[data-checkpoint="WP Granted"]');
+    const rows = uraSection.locator(".sl-row");
+    const order = async () => (await rows.locator(".sl-label").allInnerTexts()).map((t) => t.trim());
+    const addRound = async (type: string) => {
+      await uraSection.locator('[data-field="type"]').fill(type);
+      await uraSection.getByRole("button", { name: "+ Add" }).click();
+      await expect(uraSection.locator(".sl-label", { hasText: type })).toBeVisible();
+    };
     await expect(uraSection.locator(".ms-checkpoint")).toHaveCount(2);
-    // Fixed rows: no move or delete buttons.
-    await expect(wp.locator(".ms-del, .row-move-btn")).toHaveCount(0);
 
-    // A round logged afterwards still sits above the checkpoints.
-    await uraSection.locator('[data-field="type"]').fill("PP Submitted");
-    await uraSection.getByRole("button", { name: "+ Add" }).click();
-    await expect(uraSection.locator(".sl-row").first()).toContainText("PP Submitted");
+    // Rounds land above the checkpoints nobody has filled in yet.
+    await addRound("PP Submitted");
+    expect(await order()).toEqual(["PP Submitted", "PP Granted", "WP Granted"]);
+
+    // Filling PP Granted places it after what's logged, so the WP rounds follow it.
+    await uraSection.locator('[data-checkpoint="PP Granted"]').getByLabel("PP Granted date").fill("2026-03-02");
+    await expect(uraSection.locator('[data-checkpoint="PP Granted"]')).toHaveClass(/is-reached/);
+    await addRound("WP Submitted");
+    expect(await order()).toEqual(["PP Submitted", "PP Granted", "WP Submitted", "WP Granted"]);
+
+    // Checkpoints move like any round, but can't be deleted.
+    const pp = uraSection.locator('[data-checkpoint="PP Granted"]');
+    await expect(pp.locator(".ms-del")).toHaveCount(0);
+    await pp.getByRole("button", { name: "Move PP Granted down" }).click();
+    await expect.poll(order).toEqual(["PP Submitted", "WP Submitted", "PP Granted", "WP Granted"]);
+    await pp.getByRole("button", { name: "Move PP Granted up" }).click();
+    await expect.poll(order).toEqual(["PP Submitted", "PP Granted", "WP Submitted", "WP Granted"]);
+
+    // An unfilled checkpoint can be moved up into the log too.
+    const wp = uraSection.locator('[data-checkpoint="WP Granted"]');
+    await wp.getByRole("button", { name: "Move WP Granted up" }).click();
+    await expect.poll(order).toEqual(["PP Submitted", "PP Granted", "WP Granted", "WP Submitted"]);
+    await wp.getByRole("button", { name: "Move WP Granted down" }).click();
+    await expect.poll(order).toEqual(["PP Submitted", "PP Granted", "WP Submitted", "WP Granted"]);
 
     await wp.getByLabel("WP Granted date").fill("2026-05-04");
     await expect(wp).toHaveClass(/is-reached/);
@@ -135,13 +159,16 @@ test.describe("Overview tab", () => {
     await expect(map.locator('[data-node="bca-bp"]')).toHaveAttribute("data-status", "done");
 
     await page.reload();
+    await expect.poll(order).toEqual(["PP Submitted", "PP Granted", "WP Submitted", "WP Granted"]);
     await expect(page.locator('[data-checkpoint="WP Granted"]').getByLabel("WP Granted date")).toHaveValue("2026-05-04");
-    await expect(page.locator(".sl-row", { hasText: "PP Submitted" })).toHaveCount(1);
-    await expect(uraSection.locator(".sl-row").last()).toHaveAttribute("data-checkpoint", "WP Granted");
 
-    // Clearing the date un-reaches it: the only round left is a PP submission, so WP is back to not started.
+    // Clearing the date un-reaches it, and the row stays put.
     await page.locator('[data-checkpoint="WP Granted"]').getByLabel("WP Granted date").fill("");
-    await expect(page.getByTestId("submission-map").locator('[data-node="ura-wp"]')).toHaveAttribute("data-status", "pending");
+    await expect(page.getByTestId("submission-map").locator('[data-node="ura-wp"]')).toHaveAttribute(
+      "data-status",
+      "progress"
+    );
+    expect(await order()).toEqual(["PP Submitted", "PP Granted", "WP Submitted", "WP Granted"]);
   });
 
   test("logging a PP grant shows a PP Expiry bubble with an extension reminder", async ({ page }) => {

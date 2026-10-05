@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CHECKPOINT_SORT_BASE, MS_TYPE_PRESETS } from "@/template";
+import { MS_TYPE_PRESETS } from "@/template";
 import type { LogCheckpoint } from "@/template";
 import type { MilestoneEntry } from "@/hooks/useProjectData";
 import {
@@ -17,7 +17,7 @@ export function MilestoneLog({
   stepKey,
   label,
   blurb,
-  entries: allEntries,
+  entries,
   presets,
   checkpoints = [],
 }: {
@@ -27,25 +27,29 @@ export function MilestoneLog({
   blurb?: string;
   entries: MilestoneEntry[];
   presets: string[];
-  /** Fixed rows after the rounds (e.g. "WP Granted"); they can't be moved or deleted. */
+  /** Fixed rows (e.g. "PP Granted", "WP Granted"): movable like any round, but never deleted. */
   checkpoints?: LogCheckpoint[];
 }) {
-  const checkpointTypes = new Set(checkpoints.map((c) => c.type));
-  const entries = allEntries.filter((e) => !checkpointTypes.has(e.type));
+  const checkpointByType = new Map(checkpoints.map((c) => [c.type, c]));
+  // Checkpoints nobody has filled in yet. They show after the logged rows, in template
+  // order, until a date, a note or a move gives them a row of their own in the list.
+  const unplaced = checkpoints.filter((c) => !entries.some((e) => e.type === c.type));
 
-  /** Fills in a checkpoint, creating its row the first time. */
-  function saveCheckpoint(checkpoint: LogCheckpoint, index: number, patch: { date?: string | null; note?: string }) {
-    const existing = allEntries.find((e) => e.type === checkpoint.type);
-    if (existing) updateMilestone.mutate({ id: existing.id, ...patch });
-    else
-      addMilestone.mutate({
-        stepKey,
-        type: checkpoint.type,
-        date: patch.date ?? null,
-        note: patch.note ?? "",
-        sortOrder: CHECKPOINT_SORT_BASE + index,
-      });
+  /** Gives an unplaced checkpoint its row: after everything logged so far, or just above
+   * the last logged row when it's being moved up. */
+  function placeCheckpoint(
+    checkpoint: LogCheckpoint,
+    fields: { date?: string | null; note?: string; aboveLast?: boolean }
+  ) {
+    addMilestone.mutate({
+      stepKey,
+      type: checkpoint.type,
+      date: fields.date ?? null,
+      note: fields.note ?? "",
+      aboveLast: fields.aboveLast,
+    });
   }
+
   const addMilestone = useAddMilestone(projectId);
   const updateMilestone = useUpdateMilestone(projectId);
   const deleteMilestone = useDeleteMilestone(projectId);
@@ -122,77 +126,101 @@ export function MilestoneLog({
       )}
 
       <div className="sl-list">
-        {entries.map((entry, i) => (
-          <div className="sl-row" key={entry.id}>
-            <div className="row-move-group">
-              <button
-                type="button"
-                className="row-move-btn"
-                disabled={i === 0}
-                onClick={() => moveMilestone.mutate({ stepKey, id: entry.id, direction: -1 })}
-              >
-                ▲
-              </button>
-              <button
-                type="button"
-                className="row-move-btn"
-                disabled={i === entries.length - 1}
-                onClick={() => moveMilestone.mutate({ stepKey, id: entry.id, direction: 1 })}
-              >
-                ▼
-              </button>
-            </div>
-            <span className="sl-label">{entry.type}</span>
-            <input
-              type="date"
-              className="ov-amend-date-input"
-              value={entry.date ?? ""}
-              onChange={(e) => updateMilestone.mutate({ id: entry.id, date: e.target.value || null })}
-            />
-            <input
-              className="ov-amend-note-input"
-              placeholder="Note"
-              value={entry.note}
-              onChange={(e) => updateMilestone.mutate({ id: entry.id, note: e.target.value })}
-            />
-            <button type="button" className="ms-del" onClick={() => deleteMilestone.mutate({ id: entry.id })}>
-              ×
-            </button>
-          </div>
-        ))}
-        {entries.length === 0 && <span className="ov-empty">No entries yet.</span>}
-        {checkpoints.map((checkpoint, i) => {
-          const entry = allEntries.find((e) => e.type === checkpoint.type);
+        {entries.map((entry, i) => {
+          const checkpoint = checkpointByType.get(entry.type);
+          const rowLabel = checkpoint?.label ?? entry.type;
           return (
             <div
-              className={`sl-row ms-checkpoint${entry?.date ? " is-reached" : ""}`}
-              key={checkpoint.type}
-              data-checkpoint={checkpoint.type}
+              className={`sl-row${checkpoint ? ` ms-checkpoint${entry.date ? " is-reached" : ""}` : ""}`}
+              key={entry.id}
+              data-checkpoint={checkpoint?.type}
             >
-              <span className="ms-checkpoint-mark" aria-hidden="true">
-                {entry?.date ? "✓" : "◆"}
-              </span>
-              <span className="sl-label">{checkpoint.label}</span>
+              <div className="row-move-group">
+                <button
+                  type="button"
+                  className="row-move-btn"
+                  aria-label={`Move ${rowLabel} up`}
+                  disabled={i === 0}
+                  onClick={() => moveMilestone.mutate({ stepKey, id: entry.id, direction: -1 })}
+                >
+                  ▲
+                </button>
+                <button
+                  type="button"
+                  className="row-move-btn"
+                  aria-label={`Move ${rowLabel} down`}
+                  disabled={i === entries.length - 1}
+                  onClick={() => moveMilestone.mutate({ stepKey, id: entry.id, direction: 1 })}
+                >
+                  ▼
+                </button>
+              </div>
+              {checkpoint && (
+                <span className="ms-checkpoint-mark" aria-hidden="true">
+                  {entry.date ? "✓" : "◆"}
+                </span>
+              )}
+              <span className="sl-label">{rowLabel}</span>
               <input
                 type="date"
                 className="ov-amend-date-input"
-                aria-label={`${checkpoint.label} date`}
-                value={entry?.date ?? ""}
-                onChange={(e) => saveCheckpoint(checkpoint, i, { date: e.target.value || null })}
+                aria-label={`${rowLabel} date`}
+                value={entry.date ?? ""}
+                onChange={(e) => updateMilestone.mutate({ id: entry.id, date: e.target.value || null })}
               />
               <input
                 className="ov-amend-note-input"
                 placeholder="Note"
-                aria-label={`${checkpoint.label} note`}
-                defaultValue={entry?.note ?? ""}
-                key={entry?.id ?? "new"}
-                onBlur={(e) => {
-                  if (e.target.value !== (entry?.note ?? "")) saveCheckpoint(checkpoint, i, { note: e.target.value });
-                }}
+                aria-label={`${rowLabel} note`}
+                value={entry.note}
+                onChange={(e) => updateMilestone.mutate({ id: entry.id, note: e.target.value })}
               />
+              {/* A checkpoint stays in the log for good; clear its date instead. */}
+              {!checkpoint && (
+                <button type="button" className="ms-del" onClick={() => deleteMilestone.mutate({ id: entry.id })}>
+                  ×
+                </button>
+              )}
             </div>
           );
         })}
+        {entries.length === 0 && unplaced.length === 0 && <span className="ov-empty">No entries yet.</span>}
+        {unplaced.map((checkpoint) => (
+          <div className="sl-row ms-checkpoint" key={checkpoint.type} data-checkpoint={checkpoint.type}>
+            <div className="row-move-group">
+              <button
+                type="button"
+                className="row-move-btn"
+                aria-label={`Move ${checkpoint.label} up`}
+                disabled={entries.length === 0}
+                onClick={() => placeCheckpoint(checkpoint, { aboveLast: true })}
+              >
+                ▲
+              </button>
+              <button type="button" className="row-move-btn" aria-label={`Move ${checkpoint.label} down`} disabled>
+                ▼
+              </button>
+            </div>
+            <span className="ms-checkpoint-mark" aria-hidden="true">
+              ◆
+            </span>
+            <span className="sl-label">{checkpoint.label}</span>
+            <input
+              type="date"
+              className="ov-amend-date-input"
+              aria-label={`${checkpoint.label} date`}
+              value=""
+              onChange={(e) => e.target.value && placeCheckpoint(checkpoint, { date: e.target.value })}
+            />
+            <input
+              className="ov-amend-note-input"
+              placeholder="Note"
+              aria-label={`${checkpoint.label} note`}
+              defaultValue=""
+              onBlur={(e) => e.target.value && placeCheckpoint(checkpoint, { note: e.target.value })}
+            />
+          </div>
+        ))}
       </div>
 
       <div className="milestone-form">

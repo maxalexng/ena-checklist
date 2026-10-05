@@ -2,8 +2,9 @@
 // agency sections and their submission logs. Ported from the prototype's OV_SECTION_DEFS
 // and renderOvSection* functions (each of which combined a heading, a blurb, and one or
 // two milestone-log widgets keyed by `keys`).
-/** A fixed row at the end of a submission log: the approval the rounds above lead to. It
- * can't be moved or deleted, and once it has a date it marks its Submission Map stages done. */
+/** A fixed row in a submission log: an approval the rounds lead to. It can be moved among
+ * the rounds (PP Granted usually comes before the WP rounds) but never deleted, and once
+ * it has a date it marks its Submission Map stages done. */
 export interface LogCheckpoint {
   /** Stored milestone `type`. Existing rows are matched on it, so never change it once shipped. */
   type: string;
@@ -114,9 +115,6 @@ export const OV_SECTION_BY_ID: Record<string, OverviewSectionDef> = Object.fromE
 export const LOG_CHECKPOINTS_BY_STEP: Record<string, LogCheckpoint[]> = Object.fromEntries(
   OV_SECTION_DEFS.flatMap((s) => s.logs.filter((l) => l.checkpoints).map((l) => [l.key, l.checkpoints!]))
 );
-
-/** Checkpoint rows sort after every ordinary round (see useAddMilestone). */
-export const CHECKPOINT_SORT_BASE = 1_000_000;
 
 export function defaultOverviewSectionOrder(): string[] {
   return OV_SECTION_DEFS.map((s) => s.id);

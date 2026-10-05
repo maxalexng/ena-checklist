@@ -10,7 +10,7 @@
 // bump n and drop any letter suffix. "R<n><letter>" for a smaller revision within that
 // cycle (a wording tweak, a logo swap, a bug fix) — keep n, advance the letter.
 // Never renumber a revision once published.
-export const TEMPLATE_VERSION = "R22d";
+export const TEMPLATE_VERSION = "R22e";
 
 export interface ChangelogEntry {
   rev: string;
@@ -23,6 +23,12 @@ export interface ChangelogEntry {
 // from the HTML prototype (submissions-register-MASTER.html); entries from here on
 // describe changes made in this app.
 export const TEMPLATE_CHANGELOG: ChangelogEntry[] = [
+  {
+    rev: "R22e",
+    date: "2026-10-02",
+    summary:
+      "Overview log checkpoints (PP Granted, WP Granted, BP & HS Approval (BP01)) can now be moved among the rounds with ▲ / ▼, so PP Granted can sit before the WP rounds. They still can't be deleted. An unfilled checkpoint waits after the logged rounds, and new rounds are added above it; filling in its date places it after what's logged so far.",
+  },
   {
     rev: "R22d",
     date: "2026-10-02",
