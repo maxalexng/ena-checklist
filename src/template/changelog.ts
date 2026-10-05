@@ -10,7 +10,7 @@
 // bump n and drop any letter suffix. "R<n><letter>" for a smaller revision within that
 // cycle (a wording tweak, a logo swap, a bug fix) — keep n, advance the letter.
 // Never renumber a revision once published.
-export const TEMPLATE_VERSION = "R22e";
+export const TEMPLATE_VERSION = "R22f";
 
 export interface ChangelogEntry {
   rev: string;
@@ -23,6 +23,12 @@ export interface ChangelogEntry {
 // from the HTML prototype (submissions-register-MASTER.html); entries from here on
 // describe changes made in this app.
 export const TEMPLATE_CHANGELOG: ChangelogEntry[] = [
+  {
+    rev: "R22f",
+    date: "2026-10-05",
+    summary:
+      "Checkpoints on every Overview log: ST Approval (Piling) and ST Approval (Other Works) on BCA ST; NParks DC Clearance and NParks BP Clearance; LTA DC Clearance; Drainage DC / DP Clearance on PUB-DRA and Sewerage DC / DP Clearance on PUB-SEW; Fire Safety Plan Approval on SCDF. Each marks its Submission Map stage done once dated. PUB's DC and BP stages need both the drainage and the sewerage clearance, and the DP clearances now clear PUB's BP stage, which used to be tracked only by hand.",
+  },
   {
     rev: "R22e",
     date: "2026-10-02",

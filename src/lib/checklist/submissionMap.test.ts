@@ -181,6 +181,31 @@ describe("autoNodeStatus", () => {
     expect(autoNodeStatus(def("bca-bp"), inputs)).toBe("done");
   });
 
+  it("needs both PUB logs' clearances for a PUB stage", () => {
+    const inputs = freshInputs();
+    inputs.milestonesByStep["pub__SW"] = [{ type: "Drainage DC Clearance", date: "2026-04-01" }];
+    expect(autoNodeStatus(def("pub-dc"), inputs)).not.toBe("done");
+    inputs.milestonesByStep["pub__SS"] = [{ type: "Sewerage DC Clearance", date: "2026-04-10" }];
+    expect(autoNodeStatus(def("pub-dc"), inputs)).toBe("done");
+    expect(autoNodeStatus(def("pub-bp"), inputs)).toBeNull();
+
+    // PUB's BP stage has no checklist step, but its DP checkpoints still clear it.
+    inputs.milestonesByStep["pub__SW"].push({ type: "Drainage DP Clearance", date: "2026-07-01" });
+    inputs.milestonesByStep["pub__SS"].push({ type: "Sewerage DP Clearance", date: "2026-07-02" });
+    expect(autoNodeStatus(def("pub-bp"), inputs)).toBe("done");
+  });
+
+  it("clears the piling and other-works ST stages separately", () => {
+    const inputs = freshInputs();
+    inputs.milestonesByStep["bca__ST"] = [
+      { type: "ST Approval (Piling)", date: "2026-06-01" },
+      { type: "ST Approval (Other Works)", date: null },
+    ];
+    expect(autoNodeStatus(def("bca-st-piling"), inputs)).toBe("done");
+    // The undated other-works checkpoint is only a placeholder, not a logged round.
+    expect(autoNodeStatus(def("bca-st"), inputs)).toBe("progress");
+  });
+
   it("treats a WP grant as PP done too", () => {
     const inputs = freshInputs();
     inputs.milestonesByStep["ura__PP"] = [{ type: "WP Granted", date: "2026-05-04" }];

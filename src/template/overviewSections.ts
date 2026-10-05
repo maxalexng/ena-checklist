@@ -52,6 +52,10 @@ export const OV_SECTION_DEFS: OverviewSectionDef[] = [
       {
         key: "bca__ST",
         label: "ST submissions",
+        checkpoints: [
+          { type: "ST Approval (Piling)", label: "ST Approval (Piling)", completes: ["bca-st-piling"] },
+          { type: "ST Approval (Other Works)", label: "ST Approval (Other Works)", completes: ["bca-st"] },
+        ],
         blurb:
           "Different engineers and projects number BCA ST permits completely differently — add each one under whatever label your team actually uses.",
       },
@@ -64,6 +68,10 @@ export const OV_SECTION_DEFS: OverviewSectionDef[] = [
       {
         key: "nparks__TREE",
         label: "NParks submissions",
+        checkpoints: [
+          { type: "NParks DC Clearance", label: "NParks DC Clearance", completes: ["nparks-dc"] },
+          { type: "NParks BP Clearance", label: "NParks BP Clearance", completes: ["nparks-bp"] },
+        ],
         blurb:
           "Tracked as Development Control (DC) at design stage and Building Plan (BP) at construction stage — tree felling/pruning is a component within the DC submission, not a separate approval of its own.",
       },
@@ -76,6 +84,7 @@ export const OV_SECTION_DEFS: OverviewSectionDef[] = [
       {
         key: "lta__ACCESS",
         label: "LTA submissions",
+        checkpoints: [{ type: "LTA DC Clearance", label: "LTA DC Clearance", completes: ["lta-dc"] }],
         blurb:
           "Development Control (DC) is the formal review; Lodgement is the self-declaration route a QP can use instead, where it applies.",
       },
@@ -88,10 +97,23 @@ export const OV_SECTION_DEFS: OverviewSectionDef[] = [
       {
         key: "pub__SW",
         label: "PUB-DRA submissions",
+        // PUB's DC and BP stages each need both the drainage and the sewerage clearance.
+        checkpoints: [
+          { type: "Drainage DC Clearance", label: "Drainage DC Clearance", completes: ["pub-dc"] },
+          { type: "Drainage DP Clearance", label: "Drainage DP Clearance", completes: ["pub-bp"] },
+        ],
         blurb:
           "Drainage and sewer clear independently — each tracks its own Development Control (DC) and Detailed Plan (DP) stages, plus any deviations.",
       },
-      { key: "pub__SS", label: "PUB-SEW submissions", blurb: "" },
+      {
+        key: "pub__SS",
+        label: "PUB-SEW submissions",
+        blurb: "",
+        checkpoints: [
+          { type: "Sewerage DC Clearance", label: "Sewerage DC Clearance", completes: ["pub-dc"] },
+          { type: "Sewerage DP Clearance", label: "Sewerage DP Clearance", completes: ["pub-bp"] },
+        ],
+      },
     ],
   },
   {
@@ -101,6 +123,7 @@ export const OV_SECTION_DEFS: OverviewSectionDef[] = [
       {
         key: "scdf__FS",
         label: "Fire Safety submissions",
+        checkpoints: [{ type: "Fire Safety Plan Approval", label: "Fire Safety Plan Approval", completes: ["scdf-bp"] }],
         blurb: "Submitted, then cleared, or received back with comments or a Written Direction — track each round.",
       },
     ],
@@ -115,6 +138,15 @@ export const OV_SECTION_BY_ID: Record<string, OverviewSectionDef> = Object.fromE
 export const LOG_CHECKPOINTS_BY_STEP: Record<string, LogCheckpoint[]> = Object.fromEntries(
   OV_SECTION_DEFS.flatMap((s) => s.logs.filter((l) => l.checkpoints).map((l) => [l.key, l.checkpoints!]))
 );
+
+/** For each Submission Map node, the checkpoints that complete it, with the log they sit in. */
+export const LOG_CHECKPOINTS_BY_NODE: Record<string, { step: string; type: string }[]> = (() => {
+  const out: Record<string, { step: string; type: string }[]> = {};
+  Object.entries(LOG_CHECKPOINTS_BY_STEP).forEach(([step, checkpoints]) =>
+    checkpoints.forEach((c) => c.completes.forEach((id) => (out[id] ||= []).push({ step, type: c.type })))
+  );
+  return out;
+})();
 
 export function defaultOverviewSectionOrder(): string[] {
   return OV_SECTION_DEFS.map((s) => s.id);

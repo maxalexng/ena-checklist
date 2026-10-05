@@ -6,6 +6,7 @@
 // Each node also has a plan for the Timeline tab: a target date (by default, the end of the
 // office stage its checklist step sits in) and, once someone sets one, a start date.
 import {
+  LOG_CHECKPOINTS_BY_NODE,
   LOG_CHECKPOINTS_BY_STEP,
   MAP_COLUMNS,
   MAP_COLUMN_STAGE,
@@ -133,20 +134,26 @@ function logShowsDone(node: MapNodeDef, entries: { type: string }[]): boolean {
   return !!log && entries.some((e) => log.done.test(e.type) && !log.notDone?.test(e.type));
 }
 
-/** A dated checkpoint row (e.g. "WP Granted" on the Overview tab) that completes this node. */
+/** Done from the Overview logs' checkpoints: every log that feeds this node has one of
+ * its checkpoints for it dated. One log offering two (URA's PP Granted or WP Granted)
+ * needs either; two logs (PUB drainage and sewerage) need one each. */
 function checkpointDone(node: MapNodeDef, inputs: MapInputs): boolean {
-  return node.links.some((link) =>
-    (LOG_CHECKPOINTS_BY_STEP[link.step] ?? [])
-      .filter((c) => c.completes.includes(node.id))
-      .some((c) => (inputs.milestonesByStep[link.step] ?? []).some((e) => e.type === c.type && !!e.date))
+  const checkpoints = LOG_CHECKPOINTS_BY_NODE[node.id] ?? [];
+  if (checkpoints.length === 0) return false;
+  const steps = [...new Set(checkpoints.map((c) => c.step))];
+  return steps.every((step) =>
+    checkpoints
+      .filter((c) => c.step === step)
+      .some((c) => (inputs.milestonesByStep[step] ?? []).some((e) => e.type === c.type && !!e.date))
   );
 }
 
 /** The node's status from the checklist and the linked steps' submission logs, ignoring
  * any manual status. Null when the node links to nothing. */
 export function autoNodeStatus(node: MapNodeDef, inputs: MapInputs): MapStatus | null {
-  if (node.links.length === 0) return null;
+  // Before the no-link check: a hand-tracked stage (PUB's BP) can still be cleared by checkpoints.
   if (checkpointDone(node, inputs)) return "done";
+  if (node.links.length === 0) return null;
   const records = itemKeysFor(node)
     .map((key) => inputs.itemsByKey[key])
     .filter((r): r is { status: string; na: boolean } => !!r);

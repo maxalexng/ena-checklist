@@ -171,6 +171,37 @@ test.describe("Overview tab", () => {
     expect(await order()).toEqual(["PP Submitted", "PP Granted", "WP Submitted", "WP Granted"]);
   });
 
+  test("every Overview log has checkpoints, and PUB's stages need both drainage and sewerage", async ({ page }) => {
+    for (const type of [
+      "ST Approval (Piling)",
+      "ST Approval (Other Works)",
+      "NParks DC Clearance",
+      "NParks BP Clearance",
+      "LTA DC Clearance",
+      "Drainage DC Clearance",
+      "Drainage DP Clearance",
+      "Sewerage DC Clearance",
+      "Sewerage DP Clearance",
+      "Fire Safety Plan Approval",
+    ]) {
+      await expect(page.locator(`[data-checkpoint="${type}"]`)).toHaveCount(1);
+    }
+
+    const map = page.getByTestId("submission-map");
+    await page.locator('[data-checkpoint="Drainage DC Clearance"]').getByLabel("Drainage DC Clearance date").fill("2026-04-01");
+    await expect(page.locator('[data-checkpoint="Drainage DC Clearance"]')).toHaveClass(/is-reached/);
+    await expect(map.locator('[data-node="pub-dc"]')).not.toHaveAttribute("data-status", "done");
+    await page.locator('[data-checkpoint="Sewerage DC Clearance"]').getByLabel("Sewerage DC Clearance date").fill("2026-04-10");
+    await expect(map.locator('[data-node="pub-dc"]')).toHaveAttribute("data-status", "done");
+
+    await page.locator('[data-checkpoint="Fire Safety Plan Approval"]').getByLabel("Fire Safety Plan Approval date").fill("2026-06-15");
+    await expect(map.locator('[data-node="scdf-bp"]')).toHaveAttribute("data-status", "done");
+
+    await page.reload();
+    await expect(page.getByTestId("submission-map").locator('[data-node="pub-dc"]')).toHaveAttribute("data-status", "done");
+    await expect(page.getByTestId("submission-map").locator('[data-node="scdf-bp"]')).toHaveAttribute("data-status", "done");
+  });
+
   test("logging a PP grant shows a PP Expiry bubble with an extension reminder", async ({ page }) => {
     const uraSection = page.locator(".ov-section").filter({ hasText: "URA — Provisional Permission" });
     await uraSection.locator('[data-field="type"]').fill("PP Cleared / Granted");

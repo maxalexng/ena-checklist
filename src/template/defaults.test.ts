@@ -1,4 +1,4 @@
-import { LOG_CHECKPOINTS_BY_STEP, SUBMISSION_MAP } from "./index";
+import { LOG_CHECKPOINTS_BY_STEP, OV_SECTION_DEFS, SUBMISSION_MAP } from "./index";
 import { describe, expect, it } from "vitest";
 import { STATUSES, defaultListPresets, defaultRoles, nextStatus, slugify, uniqueRoleId } from "./defaults";
 import { ROLE_PALETTE } from "./keys";
@@ -83,16 +83,25 @@ describe("defaultListPresets", () => {
 });
 
 describe("log checkpoints", () => {
-  it("only complete Submission Map stages that read the checkpoint's own step", () => {
-    const nodes = SUBMISSION_MAP.flatMap((r) => r.nodes);
+  it("only complete Submission Map stages of the log's own agency", () => {
+    const rows = SUBMISSION_MAP;
     Object.entries(LOG_CHECKPOINTS_BY_STEP).forEach(([stepKey, checkpoints]) =>
       checkpoints.forEach((c) =>
         c.completes.forEach((id) => {
-          const node = nodes.find((n) => n.id === id);
-          expect(node, `${c.type} → ${id}`).toBeDefined();
-          expect(node!.links.map((l) => l.step), `${c.type} → ${id}`).toContain(stepKey);
+          const row = rows.find((r) => r.nodes.some((n) => n.id === id));
+          expect(row, `${c.type} → ${id}`).toBeDefined();
+          expect(stepKey.startsWith(`${row!.agencyId}__`), `${c.type} → ${id}`).toBe(true);
         })
       )
     );
+  });
+
+  it("gives every Overview log at least one checkpoint, each with a unique type", () => {
+    const logs = OV_SECTION_DEFS.flatMap((s) => s.logs);
+    logs.forEach((l) => expect(l.checkpoints?.length, l.key).toBeGreaterThan(0));
+    logs.forEach((l) => {
+      const types = l.checkpoints!.map((c) => c.type);
+      expect(new Set(types).size, l.key).toBe(types.length);
+    });
   });
 });
