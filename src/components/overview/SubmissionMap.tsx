@@ -18,8 +18,8 @@ import {
 } from "@/lib/checklist/submissionMap";
 
 export const MAP_STATUS_LABEL: Record<MapStatus, string> = {
-  pending: "Not started",
-  progress: "In progress",
+  pending: "Not Started",
+  progress: "In Progress",
   done: "Done",
   na: "N/A",
 };
@@ -113,8 +113,8 @@ export function SubmissionMap({
 
   const chipGroups: { key: string; title: string; nodes: MapNodeState[]; empty: string }[] = [
     { key: "late", title: "Late", nodes: summary.late, empty: "Nothing late." },
-    { key: "progress", title: "In progress", nodes: summary.inProgress, empty: "Nothing under way." },
-    { key: "next", title: "Up next", nodes: summary.upNext, empty: "Nothing waiting to start." },
+    { key: "progress", title: "In Progress", nodes: summary.inProgress, empty: "Nothing under way." },
+    { key: "next", title: "Up Next", nodes: summary.upNext, empty: "Nothing waiting to start." },
   ];
 
   return (
@@ -144,7 +144,7 @@ export function SubmissionMap({
         </span>
         <span className="smap-legend-item">
           <span className="smap-dot smap-st-pending smap-next" />
-          Up next
+          Up Next
         </span>
       </div>
 

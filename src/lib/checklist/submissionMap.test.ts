@@ -121,7 +121,7 @@ describe("autoNodeStatus", () => {
   });
 
   it("tags the C&S engineer's stages", () => {
-    const by = SUBMISSION_MAP.flatMap((r) => r.nodes).filter((n) => n.by === "C&S engineer").map((n) => n.id);
+    const by = SUBMISSION_MAP.flatMap((r) => r.nodes).filter((n) => n.by === "C&S Engineer").map((n) => n.id);
     expect(by).toEqual(["bca-demo", "bca-st-piling", "bca-st"]);
   });
 

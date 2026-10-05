@@ -10,7 +10,7 @@
 // bump n and drop any letter suffix. "R<n><letter>" for a smaller revision within that
 // cycle (a wording tweak, a logo swap, a bug fix) — keep n, advance the letter.
 // Never renumber a revision once published.
-export const TEMPLATE_VERSION = "R22f";
+export const TEMPLATE_VERSION = "R22g";
 
 export interface ChangelogEntry {
   rev: string;
@@ -23,6 +23,12 @@ export interface ChangelogEntry {
 // from the HTML prototype (submissions-register-MASTER.html); entries from here on
 // describe changes made in this app.
 export const TEMPLATE_CHANGELOG: ChangelogEntry[] = [
+  {
+    rev: "R22g",
+    date: "2026-10-05",
+    summary:
+      "Submission Map wording in title case: stage labels and names (ST (Piling), ST (Other), As-Built, Structural Plan — Piling, NEA Development Control, …), the Planning Permission and Plan Approval bands, Self-Declaration, by C&S Engineer, and the Not Started / In Progress / Up Next status words, which the Timeline shares.",
+  },
   {
     rev: "R22f",
     date: "2026-10-05",

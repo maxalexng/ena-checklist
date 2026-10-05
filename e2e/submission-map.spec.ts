@@ -53,7 +53,7 @@ test.describe("Overview submission map", () => {
     await mapNode(page, "scdf-bp").click();
     const detail = page.getByTestId("submission-map-detail");
     await expect(detail).toContainText("From the checklist: 6 of 6 items cleared.");
-    await statusButton(page, "In progress").click();
+    await statusButton(page, "In Progress").click();
     await expect(mapNode(page, "scdf-bp")).toHaveAttribute("data-status", "progress");
     await expect(detail).toContainText("Set by hand. The checklist says done.");
 
@@ -106,9 +106,9 @@ test.describe("Overview submission map", () => {
 
   test("demolition sits with the engineer's structural stages", async ({ page }) => {
     const bca = page.getByTestId("submission-map").locator('[data-agency="bca"]');
-    await expect(bca.locator(".smap-by-label")).toHaveText("by C&S engineer");
+    await expect(bca.locator(".smap-by-label")).toHaveText("by C&S Engineer");
     await mapNode(page, "bca-demo").click();
-    await expect(page.getByTestId("submission-map-detail")).toContainText("Submitted by the C&S engineer.");
+    await expect(page.getByTestId("submission-map-detail")).toContainText("Submitted by the C&S Engineer.");
   });
 
   test("URA PP and WP read the PP submission log", async ({ page }) => {

@@ -17,8 +17,8 @@ export type MapColumnId = (typeof MAP_COLUMNS)[number];
 /** The bands across the top of the map, each spanning a run of columns. */
 export const MAP_PHASES: { id: string; label: string; columns: MapColumnId[] }[] = [
   { id: "site", label: "Site", columns: ["survey"] },
-  { id: "planning", label: "Planning permission", columns: ["opp", "pp", "wp"] },
-  { id: "plans", label: "Plan approval", columns: ["demo", "dc", "st", "bp"] },
+  { id: "planning", label: "Planning Permission", columns: ["opp", "pp", "wp"] },
+  { id: "plans", label: "Plan Approval", columns: ["demo", "dc", "st", "bp"] },
   { id: "construction", label: "Construction", columns: ["permit"] },
   { id: "completion", label: "Completion", columns: ["top", "csc"] },
 ];
@@ -56,7 +56,7 @@ export interface MapNodeDef {
   /** Full name, shown on hover and in the node's panel. */
   name: string;
   /** How this stage is reached from the one before, when it isn't a full submission. */
-  route?: "Lodgement" | "Self-declaration";
+  route?: "Lodgement" | "Self-Declaration";
   /** Only some projects need it (URA's OPP, demolition). */
   optional?: boolean;
   /** The stage always happens, and its linked checklist items are only optional parts of
@@ -130,8 +130,8 @@ export const SUBMISSION_MAP: MapRowDef[] = [
           notDone: NOT_CLEARED,
         },
       },
-      { id: "ura-top", column: "top", label: "TOP", name: "URA clearance for TOP", links: [] },
-      { id: "ura-csc", column: "csc", label: "CSC", name: "URA clearance for CSC", links: [] },
+      { id: "ura-top", column: "top", label: "TOP", name: "URA Clearance for TOP", links: [] },
+      { id: "ura-csc", column: "csc", label: "CSC", name: "URA Clearance for CSC", links: [] },
     ],
   },
   {
@@ -143,29 +143,29 @@ export const SUBMISSION_MAP: MapRowDef[] = [
         id: "bca-demo",
         column: "demo",
         label: "Demolition",
-        name: "Demolition permit",
+        name: "Demolition Permit",
         optional: true,
-        by: "C&S engineer",
+        by: "C&S Engineer",
         links: [{ step: "bca__DEMO" }],
       },
       {
         id: "bca-st-piling",
         column: "dc",
-        label: "ST (piling)",
-        name: "Structural plan — piling",
-        by: "C&S engineer",
+        label: "ST (Piling)",
+        name: "Structural Plan — Piling",
+        by: "C&S Engineer",
         links: [{ step: "bca__ST" }],
         log: { done: new RegExp(`pil.*${GRANTED}|${GRANTED}.*pil`, "i"), started: /pil/i },
       },
       {
         id: "bca-st",
         column: "st",
-        label: "ST (other)",
-        name: "Structural plan — other structural works",
-        by: "C&S engineer",
+        label: "ST (Other)",
+        name: "Structural Plan — Other Structural Works",
+        by: "C&S Engineer",
         links: [{ step: "bca__ST" }],
       },
-      { id: "bca-bp", column: "bp", label: "BP", name: "Building Plan approval", links: [{ step: "bca__BP" }] },
+      { id: "bca-bp", column: "bp", label: "BP", name: "Building Plan Approval", links: [{ step: "bca__BP" }] },
       {
         id: "bca-permit",
         column: "permit",
@@ -188,10 +188,10 @@ export const SUBMISSION_MAP: MapRowDef[] = [
     label: "NEA",
     scope: ["Environment", "Pollution"],
     nodes: [
-      { id: "nea-dc", column: "dc", label: "DC", name: "NEA development control", links: [{ step: "nea__ENV" }] },
-      { id: "nea-bp", column: "bp", label: "BP", name: "NEA building plan clearance", links: [] },
-      { id: "nea-top", column: "top", label: "TOP", name: "NEA clearance for TOP", links: [] },
-      { id: "nea-csc", column: "csc", label: "CSC", name: "NEA clearance for CSC", route: "Lodgement", links: [] },
+      { id: "nea-dc", column: "dc", label: "DC", name: "NEA Development Control", links: [{ step: "nea__ENV" }] },
+      { id: "nea-bp", column: "bp", label: "BP", name: "NEA Building Plan Clearance", links: [] },
+      { id: "nea-top", column: "top", label: "TOP", name: "NEA Clearance for TOP", links: [] },
+      { id: "nea-csc", column: "csc", label: "CSC", name: "NEA Clearance for CSC", route: "Lodgement", links: [] },
     ],
   },
   {
@@ -203,12 +203,12 @@ export const SUBMISSION_MAP: MapRowDef[] = [
         id: "lta-dc",
         column: "dc",
         label: "DC",
-        name: "LTA development control",
+        name: "LTA Development Control",
         required: true,
         links: [{ step: "lta__ACCESS" }, { step: "lta__TIA" }],
       },
-      { id: "lta-bp", column: "bp", label: "BP", name: "LTA building plan clearance", route: "Lodgement", links: [] },
-      { id: "lta-csc", column: "csc", label: "CSC", name: "LTA clearance for CSC", links: [] },
+      { id: "lta-bp", column: "bp", label: "BP", name: "LTA Building Plan Clearance", route: "Lodgement", links: [] },
+      { id: "lta-csc", column: "csc", label: "CSC", name: "LTA Clearance for CSC", links: [] },
     ],
   },
   {
@@ -220,18 +220,18 @@ export const SUBMISSION_MAP: MapRowDef[] = [
         id: "pub-dc",
         column: "dc",
         label: "DC",
-        name: "PUB development control (drainage and sewerage)",
+        name: "PUB Development Control (Drainage and Sewerage)",
         links: [{ step: "pub__SW" }, { step: "pub__SS" }],
       },
-      { id: "pub-bp", column: "bp", label: "BP", name: "PUB building plan clearance", route: "Lodgement", links: [] },
+      { id: "pub-bp", column: "bp", label: "BP", name: "PUB Building Plan Clearance", route: "Lodgement", links: [] },
       {
         id: "pub-top",
         column: "top",
         label: "TOP",
-        name: "PUB clearance for TOP",
+        name: "PUB Clearance for TOP",
         links: [{ step: "pub__CLR" }, { step: "pub__WS" }],
       },
-      { id: "pub-csc", column: "csc", label: "CSC", name: "PUB clearance for CSC", links: [] },
+      { id: "pub-csc", column: "csc", label: "CSC", name: "PUB Clearance for CSC", links: [] },
     ],
   },
   {
@@ -239,17 +239,17 @@ export const SUBMISSION_MAP: MapRowDef[] = [
     label: "NParks",
     scope: ["Trees", "Greenery"],
     nodes: [
-      { id: "nparks-dc", column: "dc", label: "DC", name: "NParks development control", links: [{ step: "nparks__TREE" }] },
+      { id: "nparks-dc", column: "dc", label: "DC", name: "NParks Development Control", links: [{ step: "nparks__TREE" }] },
       {
         id: "nparks-bp",
         column: "bp",
         label: "BP",
-        name: "NParks building plan (greenery)",
-        route: "Self-declaration",
+        name: "NParks Building Plan (Greenery)",
+        route: "Self-Declaration",
         required: true,
         links: [{ step: "nparks__GREEN" }],
       },
-      { id: "nparks-csc", column: "csc", label: "CSC", name: "NParks clearance for CSC", route: "Self-declaration", links: [] },
+      { id: "nparks-csc", column: "csc", label: "CSC", name: "NParks Clearance for CSC", route: "Self-Declaration", links: [] },
     ],
   },
   {
@@ -257,7 +257,7 @@ export const SUBMISSION_MAP: MapRowDef[] = [
     label: "SCDF",
     scope: ["Fire Safety"],
     nodes: [
-      { id: "scdf-bp", column: "bp", label: "BP", name: "Fire safety plan approval", links: [{ step: "scdf__FS" }] },
+      { id: "scdf-bp", column: "bp", label: "BP", name: "Fire Safety Plan Approval", links: [{ step: "scdf__FS" }] },
       {
         id: "scdf-top",
         column: "top",
@@ -276,14 +276,14 @@ export const SUBMISSION_MAP: MapRowDef[] = [
         id: "sla-survey",
         column: "survey",
         label: "Survey",
-        name: "Cadastral and boundary survey",
+        name: "Cadastral and Boundary Survey",
         links: [{ step: "sla__SURVEY", items: [0, 1, 2, 3] }],
       },
       {
         id: "sla-csc",
         column: "csc",
-        label: "As-built",
-        name: "As-built survey plan lodgement",
+        label: "As-Built",
+        name: "As-Built Survey Plan Lodgement",
         route: "Lodgement",
         required: true,
         stage: "csc",
@@ -296,8 +296,8 @@ export const SUBMISSION_MAP: MapRowDef[] = [
     label: "TFCC",
     scope: ["Telecom", "Fibre"],
     nodes: [
-      { id: "tfcc-plans", column: "dc", label: "Plans", name: "Telecom facility plans", links: [{ step: "tfcc__PLAN" }] },
-      { id: "tfcc-fibre", column: "top", label: "Fibre", name: "Fibre lead-in, before TOP", links: [{ step: "tfcc__FIBRE" }] },
+      { id: "tfcc-plans", column: "dc", label: "Plans", name: "Telecom Facility Plans", links: [{ step: "tfcc__PLAN" }] },
+      { id: "tfcc-fibre", column: "top", label: "Fibre", name: "Fibre Lead-In before TOP", links: [{ step: "tfcc__FIBRE" }] },
     ],
   },
 ];
