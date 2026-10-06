@@ -272,6 +272,28 @@ test.describe("Overview tab", () => {
     await expect(bubble).not.toContainText("expired"); // still ~1 month left, not overdue
   });
 
+  test("the SP Testing & Commissioning date set on its Checklist step shows on the Overview", async ({ page }) => {
+    const label = "SP Testing & Commissioning date";
+    await page.getByRole("button", { name: "Checklist" }).click();
+    await page.getByPlaceholder("Search checklist…").fill("testing & commissioning appointment");
+    const stepCard = page.locator(".agency").filter({ hasText: "SP Group testing & commissioning appointment" }).first();
+    await stepCard.getByLabel(label).fill("2026-11-20");
+
+    await page.getByRole("button", { name: "Overview" }).click();
+    const overviewInput = overviewRow(page, label).locator("input[type=date]");
+    await expect(overviewInput).toHaveValue("2026-11-20");
+
+    // Editing it on the Overview carries back to the step, and persists.
+    await overviewInput.fill("2026-12-04");
+    await page.reload();
+    await expect(overviewRow(page, label).locator("input[type=date]")).toHaveValue("2026-12-04");
+    await page.getByRole("button", { name: "Checklist" }).click();
+    await page.getByPlaceholder("Search checklist…").fill("testing & commissioning appointment");
+    await expect(
+      page.locator(".agency").filter({ hasText: "SP Group testing & commissioning appointment" }).first().getByLabel(label),
+    ).toHaveValue("2026-12-04");
+  });
+
   test("editing the project info bar (title/reference) saves and reflects in the masthead", async ({ page }) => {
     await page.getByLabel("Title").fill("Renamed Project Title");
     await page.getByLabel("Title").blur();

@@ -24,6 +24,9 @@ export interface ProjectDates {
   /** When the project started (Timeline tab), so typical dates show before there's a
    * building contract. Optional for the same reason as actualCompletion. */
   projectStart?: string;
+  /** SP Group testing & commissioning date (Checklist step and Overview, both editing the
+   * same field). Optional for the same reason as actualCompletion. */
+  spTestingDate?: string;
 }
 
 // Partial because fee_calculator_inputs starts as '{}' — see defaultFeeCalculatorInputs()

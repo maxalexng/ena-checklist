@@ -2,6 +2,7 @@
 // stepOrder.ts) is pure data + pure functions — no React, no Supabase — so it can be
 // imported by both the app and the one-off migration script (scripts/migrate-html-import.ts).
 import type { DesignLogId } from "./designLogs";
+import type { KeyDateId } from "./keyDates";
 
 export type ItemStatus = "pending" | "progress" | "submitted" | "cleared";
 
@@ -60,6 +61,9 @@ export interface Submission {
   designLog?: DesignLogId;
   /** Renders the PC sum schedule table after the item list. */
   isPcSumSchedule?: boolean;
+  /** Renders a date field for this project-level date (template/keyDates.ts) after the item
+   * list; the same date shows on the Overview tab. */
+  keyDate?: KeyDateId;
 }
 
 export interface Agency {
@@ -91,6 +95,7 @@ export interface TemplateStep {
   isConsultantList?: boolean;
   designLog?: DesignLogId;
   isPcSumSchedule?: boolean;
+  keyDate?: KeyDateId;
   submission: Submission;
   items: TemplateItem[];
 }

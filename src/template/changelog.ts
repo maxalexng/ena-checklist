@@ -10,7 +10,7 @@
 // bump n and drop any letter suffix. "R<n><letter>" for a smaller revision within that
 // cycle (a wording tweak, a logo swap, a bug fix) — keep n, advance the letter.
 // Never renumber a revision once published.
-export const TEMPLATE_VERSION = "R22h";
+export const TEMPLATE_VERSION = "R22i";
 
 export interface ChangelogEntry {
   rev: string;
@@ -23,6 +23,12 @@ export interface ChangelogEntry {
 // from the HTML prototype (submissions-register-MASTER.html); entries from here on
 // describe changes made in this app.
 export const TEMPLATE_CHANGELOG: ChangelogEntry[] = [
+  {
+    rev: "R22i",
+    date: "2026-10-06",
+    summary:
+      "SP Testing & Commissioning now has its own date field, also shown on the Overview tab beside the contract dates. Concept Design gets a new item for the client's decision on town gas, and the Gas step has its own gas heading and description (it showed the electricity one) and says to mark it N/A when the client does not want gas. The electricity step's turn-on item now reads as the LEW's application, so it is not confused with the SP testing appointment.",
+  },
   {
     rev: "R22h",
     date: "2026-10-06",

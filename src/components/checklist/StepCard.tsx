@@ -10,6 +10,7 @@ import { ItemRow } from "./ItemRow";
 import { Highlight } from "./Highlight";
 import { ConsultantsWidget } from "@/components/consultants/ConsultantsWidget";
 import { DesignReviewLog } from "./DesignReviewLog";
+import { KeyDateField } from "./KeyDateField";
 import { pcSumAwardLine, pcSumSummaryLine, summarizePcSums } from "@/lib/pcSums/pcSums";
 
 export function StepCard({
@@ -208,6 +209,9 @@ export function StepCard({
             entries={data.milestonesByStep[step.id] ?? []}
             locked={locked}
           />
+        )}
+        {step.keyDate && (
+          <KeyDateField projectId={projectId} keyDate={step.keyDate} data={data} locked={locked} />
         )}
         {step.isPcSumSchedule && (
           <div className="pc-step-link">

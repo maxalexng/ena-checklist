@@ -12,6 +12,7 @@ import {
   tpcSuggestedDate,
   type CompletionDelay,
 } from "@/lib/checklist/dates";
+import { KEY_DATES } from "@/template";
 import { ContractProgressBar } from "./ContractProgressBar";
 
 function days(n: number): string {
@@ -125,6 +126,17 @@ export function ProjectDatesCard({ data }: { data: ProjectChecklistData }) {
           value={dates.practicalCompletionNote}
           onChange={(e) => updateDates.mutate({ practicalCompletionNote: e.target.value })}
         />
+      </div>
+      <div className="ov-row">
+        <span className="ov-label">{KEY_DATES.spTesting.label}</span>
+        <input
+          type="date"
+          aria-label={KEY_DATES.spTesting.label}
+          className="ov-amend-date-input"
+          value={dates.spTestingDate ?? ""}
+          onChange={(e) => updateDates.mutate({ spTestingDate: e.target.value })}
+        />
+        <span className="ov-calc-note">Holds up the turn-on and TOP — also on the Checklist step.</span>
       </div>
 
       <div className="ov-row-stack">

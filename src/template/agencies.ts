@@ -511,7 +511,10 @@ export const AGENCIES: Agency[] = [
         // revise and confirm) below this step's single clearable item. Entries are stored
         // as milestones under this step's key; see template/designLogs.ts.
         designLog: "concept",
-        items: ["Concept design confirmed by the client, ready for Design Development"],
+        items: [
+          "Concept design confirmed by the client, ready for Design Development",
+          "Client's decision on town gas recorded: whether they want gas in the house (gas hob, gas water heater). If not, mark the Town Gas Supply Connection step N/A",
+        ],
       },
       {
         code: "GREENMARK",
@@ -677,13 +680,14 @@ export const AGENCIES: Agency[] = [
           "Supply / connection application and applied load calculation",
           "Connection charge quotation and payment",
           "Gate pillar / metering position coordinated with LTA, PUB and NParks for shared trenching",
-          "First inspection and turn-on application",
+          "First inspection and turn-on application lodged with SP by the LEW (the appointment it leads to is tracked under SP Testing & Commissioning)",
         ],
       },
       {
         code: "TEST",
         name: "SP Testing & Commissioning",
-        when: "Arrange this well ahead of TOP — a critical, date-driven item; log the arranged date in the Timeline below so it also shows on the Overview tab.",
+        when: "Arrange this well ahead of TOP — a critical, date-driven item that holds up the turn-on and the TOP clearances after it. Record the arranged date below; it also shows on the Overview tab.",
+        keyDate: "spTesting",
         items: [
           "SP Group testing & commissioning appointment arranged",
           "Testing and commissioning completed, supply confirmed ready for turn-on",
@@ -692,8 +696,11 @@ export const AGENCIES: Agency[] = [
       {
         code: "GAS",
         name: "Gas supply connection",
+        stepName: "Town Gas Supply Connection",
+        stepBlurb:
+          "Connecting the house to the town gas network (SP Group's gas network, with City Energy as the supplier), where the client wants gas for cooking or water heating.",
         conditional: true,
-        when: "Where reticulated town gas is provided.",
+        when: "Only where the client wants town gas, decided at Concept Design. If the client does not want gas, mark this step N/A.",
         items: [
           "Gas supply connection application",
           "Internal gas pipe layout and appliance schedule",

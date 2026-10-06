@@ -8,5 +8,6 @@ export * from "./overviewSections";
 export * from "./changelog";
 export * from "./feeRates";
 export * from "./designLogs";
+export * from "./keyDates";
 export * from "./pcSums";
 export * from "./submissionMap";

@@ -141,7 +141,7 @@ describe("template integrity", () => {
     expect(STEPS.length).toBe(49);
   });
 
-  it("has exactly 230 checklist items across all steps", () => {
+  it("has exactly 231 checklist items across all steps", () => {
     // 183 from the original prototype port, +1 for the Consultant Appointments step's own
     // clearable item, +2 for the new Asbestos Survey & Removal step, +2 for the design-lock
     // and construction-drawings checkpoints added to PP/BP, -1 for the NEA grease trap item
@@ -152,7 +152,7 @@ describe("template integrity", () => {
     // Evaluation added in R16, +4 for the PC Sum Schedule step added in R17, +3 for the Green Mark
     // Certification step added in R18.
     const total = STEPS.reduce((sum, s) => sum + s.items.length, 0);
-    expect(total).toBe(230);
+    expect(total).toBe(231);
   });
 
   it("places the TFCC steps after IMDA COPIF and after the gas connection, with the NetLink logo", () => {
@@ -177,7 +177,7 @@ describe("template integrity", () => {
     expect(STEPS[i - 2].defaultStage).toBe("pre-design");
     expect(STEPS[i].defaultStage).toBe("concept");
     expect(STEPS[i].designLog).toBe("concept");
-    expect(STEPS[i].items.map((it) => it.id)).toEqual(["admin__DESIGN__0"]);
+    expect(STEPS[i].items.map((it) => it.id)).toEqual(["admin__DESIGN__0", "admin__DESIGN__1"]);
   });
 
   it("opens Design Development with the DD sign-off step and closes Detailed Design with the tender set", () => {
@@ -243,5 +243,23 @@ describe("template integrity", () => {
     STEPS.forEach((step) => {
       expect(STEP_BY_ID[step.id]).toBe(step);
     });
+  });
+});
+
+describe("SP testing date and town gas (R22i)", () => {
+  it("SP Testing & Commissioning carries the spTesting key date", () => {
+    expect(STEP_BY_ID["utilities__TEST"].keyDate).toBe("spTesting");
+  });
+
+  it("the Gas step has its own gas heading and blurb, not the agency's electricity one", () => {
+    const gas = STEP_BY_ID["utilities__GAS"];
+    expect(gas.name).toBe("Town Gas Supply Connection");
+    expect(gas.blurb).toMatch(/gas/i);
+    expect(gas.blurb).not.toMatch(/electricity/i);
+  });
+
+  it("the client's gas decision is appended to Concept Design, keeping existing item keys", () => {
+    expect(itemById("admin__DESIGN__0")?.text).toMatch(/^Concept design confirmed/);
+    expect(itemById("admin__DESIGN__1")?.text).toMatch(/town gas/);
   });
 });
