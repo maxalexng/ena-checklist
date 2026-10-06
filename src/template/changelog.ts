@@ -10,7 +10,7 @@
 // bump n and drop any letter suffix. "R<n><letter>" for a smaller revision within that
 // cycle (a wording tweak, a logo swap, a bug fix) — keep n, advance the letter.
 // Never renumber a revision once published.
-export const TEMPLATE_VERSION = "R22g";
+export const TEMPLATE_VERSION = "R22h";
 
 export interface ChangelogEntry {
   rev: string;
@@ -23,6 +23,12 @@ export interface ChangelogEntry {
 // from the HTML prototype (submissions-register-MASTER.html); entries from here on
 // describe changes made in this app.
 export const TEMPLATE_CHANGELOG: ChangelogEntry[] = [
+  {
+    rev: "R22h",
+    date: "2026-10-06",
+    summary:
+      "New optional Final Amendment Set stage on the Submission Map (and the Timeline) for URA, BCA, LTA, PUB, NParks and SCDF, just before their TOP (or CSC, for LTA and NParks): a reminder to check whether the drawings need amending before TOP. Tracked by hand; set it to N/A where none is needed. Its typical target is the end of Construction.",
+  },
   {
     rev: "R22g",
     date: "2026-10-05",

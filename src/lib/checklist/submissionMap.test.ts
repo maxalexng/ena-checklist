@@ -120,6 +120,22 @@ describe("autoNodeStatus", () => {
     expect(autoNodeStatus(def("lta-dc"), inputs)).toBe("progress");
   });
 
+  it("has an optional, hand-tracked Final Amendment Set before TOP for the agencies that need one", () => {
+    const amendRows = SUBMISSION_MAP.filter((r) => r.nodes.some((n) => n.id === `${r.agencyId}-amend`));
+    expect(amendRows.map((r) => r.agencyId)).toEqual(["ura", "bca", "lta", "pub", "nparks", "scdf"]);
+    amendRows.forEach((r) => {
+      const ids = r.nodes.map((n) => n.id);
+      const amend = r.nodes.find((n) => n.id === `${r.agencyId}-amend`)!;
+      expect(amend).toMatchObject({ column: "amend", optional: true, links: [] });
+      // Straight after Permit/BP and before the agency's TOP or CSC.
+      const next = r.nodes[ids.indexOf(amend.id) + 1];
+      expect(["top", "csc"]).toContain(next.column);
+    });
+    const inputs = freshInputs();
+    expect(node(inputs, "bca-amend")).toMatchObject({ status: "pending", source: "untracked" });
+    expect(nodeStage(def("bca-amend"))).toBe("construction");
+  });
+
   it("tags the C&S engineer's stages", () => {
     const by = SUBMISSION_MAP.flatMap((r) => r.nodes).filter((n) => n.by === "C&S Engineer").map((n) => n.id);
     expect(by).toEqual(["bca-demo", "bca-st-piling", "bca-st"]);
@@ -292,6 +308,9 @@ describe("submissionMapState", () => {
     const inputs = freshInputs();
     setStep(inputs, "scdf__FS", "cleared");
     expect(node(inputs, "scdf-bp").isNext).toBe(false);
+    // The final amendment check comes up before TOP; once it's settled, TOP is next.
+    expect(node(inputs, "scdf-amend").isNext).toBe(true);
+    inputs.overrides = { "scdf-amend": { status: "na" } };
     expect(node(inputs, "scdf-top").isNext).toBe(true);
   });
 

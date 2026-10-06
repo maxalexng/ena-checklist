@@ -47,8 +47,8 @@ test.describe("Overview submission map", () => {
     await page.reload();
 
     await expect(mapNode(page, "scdf-bp")).toHaveAttribute("data-status", "done");
-    // With BP done, SCDF's next stage is the FSC / TFP for TOP.
-    await expect(page.locator(".smap-chip-next .smap-chip", { hasText: "SCDF TOP" })).toBeVisible();
+    // With BP done, SCDF's next stage is the final amendment check before TOP.
+    await expect(page.locator(".smap-chip-next .smap-chip", { hasText: "SCDF Final Amendment Set" })).toBeVisible();
 
     await mapNode(page, "scdf-bp").click();
     const detail = page.getByTestId("submission-map-detail");

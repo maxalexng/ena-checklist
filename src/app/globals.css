@@ -794,7 +794,7 @@
   .smap-legend{ display:flex; flex-wrap:wrap; gap:6px 14px; margin-bottom:10px; font-size:11.5px; color:var(--ink-soft); }
   .smap-legend-item{ display:inline-flex; align-items:center; gap:6px; }
   .smap-scroll{ overflow-x:auto; margin:0 -4px; padding:0 4px 4px; }
-  .smap-grid{ display:grid; grid-template-columns:176px minmax(820px, 1fr); }
+  .smap-grid{ display:grid; grid-template-columns:176px minmax(960px, 1fr); }
   .smap-corner{ position:sticky; left:0; z-index:3; background:var(--surface); }
   .smap-phases{ position:relative; height:38px; }
   .smap-phase{
@@ -844,7 +844,7 @@
     color:var(--ink-faint); white-space:nowrap;
   }
   .smap-node-wrap{
-    position:absolute; top:0; bottom:24px; width:84px; transform:translateX(-50%); display:flex;
+    position:absolute; top:0; bottom:24px; width:96px; transform:translateX(-50%); display:flex;
     flex-direction:column; align-items:center; justify-content:flex-end; gap:8px; pointer-events:none;
   }
   .smap-node-label{
@@ -898,7 +898,7 @@
   .smap-chip-next .smap-chip{ color:var(--accent); background:var(--accent-soft); border-color:transparent; }
   .smap-chip-due{ font-weight:400; }
   @media (max-width:560px){
-    .smap-grid{ grid-template-columns:76px minmax(760px, 1fr); }
+    .smap-grid{ grid-template-columns:76px minmax(900px, 1fr); }
     .smap-agency{ flex-direction:column; align-items:flex-start; gap:3px; }
     .smap-agency-scope{ display:none; }
     .smap-logo{ width:64px; height:28px; }

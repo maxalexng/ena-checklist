@@ -11,7 +11,7 @@
 import type { StageId } from "./types";
 
 /** Left-to-right positions on the map. Each agency only has nodes in some of them. */
-export const MAP_COLUMNS = ["survey", "opp", "pp", "wp", "demo", "dc", "st", "bp", "permit", "top", "csc"] as const;
+export const MAP_COLUMNS = ["survey", "opp", "pp", "wp", "demo", "dc", "st", "bp", "permit", "amend", "top", "csc"] as const;
 export type MapColumnId = (typeof MAP_COLUMNS)[number];
 
 /** The bands across the top of the map, each spanning a run of columns. */
@@ -19,7 +19,7 @@ export const MAP_PHASES: { id: string; label: string; columns: MapColumnId[] }[]
   { id: "site", label: "Site", columns: ["survey"] },
   { id: "planning", label: "Planning Permission", columns: ["opp", "pp", "wp"] },
   { id: "plans", label: "Plan Approval", columns: ["demo", "dc", "st", "bp"] },
-  { id: "construction", label: "Construction", columns: ["permit"] },
+  { id: "construction", label: "Construction", columns: ["permit", "amend"] },
   { id: "completion", label: "Completion", columns: ["top", "csc"] },
 ];
 
@@ -36,6 +36,8 @@ export const MAP_COLUMN_STAGE: Record<MapColumnId, StageId> = {
   st: "tender",
   bp: "tender",
   permit: "construction",
+  // Checked and lodged as construction wraps up, ahead of the TOP clearances.
+  amend: "construction",
   top: "top",
   csc: "csc",
 };
@@ -57,7 +59,7 @@ export interface MapNodeDef {
   name: string;
   /** How this stage is reached from the one before, when it isn't a full submission. */
   route?: "Lodgement" | "Self-Declaration";
-  /** Only some projects need it (URA's OPP, demolition). */
+  /** Only some projects need it (URA's Outline, demolition, a final amendment set before TOP). */
   optional?: boolean;
   /** The stage always happens, and its linked checklist items are only optional parts of
    * it (LTA's DC links to vehicular access and traffic impact, which many projects skip).
@@ -130,6 +132,14 @@ export const SUBMISSION_MAP: MapRowDef[] = [
           notDone: NOT_CLEARED,
         },
       },
+      {
+        id: "ura-amend",
+        column: "amend",
+        label: "Final Amendment Set",
+        name: "URA Final Amendment Set",
+        optional: true,
+        links: [],
+      },
       { id: "ura-top", column: "top", label: "TOP", name: "URA Clearance for TOP", links: [] },
       { id: "ura-csc", column: "csc", label: "CSC", name: "URA Clearance for CSC", links: [] },
     ],
@@ -173,6 +183,14 @@ export const SUBMISSION_MAP: MapRowDef[] = [
         name: "Permit to Commence Building Works",
         links: [{ step: "bca__PERMIT" }],
       },
+      {
+        id: "bca-amend",
+        column: "amend",
+        label: "Final Amendment Set",
+        name: "BCA Final Amendment Set",
+        optional: true,
+        links: [],
+      },
       { id: "bca-top", column: "top", label: "Overall TOP", name: "Temporary Occupation Permit", links: [{ step: "bca__TOP" }] },
       {
         id: "bca-csc",
@@ -208,6 +226,14 @@ export const SUBMISSION_MAP: MapRowDef[] = [
         links: [{ step: "lta__ACCESS" }, { step: "lta__TIA" }],
       },
       { id: "lta-bp", column: "bp", label: "BP", name: "LTA Building Plan Clearance", route: "Lodgement", links: [] },
+      {
+        id: "lta-amend",
+        column: "amend",
+        label: "Final Amendment Set",
+        name: "LTA Final Amendment Set",
+        optional: true,
+        links: [],
+      },
       { id: "lta-csc", column: "csc", label: "CSC", name: "LTA Clearance for CSC", links: [] },
     ],
   },
@@ -224,6 +250,14 @@ export const SUBMISSION_MAP: MapRowDef[] = [
         links: [{ step: "pub__SW" }, { step: "pub__SS" }],
       },
       { id: "pub-bp", column: "bp", label: "BP", name: "PUB Building Plan Clearance", route: "Lodgement", links: [] },
+      {
+        id: "pub-amend",
+        column: "amend",
+        label: "Final Amendment Set",
+        name: "PUB Final Amendment Set",
+        optional: true,
+        links: [],
+      },
       {
         id: "pub-top",
         column: "top",
@@ -249,6 +283,14 @@ export const SUBMISSION_MAP: MapRowDef[] = [
         required: true,
         links: [{ step: "nparks__GREEN" }],
       },
+      {
+        id: "nparks-amend",
+        column: "amend",
+        label: "Final Amendment Set",
+        name: "NParks Final Amendment Set",
+        optional: true,
+        links: [],
+      },
       { id: "nparks-csc", column: "csc", label: "CSC", name: "NParks Clearance for CSC", route: "Self-Declaration", links: [] },
     ],
   },
@@ -258,6 +300,14 @@ export const SUBMISSION_MAP: MapRowDef[] = [
     scope: ["Fire Safety"],
     nodes: [
       { id: "scdf-bp", column: "bp", label: "BP", name: "Fire Safety Plan Approval", links: [{ step: "scdf__FS" }] },
+      {
+        id: "scdf-amend",
+        column: "amend",
+        label: "Final Amendment Set",
+        name: "SCDF Final Amendment Set",
+        optional: true,
+        links: [],
+      },
       {
         id: "scdf-top",
         column: "top",
