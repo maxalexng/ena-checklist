@@ -135,7 +135,7 @@ export const SUBMISSION_MAP: MapRowDef[] = [
       {
         id: "ura-amend",
         column: "amend",
-        label: "Final Amendment Set",
+        label: "Amendment",
         name: "URA Final Amendment Set",
         optional: true,
         links: [],
@@ -186,7 +186,7 @@ export const SUBMISSION_MAP: MapRowDef[] = [
       {
         id: "bca-amend",
         column: "amend",
-        label: "Final Amendment Set",
+        label: "Amendment",
         name: "BCA Final Amendment Set",
         optional: true,
         links: [],
@@ -229,7 +229,7 @@ export const SUBMISSION_MAP: MapRowDef[] = [
       {
         id: "lta-amend",
         column: "amend",
-        label: "Final Amendment Set",
+        label: "Amendment",
         name: "LTA Final Amendment Set",
         optional: true,
         links: [],
@@ -253,7 +253,7 @@ export const SUBMISSION_MAP: MapRowDef[] = [
       {
         id: "pub-amend",
         column: "amend",
-        label: "Final Amendment Set",
+        label: "Amendment",
         name: "PUB Final Amendment Set",
         optional: true,
         links: [],
@@ -286,7 +286,7 @@ export const SUBMISSION_MAP: MapRowDef[] = [
       {
         id: "nparks-amend",
         column: "amend",
-        label: "Final Amendment Set",
+        label: "Amendment",
         name: "NParks Final Amendment Set",
         optional: true,
         links: [],
@@ -303,7 +303,7 @@ export const SUBMISSION_MAP: MapRowDef[] = [
       {
         id: "scdf-amend",
         column: "amend",
-        label: "Final Amendment Set",
+        label: "Amendment",
         name: "SCDF Final Amendment Set",
         optional: true,
         links: [],

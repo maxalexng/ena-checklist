@@ -10,7 +10,7 @@
 // bump n and drop any letter suffix. "R<n><letter>" for a smaller revision within that
 // cycle (a wording tweak, a logo swap, a bug fix) — keep n, advance the letter.
 // Never renumber a revision once published.
-export const TEMPLATE_VERSION = "R22j";
+export const TEMPLATE_VERSION = "R22k";
 
 export interface ChangelogEntry {
   rev: string;
@@ -23,6 +23,12 @@ export interface ChangelogEntry {
 // from the HTML prototype (submissions-register-MASTER.html); entries from here on
 // describe changes made in this app.
 export const TEMPLATE_CHANGELOG: ChangelogEntry[] = [
+  {
+    rev: "R22k",
+    date: "2026-10-07",
+    summary:
+      "The Final Amendment Set stages are now labelled Amendment on the Timeline and the Submission Map, so the long label no longer squeezes the stage names. Their full names are unchanged.",
+  },
   {
     rev: "R22j",
     date: "2026-10-07",
