@@ -197,7 +197,7 @@ describe("template integrity", () => {
     expect(STEPS[tender + 1].defaultStage).toBe("tender");
     expect(STEPS[tender].designLog).toBe("tender");
     expect(STEPS[tender].items).toHaveLength(9);
-    expect(STEPS[tender].items[0].checklist).toHaveLength(7);
+    expect(STEPS[tender].items[0].checklist).toHaveLength(9);
   });
 
   it("runs Tender Calling & Evaluation after the BCA Structural Plan, then Contract Award", () => {
@@ -261,5 +261,22 @@ describe("SP testing date and town gas (R22i)", () => {
   it("the client's gas decision is appended to Concept Design, keeping existing item keys", () => {
     expect(itemById("admin__DESIGN__0")?.text).toMatch(/^Concept design confirmed/);
     expect(itemById("admin__DESIGN__1")?.text).toMatch(/town gas/);
+  });
+});
+
+describe("electrical and plumbing layouts on the architectural tender drawings (R22j)", () => {
+  it("are appended to the sub-checklist so existing ticks keep their positions", () => {
+    const list = itemById("admin__TENDERSET__0")?.checklist ?? [];
+    expect(list.slice(0, 7)).toEqual([
+      "General arrangement plans, elevations and sections",
+      "Wall and roof sections",
+      "Details — staircases, toilets, kitchen, façade",
+      "Door and window schedule",
+      "Finishes schedule",
+      "Reflected ceiling plans",
+      "External works",
+    ]);
+    expect(list[7]).toMatch(/^Electrical layout/);
+    expect(list[8]).toMatch(/^Plumbing layout/);
   });
 });

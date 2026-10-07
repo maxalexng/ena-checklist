@@ -10,7 +10,7 @@
 // bump n and drop any letter suffix. "R<n><letter>" for a smaller revision within that
 // cycle (a wording tweak, a logo swap, a bug fix) — keep n, advance the letter.
 // Never renumber a revision once published.
-export const TEMPLATE_VERSION = "R22i";
+export const TEMPLATE_VERSION = "R22j";
 
 export interface ChangelogEntry {
   rev: string;
@@ -23,6 +23,12 @@ export interface ChangelogEntry {
 // from the HTML prototype (submissions-register-MASTER.html); entries from here on
 // describe changes made in this app.
 export const TEMPLATE_CHANGELOG: ChangelogEntry[] = [
+  {
+    rev: "R22j",
+    date: "2026-10-07",
+    summary:
+      "Architectural tender drawings (Tender Drawing Set & Documents) now list the electrical layout and the plumbing layout among the drawings to resolve before tender.",
+  },
   {
     rev: "R22i",
     date: "2026-10-06",

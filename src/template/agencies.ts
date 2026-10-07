@@ -586,6 +586,9 @@ export const AGENCIES: Agency[] = [
               "Finishes schedule",
               "Reflected ceiling plans",
               "External works",
+              // Appended, not inserted: sub-checklist ticks are stored by position.
+              "Electrical layout — lighting, switches and power points",
+              "Plumbing layout — sanitary fittings, water points and floor traps",
             ],
           },
           "C&S tender drawings — foundation, framing and typical details",
