@@ -72,7 +72,7 @@ export function ItemRow({
   const checkedCount = item.checklist ? item.checklist.filter((_, i) => subchecks[i]).length : 0;
 
   return (
-    <div className={`item${na ? " is-na" : ""}`} data-search={item.text.toLowerCase()}>
+    <div id={`item-${item.id}`} className={`item${na ? " is-na" : ""}`} data-search={item.text.toLowerCase()}>
       {!locked && (
         <div className="item-move-group">
           <button

@@ -438,6 +438,22 @@
   @media (max-width:560px){
     .assign-lock-fab{ font-size:10px; padding:7px 10px; top:8px; right:8px; }
   }
+  /* Checklist tab's Next to-do / Top buttons, stacked under the lock button so they stay in reach while scrolling. */
+  .checklist-fabs{
+    position:fixed; top:54px; right:14px; z-index:50;
+    display:flex; flex-direction:column; align-items:flex-end; gap:6px;
+  }
+  .checklist-fab{
+    font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600;
+    background:var(--surface); border:1px solid var(--line); color:var(--ink-soft);
+    border-radius:999px; padding:8px 14px; cursor:pointer; box-shadow:var(--shadow);
+    white-space:nowrap;
+  }
+  .checklist-fab:hover{ background:var(--surface-2); }
+  @media (max-width:560px){
+    .checklist-fabs{ top:44px; right:8px; gap:5px; }
+    .checklist-fab{ font-size:10px; padding:7px 10px; }
+  }
 
   /* Every edit here is only actually kept once the self-publish (a couple of seconds after it succeeds) â€”
      until now that happened silently, so a publish that failed (a version conflict, a

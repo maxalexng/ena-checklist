@@ -1,21 +1,28 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { flattenSteps, orderedStageGroups } from "@/lib/checklist/grouping";
+import { effectiveItemOrder, orderedStepItems } from "@/lib/checklist/itemOrder";
+import { nextTodoKey } from "@/lib/checklist/nextTodo";
 import type { ProjectChecklistData } from "@/hooks/useProjectData";
 import { STAGES } from "@/template";
 import { useMoveSharedStep } from "@/hooks/useChecklistMutations";
 import { StepCard } from "./StepCard";
 import { ChecklistRail } from "./ChecklistRail";
 
-/** Scrolls a step card into view and flashes it. */
-function scrollToStep(stepId: string) {
+/** Scrolls an element (a step card or an item row) into view and flashes it. */
+function scrollToElement(id: string, block: ScrollLogicalPosition) {
   requestAnimationFrame(() => {
-    const el = document.getElementById(`step-${stepId}`);
-    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const el = document.getElementById(id);
+    el?.scrollIntoView({ behavior: "smooth", block });
     el?.classList.add("jump-flash");
     setTimeout(() => el?.classList.remove("jump-flash"), 1400);
   });
+}
+
+/** Scrolls a step card into view and flashes it. */
+function scrollToStep(stepId: string) {
+  scrollToElement(`step-${stepId}`, "start");
 }
 
 export function ChecklistTab({
@@ -41,6 +48,7 @@ export function ChecklistTab({
     steps: {},
   });
   const [jumpMessage, setJumpMessage] = useState<string | null>(null);
+  const lastTodoKey = useRef<string | null>(null);
   const moveSharedStep = useMoveSharedStep(projectId);
 
   const groups = useMemo(
@@ -124,33 +132,54 @@ export function ChecklistTab({
     moveSharedStep.mutate({ stepId, direction });
   }
 
+  // Every item on screen, in on-screen order (stage, step, then the project's item order),
+  // mapped to the step it sits in so a collapsed step can be opened before jumping into it.
+  const itemOrder = effectiveItemOrder(data.project.item_order);
+  const visibleItems = visibleGroups.flatMap((g) =>
+    g.steps.flatMap((step) => orderedStepItems(step, itemOrder).map((item) => ({ key: item.id, stepId: step.id })))
+  );
+
+  function isTodo(key: string) {
+    const record = data.itemsByKey[key];
+    return !!record && !record.na && record.status === "pending";
+  }
+
+  // Each click carries on from the item the previous click landed on, so repeated clicks
+  // walk through every to-do in turn. After the last one, the next click starts over.
   function jumpToNextTodo() {
-    for (const group of groups) {
-      for (const step of group.steps) {
-        for (const item of step.items) {
-          const record = data.itemsByKey[item.id];
-          if (record && !record.na && record.status === "pending") {
-            setJumpMessage(null);
-            expandAndScrollTo(step.id);
-            return;
-          }
-        }
-      }
+    const keys = visibleItems.map((it) => it.key);
+    const next = nextTodoKey(keys, isTodo, lastTodoKey.current);
+    if (next) {
+      lastTodoKey.current = next;
+      setJumpMessage(null);
+      const stepId = visibleItems.find((it) => it.key === next)!.stepId;
+      updateCollapsed((prev) => ({ ...prev, [stepId]: false }));
+      scrollToElement(`item-${next}`, "center");
+      return;
     }
-    setJumpMessage("✓ All caught up");
+    setJumpMessage(lastTodoKey.current ? "✓ That was the last to-do" : "✓ All caught up");
+    lastTodoKey.current = null;
     setTimeout(() => setJumpMessage(null), 1600);
   }
 
   return (
     <div>
+      <div className="checklist-fabs">
+        <button type="button" className="checklist-fab" onClick={jumpToNextTodo}>
+          {jumpMessage ?? "⏭ Next to-do"}
+        </button>
+        <button
+          type="button"
+          className="checklist-fab"
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        >
+          ↑ Top
+        </button>
+      </div>
+
       <div className="summary">
         <div className="summary-btn-group" style={{ flex: "1 1 auto" }}>
           <div className="summary-btn-row">
-            <div className="summary-btn-row-left">
-              <button type="button" className="summary-btn" onClick={jumpToNextTodo}>
-                {jumpMessage ?? "⏭ Next to-do"}
-              </button>
-            </div>
             <div className="search-wrap" style={{ marginLeft: 0, flex: "1 1 240px" }}>
               <input
                 className="search-input"

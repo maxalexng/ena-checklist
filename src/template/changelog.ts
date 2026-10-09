@@ -10,7 +10,7 @@
 // bump n and drop any letter suffix. "R<n><letter>" for a smaller revision within that
 // cycle (a wording tweak, a logo swap, a bug fix) — keep n, advance the letter.
 // Never renumber a revision once published.
-export const TEMPLATE_VERSION = "R22k";
+export const TEMPLATE_VERSION = "R22l";
 
 export interface ChangelogEntry {
   rev: string;
@@ -23,6 +23,12 @@ export interface ChangelogEntry {
 // from the HTML prototype (submissions-register-MASTER.html); entries from here on
 // describe changes made in this app.
 export const TEMPLATE_CHANGELOG: ChangelogEntry[] = [
+  {
+    rev: "R22l",
+    date: "2026-10-09",
+    summary:
+      'The checklist\'s "⏭ Next to-do" button now floats at the top right under the lock button, so it stays in reach while scrolling. Each click goes to the next not-started item after the last one, and after the last to-do it starts over from the top. A new "↑ Top" button under it scrolls back to the top of the page.',
+  },
   {
     rev: "R22k",
     date: "2026-10-07",
