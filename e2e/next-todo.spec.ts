@@ -42,7 +42,7 @@ test.describe("Next to-do and Top buttons", () => {
     // Collapsed steps open up when the jump lands inside them.
     await page.getByRole("button", { name: "Collapse all" }).click();
 
-    const next = page.locator(".checklist-fab", { hasText: "Next to-do" });
+    const next = page.locator(".checklist-fabs .fab");
     const top = page.getByRole("button", { name: "↑ Top" });
 
     await next.click();
@@ -54,11 +54,11 @@ test.describe("Next to-do and Top buttons", () => {
     await expect(next).toBeInViewport();
     await expect(top).toBeInViewport();
 
-    await page.locator(".checklist-fab").first().click();
-    await expect(page.locator(".checklist-fab").first()).toHaveText("✓ That was the last to-do");
+    await next.click();
+    await expect(next).toHaveText("✓ No more to-dos");
 
     // After the last one, the walk starts over from the top.
-    await expect(next).toBeVisible();
+    await expect(next).toHaveText("⏭ Next to-do");
     await next.click();
     await expect(page.locator(`[id="item-${first}"]`)).toBeInViewport();
 
@@ -67,12 +67,30 @@ test.describe("Next to-do and Top buttons", () => {
     await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
   });
 
+  test("Top, the lock and Next to-do stack in that order, all the same width", async ({ page }) => {
+    const boxes = await Promise.all(
+      [
+        page.getByRole("button", { name: "↑ Top" }),
+        page.getByRole("button", { name: "🔓 Unlocked" }),
+        page.getByRole("button", { name: "⏭ Next to-do" }),
+      ].map(async (button) => (await button.boundingBox())!)
+    );
+    expect(boxes[0].y).toBeLessThan(boxes[1].y);
+    expect(boxes[1].y + boxes[1].height).toBeLessThan(boxes[2].y);
+    for (const box of boxes) {
+      expect(box.width).toBe(boxes[0].width);
+      expect(box.x).toBe(boxes[0].x);
+    }
+    // Evenly spaced, with the same gap above and below the lock.
+    expect(boxes[1].y - boxes[0].y).toBeCloseTo(boxes[2].y - boxes[1].y, 0);
+  });
+
   test("says all caught up when nothing is left to do", async ({ page }) => {
     await adminClient().from("checklist_items").update({ status: "cleared" }).eq("project_id", projectId);
     await page.reload();
     await page.getByRole("button", { name: "Checklist" }).click();
 
-    await page.locator(".checklist-fab", { hasText: "Next to-do" }).click();
-    await expect(page.locator(".checklist-fab").first()).toHaveText("✓ All caught up");
+    await page.locator(".checklist-fabs .fab").click();
+    await expect(page.locator(".checklist-fabs .fab")).toHaveText("✓ All caught up");
   });
 });

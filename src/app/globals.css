@@ -425,34 +425,29 @@
     .item-move-group{ opacity:0.4; }
   }
 
-  .assign-lock-fab{
-    position:fixed; top:14px; right:14px; z-index:50;
-    display:flex; align-items:center; gap:6px;
+  /* Floating buttons at the top right, one under another and all the same size: Top and the
+     lock button on every tab (.fab-stack), then the checklist's Next to-do (.checklist-fabs),
+     placed exactly two buttons further down so it lines up as the third in the stack. */
+  .fab-stack, .checklist-fabs{
+    --fab-top:14px; --fab-h:32px; --fab-gap:6px;
+    position:fixed; right:14px; z-index:50;
+    display:flex; flex-direction:column; gap:var(--fab-gap);
+  }
+  .fab-stack{ top:var(--fab-top); }
+  .checklist-fabs{ top:calc(var(--fab-top) + 2 * (var(--fab-h) + var(--fab-gap))); }
+  .fab{
+    box-sizing:border-box; width:140px; height:var(--fab-h);
+    display:flex; align-items:center; justify-content:center; gap:6px;
     font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600;
     background:var(--surface); border:1px solid var(--line); color:var(--ink-soft);
-    border-radius:999px; padding:8px 14px; cursor:pointer; box-shadow:var(--shadow);
+    border-radius:999px; padding:0 10px; cursor:pointer; box-shadow:var(--shadow);
     white-space:nowrap;
   }
-  .assign-lock-fab:hover{ background:var(--surface-2); }
+  .fab:hover{ background:var(--surface-2); }
   .assign-lock-fab.active{ background:var(--st-progress-soft); border-color:var(--st-progress); color:var(--st-progress); }
   @media (max-width:560px){
-    .assign-lock-fab{ font-size:10px; padding:7px 10px; top:8px; right:8px; }
-  }
-  /* Checklist tab's Next to-do / Top buttons, stacked under the lock button so they stay in reach while scrolling. */
-  .checklist-fabs{
-    position:fixed; top:54px; right:14px; z-index:50;
-    display:flex; flex-direction:column; align-items:flex-end; gap:6px;
-  }
-  .checklist-fab{
-    font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600;
-    background:var(--surface); border:1px solid var(--line); color:var(--ink-soft);
-    border-radius:999px; padding:8px 14px; cursor:pointer; box-shadow:var(--shadow);
-    white-space:nowrap;
-  }
-  .checklist-fab:hover{ background:var(--surface-2); }
-  @media (max-width:560px){
-    .checklist-fabs{ top:44px; right:8px; gap:5px; }
-    .checklist-fab{ font-size:10px; padding:7px 10px; }
+    .fab-stack, .checklist-fabs{ --fab-top:8px; --fab-h:28px; --fab-gap:5px; right:8px; }
+    .fab{ width:122px; font-size:10px; padding:0 8px; }
   }
 
   /* Every edit here is only actually kept once the self-publish (a couple of seconds after it succeeds) â€”

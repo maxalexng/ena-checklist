@@ -157,7 +157,7 @@ export function ChecklistTab({
       scrollToElement(`item-${next}`, "center");
       return;
     }
-    setJumpMessage(lastTodoKey.current ? "✓ That was the last to-do" : "✓ All caught up");
+    setJumpMessage(lastTodoKey.current ? "✓ No more to-dos" : "✓ All caught up");
     lastTodoKey.current = null;
     setTimeout(() => setJumpMessage(null), 1600);
   }
@@ -165,15 +165,8 @@ export function ChecklistTab({
   return (
     <div>
       <div className="checklist-fabs">
-        <button type="button" className="checklist-fab" onClick={jumpToNextTodo}>
+        <button type="button" className="fab" onClick={jumpToNextTodo}>
           {jumpMessage ?? "⏭ Next to-do"}
-        </button>
-        <button
-          type="button"
-          className="checklist-fab"
-          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-        >
-          ↑ Top
         </button>
       </div>
 
