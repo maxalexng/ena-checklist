@@ -62,9 +62,43 @@ test.describe("Next to-do and Top buttons", () => {
     await next.click();
     await expect(page.locator(`[id="item-${first}"]`)).toBeInViewport();
 
-    await page.locator(`[id="item-${second}"]`).scrollIntoViewIfNeeded();
+    await next.click();
+    await expect(page.locator(`[id="item-${second}"]`)).toBeInViewport();
     await top.click();
     await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+
+    // Back at the top, Next to-do follows the page rather than the last item it landed on.
+    await next.click();
+    await expect(page.locator(`[id="item-${first}"]`)).toBeInViewport();
+  });
+
+  test("after scrolling down past to-dos, Next to-do picks up from the screen", async ({ page }) => {
+    const ids = await page.locator(".content .item[id^='item-']").evaluateAll((els) => els.map((el) => el.id));
+    const [first, middle, later] = [ids[3], ids[Math.floor(ids.length / 2)], ids[ids.length - 5]].map((id) =>
+      id.slice("item-".length)
+    );
+    const supabase = adminClient();
+    await supabase.from("checklist_items").update({ status: "cleared" }).eq("project_id", projectId);
+    await supabase
+      .from("checklist_items")
+      .update({ status: "pending" })
+      .eq("project_id", projectId)
+      .in("item_key", [first, middle, later]);
+    await page.reload();
+    await page.getByRole("button", { name: "Checklist" }).click();
+
+    const next = page.locator(".checklist-fabs .fab");
+    await next.click();
+    await expect(page.locator(`[id="item-${first}"]`)).toBeInViewport();
+
+    // Scroll down by hand, past the middle to-do, so the later one is at the top of the screen.
+    await page.mouse.wheel(0, 10);
+    await page.locator(`[id="item-${later}"]`).evaluate((el) => el.scrollIntoView({ block: "start" }));
+    await expect(page.locator(`[id="item-${middle}"]`)).not.toBeInViewport();
+
+    await next.click();
+    await expect(page.locator(`[id="item-${later}"]`)).toBeInViewport();
+    await expect(page.locator(`[id="item-${middle}"]`)).not.toBeInViewport();
   });
 
   test("Top, the lock and Next to-do stack in that order, all the same width", async ({ page }) => {

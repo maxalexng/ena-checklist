@@ -20,6 +20,20 @@ function scrollToElement(id: string, block: ScrollLogicalPosition) {
   });
 }
 
+/** Where an item row sits on screen. A collapsed step hides its items, so they're placed
+ * where their step card is. */
+function itemRect(key: string) {
+  const el = document.getElementById(`item-${key}`);
+  if (!el) return new DOMRect();
+  const shown = el.getClientRects().length > 0 ? el : el.closest(".agency");
+  return (shown ?? el).getBoundingClientRect();
+}
+
+function isItemOnScreen(key: string) {
+  const rect = itemRect(key);
+  return rect.bottom > 0 && rect.top < window.innerHeight;
+}
+
 /** Scrolls a step card into view and flashes it. */
 function scrollToStep(stepId: string) {
   scrollToElement(`step-${stepId}`, "start");
@@ -49,6 +63,8 @@ export function ChecklistTab({
   });
   const [jumpMessage, setJumpMessage] = useState<string | null>(null);
   const lastTodoKey = useRef<string | null>(null);
+  const restartTodos = useRef(false);
+  const lastTodoJumpAt = useRef(-Infinity);
   const moveSharedStep = useMoveSharedStep(projectId);
 
   const groups = useMemo(
@@ -117,6 +133,18 @@ export function ChecklistTab({
     if (focusStepId) scrollToStep(focusStepId);
   }, [focusStepId]);
 
+  // Anything the user does other than clicking Next to-do (Top, the wheel, a key, a touch)
+  // ends the grace period after a jump, so the next click follows the page right away.
+  useEffect(() => {
+    const endGrace = (e: Event) => {
+      if (e.target instanceof Element && e.target.closest(".checklist-fabs")) return;
+      lastTodoJumpAt.current = -Infinity;
+    };
+    const events = ["pointerdown", "wheel", "touchstart", "keydown"] as const;
+    events.forEach((type) => window.addEventListener(type, endGrace, { passive: true }));
+    return () => events.forEach((type) => window.removeEventListener(type, endGrace));
+  }, []);
+
   function toggleCollapsed(stepId: string) {
     updateCollapsed((prev) => ({ ...prev, [stepId]: !prev[stepId] }));
   }
@@ -144,21 +172,34 @@ export function ChecklistTab({
     return !!record && !record.na && record.status === "pending";
   }
 
-  // Each click carries on from the item the previous click landed on, so repeated clicks
-  // walk through every to-do in turn. After the last one, the next click starts over.
-  function jumpToNextTodo() {
-    const keys = visibleItems.map((it) => it.key);
-    const next = nextTodoKey(keys, isTodo, lastTodoKey.current);
+  // Repeated clicks walk through every to-do in turn, as long as the one the last click
+  // landed on is still on screen. Scroll away (or press Top) and the next click picks up from
+  // the top of the screen instead. After the last one, the next click starts over.
+  function jumpToNextTodo(e: React.MouseEvent) {
+    const lastKey = lastTodoKey.current;
+    const next = nextTodoKey({
+      orderedKeys: visibleItems.map((it) => it.key),
+      isTodo,
+      lastKey,
+      // A quick second click can land while the page is still scrolling to the last one.
+      lastOnScreen: lastKey !== null && (e.timeStamp - lastTodoJumpAt.current < 1000 || isItemOnScreen(lastKey)),
+      isBelowScreenTop: (key) => itemRect(key).bottom > 0,
+      fromStart: restartTodos.current,
+    });
+    restartTodos.current = false;
     if (next) {
       lastTodoKey.current = next;
+      lastTodoJumpAt.current = e.timeStamp;
       setJumpMessage(null);
       const stepId = visibleItems.find((it) => it.key === next)!.stepId;
       updateCollapsed((prev) => ({ ...prev, [stepId]: false }));
       scrollToElement(`item-${next}`, "center");
       return;
     }
-    setJumpMessage(lastTodoKey.current ? "✓ No more to-dos" : "✓ All caught up");
+    const anyTodo = visibleItems.some((it) => isTodo(it.key));
+    setJumpMessage(anyTodo ? "✓ No more to-dos" : "✓ All caught up");
     lastTodoKey.current = null;
+    restartTodos.current = anyTodo;
     setTimeout(() => setJumpMessage(null), 1600);
   }
 

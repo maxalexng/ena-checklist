@@ -10,7 +10,7 @@
 // bump n and drop any letter suffix. "R<n><letter>" for a smaller revision within that
 // cycle (a wording tweak, a logo swap, a bug fix) — keep n, advance the letter.
 // Never renumber a revision once published.
-export const TEMPLATE_VERSION = "R22m";
+export const TEMPLATE_VERSION = "R22n";
 
 export interface ChangelogEntry {
   rev: string;
@@ -23,6 +23,12 @@ export interface ChangelogEntry {
 // from the HTML prototype (submissions-register-MASTER.html); entries from here on
 // describe changes made in this app.
 export const TEMPLATE_CHANGELOG: ChangelogEntry[] = [
+  {
+    rev: "R22n",
+    date: "2026-10-12",
+    summary:
+      '"⏭ Next to-do" now follows where you are on the page. It carries on to the next to-do while the one it last jumped to is still on screen, but after "↑ Top" or scrolling elsewhere it goes to the first to-do from the top of the screen down, instead of carrying on from the last one it jumped to.',
+  },
   {
     rev: "R22m",
     date: "2026-10-09",
