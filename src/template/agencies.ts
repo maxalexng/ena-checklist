@@ -1,4 +1,22 @@
-import type { Agency } from "./types";
+import type { Agency, Submission } from "./types";
+
+// Optional pre-consultation with a governing body, in the same spirit as URA's Outline
+// Permission: not a requirement, just a question to settle with the client — mark the step
+// N/A when it isn't needed. `topics` lists the usual reasons to consult that agency.
+function preconsultation(agencyCode: string, topics: string): Submission {
+  return {
+    code: "PRECON",
+    name: "Pre-consultation (optional)",
+    conditional: true,
+    when: `Optional — only where a point is uncertain enough that ${agencyCode}'s view is worth having before lodging the main submission, e.g. ${topics}.`,
+    items: [
+      `Decided with the client whether to consult ${agencyCode} first — if not, mark this step N/A`,
+      `Pre-consultation lodged (CORENET correspondence or a meeting request), with the specific points and sketch plans`,
+      `${agencyCode}'s reply or the meeting notes filed, and the outcome carried into the submission drawings`,
+    ],
+  };
+}
+
 
 // The full checklist template, ported 1:1 from submissions-register-MASTER.html's
 // `AGENCIES` constant (originally ~lines 2070-2457). This is the office's single shared
@@ -84,6 +102,7 @@ export const AGENCIES: Agency[] = [
           "Materials and restoration methodology statement",
         ],
       },
+      preconsultation("URA", "the building envelope, attic or basement rules, GFA, or use"),
     ],
   },
   {
@@ -181,6 +200,22 @@ export const AGENCIES: Agency[] = [
           "Form B1 (Parts 1 & 2) — QP/PE's notice of completion and CSC application form",
         ],
       },
+      {
+        code: "LIFT",
+        name: "Lift Permit to Operate (PTO)",
+        conditional: true,
+        when: "Where the house has a lift, including a home lift. The lift can't be used, and the TOP document set isn't complete (TOP Documents 3(d)), until BCA issues the PTO.",
+        items: [
+          "Lift contractor appointed or nominated — a BCA-registered lift contractor",
+          "Lift shop drawings and lift interior finishes approved",
+          "Lift specialist PE's Certificate of Supervision — Form BPD_CSC04 (also TOP Documents 3(a))",
+          "Lift tested and examined by an Authorised Examiner, with the test report",
+          "Owner's particulars and authorised signatory provided for the PTO application",
+          "PTO application lodged with BCA and the fee paid",
+          "PTO issued — copy filed for TOP Documents 3(d) and handed to the client, who renews it every year and keeps a registered lift contractor on maintenance",
+        ],
+      },
+      preconsultation("BCA", "buildability, accessibility, the household shelter, or a TOP arrangement such as a bare-finish TOP"),
     ],
   },
   {
@@ -213,6 +248,7 @@ export const AGENCIES: Agency[] = [
           "FSC/TFP application and fee payment",
         ],
       },
+      preconsultation("SCDF", "how the fire code applies, or an item likely to need a waiver"),
     ],
   },
   {
@@ -262,6 +298,7 @@ export const AGENCIES: Agency[] = [
           "Outstanding PUB queries closed",
         ],
       },
+      preconsultation("PUB", "the drainage or sewer connection, the platform level, or a detention tank"),
     ],
   },
   {
@@ -320,6 +357,7 @@ export const AGENCIES: Agency[] = [
         when: "Larger sites or multiple crossovers.",
         items: ["Traffic generation and impact study", "LTA review and clearance"],
       },
+      preconsultation("LTA", "vehicular access, the road line or road width, the road reserve, or railway protection"),
     ],
   },
   {
@@ -354,6 +392,7 @@ export const AGENCIES: Agency[] = [
           "Application lodged / submitted to NParks",
         ],
       },
+      preconsultation("NParks", "tree retention or felling, the greenery provision, or the planting verge"),
     ],
   },
   {
@@ -664,6 +703,19 @@ export const AGENCIES: Agency[] = [
           "State land / road reserve encroachment licence, where boundary walls or works encroach",
           "Subdivision / amalgamation survey plan lodgement, coordinated with URA approval",
           "Final as-built survey plan lodgement, post-completion",
+        ],
+      },
+      {
+        code: "SUBDIV",
+        name: "Subdivision — certified plan & new lot numbers",
+        conditional: true,
+        when: "Where the land is subdivided or amalgamated — follows URA's subdivision approval and is closed out before TOP.",
+        items: [
+          "URA's subdivision approval (Written Permission) and the certified true copy of the approved subdivision plan received",
+          "Site made to match the approved plan — structures straddling the new boundary removed, with photos sent to the surveyor",
+          "Registered surveyor instructed to apply for the new lot numbers and prepare the certified plan, with their fees agreed with the client",
+          "Certified plan submitted to SLA for approval, with SLA's submission fee paid",
+          "SLA approval and the new lot numbers issued, and the client (and their lawyer) informed for the new titles",
         ],
       },
     ],

@@ -136,7 +136,7 @@ test.describe("Overview submission map", () => {
 
   test("clicking an agency opens its first step in the checklist", async ({ page }) => {
     await page.getByTestId("submission-map").getByRole("button", { name: "Go to SCDF steps" }).click();
-    await expect(page.locator("#step-scdf__FS")).toBeInViewport();
+    await expect(page.locator("#step-scdf__PRECON")).toBeInViewport();
   });
 
   test("a stage's panel links to its checklist step", async ({ page }) => {

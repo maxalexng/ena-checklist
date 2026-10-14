@@ -137,8 +137,8 @@ describe("defaultStepOrder", () => {
 // against the legacy prototype's real data (see scripts/migrate-html-import.ts's run for
 // "2 Astrid Hill": 183 items imported vs 183 in source).
 describe("template integrity", () => {
-  it("has exactly 49 steps", () => {
-    expect(STEPS.length).toBe(49);
+  it("has exactly 57 steps", () => {
+    expect(STEPS.length).toBe(57);
   });
 
   it("has exactly 231 checklist items across all steps", () => {
@@ -150,9 +150,31 @@ describe("template integrity", () => {
     // +1 for the Concept Design & Client Presentations step added in R14, +17 for the Design
     // Development (8) and Tender Drawing Set (9) steps added in R15, +8 for Tender Calling &
     // Evaluation added in R16, +4 for the PC Sum Schedule step added in R17, +3 for the Green Mark
-    // Certification step added in R18.
+    // Certification step added in R18, +18 for the six optional Pre-consultation steps, +7 for the
+    // Lift PTO step and +5 for the SLA subdivision step added in R23.
     const total = STEPS.reduce((sum, s) => sum + s.items.length, 0);
-    expect(total).toBe(231);
+    expect(total).toBe(261);
+  });
+
+  it("places the optional pre-consultation steps right after URA Outline Permission", () => {
+    const op = STEPS.findIndex((s) => s.id === "ura__OP");
+    const precon = ["ura", "bca", "scdf", "pub", "lta", "nparks"].map((a) => `${a}__PRECON`);
+    expect(STEPS.slice(op + 1, op + 1 + precon.length).map((s) => s.id)).toEqual(precon);
+    STEPS.slice(op + 1, op + 1 + precon.length).forEach((s) => {
+      expect(s.defaultStage).toBe("concept");
+      expect(s.submission.conditional).toBe(true);
+      expect(s.items[0].text).toMatch(/^Decided with the client whether to consult/);
+    });
+  });
+
+  it("places Lift PTO and the SLA subdivision step in TOP Preparation, before BCA TOP", () => {
+    const top = STEPS.findIndex((s) => s.id === "bca__TOP");
+    expect(STEPS[top - 2].id).toBe("bca__LIFT");
+    expect(STEPS[top - 1].id).toBe("sla__SUBDIV");
+    expect(STEPS[top - 2].defaultStage).toBe("top");
+    expect(STEPS[top - 1].defaultStage).toBe("top");
+    expect(STEPS[top - 2].items).toHaveLength(7);
+    expect(STEPS[top - 1].items).toHaveLength(5);
   });
 
   it("places the TFCC steps after IMDA COPIF and after the gas connection, with the NetLink logo", () => {

@@ -10,7 +10,7 @@
 // bump n and drop any letter suffix. "R<n><letter>" for a smaller revision within that
 // cycle (a wording tweak, a logo swap, a bug fix) — keep n, advance the letter.
 // Never renumber a revision once published.
-export const TEMPLATE_VERSION = "R22n";
+export const TEMPLATE_VERSION = "R23";
 
 export interface ChangelogEntry {
   rev: string;
@@ -23,6 +23,12 @@ export interface ChangelogEntry {
 // from the HTML prototype (submissions-register-MASTER.html); entries from here on
 // describe changes made in this app.
 export const TEMPLATE_CHANGELOG: ChangelogEntry[] = [
+  {
+    rev: "R23",
+    date: "2026-10-14",
+    summary:
+      "Three kinds of new step, all marked If applicable. URA, BCA, SCDF, PUB, LTA and NParks each get an optional Pre-consultation step in Concept Design, next to Outline Permission. Each one starts by asking whether it is needed, and can be marked N/A if not. TOP Preparation gets a Lift Permit to Operate (PTO) step for houses with a lift, and an SLA subdivision step (certified plan and new lot numbers) for subdivided land. Both sit before BCA's TOP.",
+  },
   {
     rev: "R22n",
     date: "2026-10-12",
