@@ -10,7 +10,7 @@
 // bump n and drop any letter suffix. "R<n><letter>" for a smaller revision within that
 // cycle (a wording tweak, a logo swap, a bug fix) — keep n, advance the letter.
 // Never renumber a revision once published.
-export const TEMPLATE_VERSION = "R23";
+export const TEMPLATE_VERSION = "R24";
 
 export interface ChangelogEntry {
   rev: string;
@@ -23,6 +23,12 @@ export interface ChangelogEntry {
 // from the HTML prototype (submissions-register-MASTER.html); entries from here on
 // describe changes made in this app.
 export const TEMPLATE_CHANGELOG: ChangelogEntry[] = [
+  {
+    rev: "R24",
+    date: "2026-10-15",
+    summary:
+      "The Submission Map gets an optional Pre-consult stage for BCA, LTA, PUB, NParks and SCDF, in the same column as URA's Outline. It follows each agency's Pre-consultation step and shows as a grey dashed circle once the step is N/A, so a skipped pre-consultation is told apart from one not yet looked at. Those five Pre-consultation steps move from Concept Design to the start of Design Development, right after Consultant Appointment; URA's stays beside Outline Permission. Each one now starts by asking the team to check whether anything needs pre-consulting. The Site Visit adds two things to record: the drainage discharge point, with a photo, and on every boundary whether the neighbour's floor level is higher or lower than ours.",
+  },
   {
     rev: "R23",
     date: "2026-10-14",

@@ -120,6 +120,28 @@ describe("autoNodeStatus", () => {
     expect(autoNodeStatus(def("lta-dc"), inputs)).toBe("progress");
   });
 
+  it("has an optional Pre-consult stage in Outline's column for BCA, LTA, PUB, NParks and SCDF, following its step", () => {
+    const rows = SUBMISSION_MAP.filter((r) => r.nodes.some((n) => n.id === `${r.agencyId}-precon`));
+    expect(rows.map((r) => r.agencyId)).toEqual(["bca", "lta", "pub", "nparks", "scdf"]);
+    rows.forEach((r) => {
+      expect(r.nodes[0]).toMatchObject({
+        id: `${r.agencyId}-precon`,
+        column: "opp",
+        label: "Pre-consult",
+        optional: true,
+        links: [{ step: `${r.agencyId}__PRECON` }],
+      });
+    });
+
+    const inputs = freshInputs();
+    expect(node(inputs, "bca-precon")).toMatchObject({ status: "pending", source: "checklist" });
+    // Skipped: every item N/A, so it shows as N/A rather than not started.
+    setStep(inputs, "bca__PRECON", "pending", { na: true });
+    expect(node(inputs, "bca-precon").status).toBe("na");
+    setStep(inputs, "pub__PRECON", "cleared");
+    expect(node(inputs, "pub-precon").status).toBe("done");
+  });
+
   it("has an optional, hand-tracked Final Amendment Set before TOP for the agencies that need one", () => {
     const amendRows = SUBMISSION_MAP.filter((r) => r.nodes.some((n) => n.id === `${r.agencyId}-amend`));
     expect(amendRows.map((r) => r.agencyId)).toEqual(["ura", "bca", "lta", "pub", "nparks", "scdf"]);
@@ -255,6 +277,7 @@ describe("submissionMapState", () => {
     const inputs = freshInputs();
     setStep(inputs, "lta__ACCESS", "pending", { na: true });
     setStep(inputs, "lta__TIA", "pending", { na: true });
+    setStep(inputs, "lta__PRECON", "pending", { na: true });
     expect(node(inputs, "lta-dc")).toMatchObject({ status: "pending", autoStatus: null, source: "untracked" });
     expect(node(inputs, "lta-bp")).toMatchObject({ status: "pending", source: "untracked" });
     expect(node(inputs, "lta-csc")).toMatchObject({ status: "pending", source: "untracked" });
@@ -282,6 +305,10 @@ describe("submissionMapState", () => {
 
   it("puts demolition first on BCA's row, N/A when there's nothing to demolish", () => {
     const inputs = freshInputs();
+    // A pending pre-consultation comes first, as the thing to check before anything else.
+    expect(node(inputs, "bca-precon").isNext).toBe(true);
+    setStep(inputs, "bca__PRECON", "pending", { na: true });
+    expect(node(inputs, "bca-precon").status).toBe("na");
     expect(node(inputs, "bca-demo").isNext).toBe(true);
     setStep(inputs, "bca__DEMO", "pending", { na: true });
     expect(node(inputs, "bca-demo").status).toBe("na");
@@ -306,6 +333,7 @@ describe("submissionMapState", () => {
 
   it("marks each agency's first not-started stage as next", () => {
     const inputs = freshInputs();
+    setStep(inputs, "scdf__PRECON", "cleared");
     setStep(inputs, "scdf__FS", "cleared");
     expect(node(inputs, "scdf-bp").isNext).toBe(false);
     // The final amendment check comes up before TOP; once it's settled, TOP is next.
@@ -334,10 +362,11 @@ describe("submissionMapSummary", () => {
     const inputs = freshInputs();
     setStep(inputs, "sla__SURVEY", "cleared", { only: [0, 1, 2, 3] });
     setStep(inputs, "ura__OP", "pending", { na: true });
+    ["bca", "lta", "pub", "nparks", "scdf"].forEach((a) => setStep(inputs, `${a}__PRECON`, "pending", { na: true }));
     inputs.milestonesByStep["ura__PP"] = [{ type: "Submitted" }];
     const summary = submissionMapSummary(submissionMapState(inputs, "2026-10-01"));
 
-    const total = SUBMISSION_MAP.flatMap((r) => r.nodes).length - 1; // OPP is N/A
+    const total = SUBMISSION_MAP.flatMap((r) => r.nodes).length - 6; // OPP and the pre-consults are N/A
     expect(summary).toMatchObject({ done: 1, total, currentPhaseId: "planning" });
     expect(summary.phases.find((p) => p.id === "site")).toMatchObject({ done: 1, total: 1 });
     expect(summary.inProgress.map((n) => n.def.id)).toEqual(["ura-pp"]);

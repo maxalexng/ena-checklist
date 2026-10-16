@@ -34,8 +34,8 @@ test.describe("Overview submission map", () => {
     await expect(map.locator(".smap-agency img")).toHaveCount(9);
     await expect(mapNode(page, "bca-bp")).toHaveAttribute("data-status", "pending");
     await expect(map).toContainText("0 of");
-    // Each agency's first stage is what's up next.
-    await expect(map.locator(".smap-chip-next .smap-chip", { hasText: "SCDF BP" })).toBeVisible();
+    // Each agency's first stage is what's up next: for SCDF, checking whether to pre-consult.
+    await expect(map.locator(".smap-chip-next .smap-chip", { hasText: "SCDF Pre-consult" })).toBeVisible();
   });
 
   test("a stage follows its checklist step, and can be overridden and returned to auto", async ({ page }) => {
@@ -43,7 +43,7 @@ test.describe("Overview submission map", () => {
       .from("checklist_items")
       .update({ status: "cleared" })
       .eq("project_id", projectId)
-      .eq("step_key", "scdf__FS");
+      .in("step_key", ["scdf__PRECON", "scdf__FS"]);
     await page.reload();
 
     await expect(mapNode(page, "scdf-bp")).toHaveAttribute("data-status", "done");
@@ -102,6 +102,26 @@ test.describe("Overview submission map", () => {
     await statusButton(page, "Done").click();
     await page.reload();
     await expect(mapNode(page, "lta-dc")).toHaveAttribute("data-status", "done");
+  });
+
+  test("a pre-consultation shows in Outline's column and goes N/A when its step is skipped", async ({ page }) => {
+    for (const agency of ["bca", "lta", "pub", "nparks", "scdf"]) {
+      await expect(mapNode(page, `${agency}-precon`)).toHaveAttribute("data-status", "pending");
+    }
+    await expect(mapNode(page, "ura-precon")).toHaveCount(0);
+
+    await adminClient()
+      .from("checklist_items")
+      .update({ na: true })
+      .eq("project_id", projectId)
+      .eq("step_key", "bca__PRECON");
+    await page.reload();
+
+    await expect(mapNode(page, "bca-precon")).toHaveAttribute("data-status", "na");
+    await expect(mapNode(page, "bca-precon")).toBeVisible();
+    await expect(mapNode(page, "lta-precon")).toHaveAttribute("data-status", "pending");
+    await mapNode(page, "bca-precon").click();
+    await expect(page.getByTestId("submission-map-detail")).toContainText("BCA Pre-consultation");
   });
 
   test("demolition sits with the engineer's structural stages", async ({ page }) => {

@@ -59,7 +59,7 @@ export interface MapNodeDef {
   name: string;
   /** How this stage is reached from the one before, when it isn't a full submission. */
   route?: "Lodgement" | "Self-Declaration";
-  /** Only some projects need it (URA's Outline, demolition, a final amendment set before TOP). */
+  /** Only some projects need it (URA's Outline, a pre-consultation, demolition, a final amendment set before TOP). */
   optional?: boolean;
   /** The stage always happens, and its linked checklist items are only optional parts of
    * it (LTA's DC links to vehicular access and traffic impact, which many projects skip).
@@ -150,6 +150,14 @@ export const SUBMISSION_MAP: MapRowDef[] = [
     scope: ["Building Control"],
     nodes: [
       {
+        id: "bca-precon",
+        column: "opp",
+        label: "Pre-consult",
+        name: "BCA Pre-consultation",
+        optional: true,
+        links: [{ step: "bca__PRECON" }],
+      },
+      {
         id: "bca-demo",
         column: "demo",
         label: "Demolition",
@@ -218,6 +226,14 @@ export const SUBMISSION_MAP: MapRowDef[] = [
     scope: ["Traffic", "Rail", "Parking"],
     nodes: [
       {
+        id: "lta-precon",
+        column: "opp",
+        label: "Pre-consult",
+        name: "LTA Pre-consultation",
+        optional: true,
+        links: [{ step: "lta__PRECON" }],
+      },
+      {
         id: "lta-dc",
         column: "dc",
         label: "DC",
@@ -242,6 +258,14 @@ export const SUBMISSION_MAP: MapRowDef[] = [
     label: "PUB",
     scope: ["Drainage", "Sewerage"],
     nodes: [
+      {
+        id: "pub-precon",
+        column: "opp",
+        label: "Pre-consult",
+        name: "PUB Pre-consultation",
+        optional: true,
+        links: [{ step: "pub__PRECON" }],
+      },
       {
         id: "pub-dc",
         column: "dc",
@@ -273,6 +297,14 @@ export const SUBMISSION_MAP: MapRowDef[] = [
     label: "NParks",
     scope: ["Trees", "Greenery"],
     nodes: [
+      {
+        id: "nparks-precon",
+        column: "opp",
+        label: "Pre-consult",
+        name: "NParks Pre-consultation",
+        optional: true,
+        links: [{ step: "nparks__PRECON" }],
+      },
       { id: "nparks-dc", column: "dc", label: "DC", name: "NParks Development Control", links: [{ step: "nparks__TREE" }] },
       {
         id: "nparks-bp",
@@ -299,6 +331,14 @@ export const SUBMISSION_MAP: MapRowDef[] = [
     label: "SCDF",
     scope: ["Fire Safety"],
     nodes: [
+      {
+        id: "scdf-precon",
+        column: "opp",
+        label: "Pre-consult",
+        name: "SCDF Pre-consultation",
+        optional: true,
+        links: [{ step: "scdf__PRECON" }],
+      },
       { id: "scdf-bp", column: "bp", label: "BP", name: "Fire Safety Plan Approval", links: [{ step: "scdf__FS" }] },
       {
         id: "scdf-amend",

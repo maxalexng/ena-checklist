@@ -156,15 +156,37 @@ describe("template integrity", () => {
     expect(total).toBe(261);
   });
 
-  it("places the optional pre-consultation steps right after URA Outline Permission", () => {
+  it("places URA's pre-consultation after Outline Permission, and the others at the start of Design Development", () => {
     const op = STEPS.findIndex((s) => s.id === "ura__OP");
-    const precon = ["ura", "bca", "scdf", "pub", "lta", "nparks"].map((a) => `${a}__PRECON`);
-    expect(STEPS.slice(op + 1, op + 1 + precon.length).map((s) => s.id)).toEqual(precon);
-    STEPS.slice(op + 1, op + 1 + precon.length).forEach((s) => {
-      expect(s.defaultStage).toBe("concept");
+    expect(STEPS[op + 1].id).toBe("ura__PRECON");
+    expect(STEPS[op + 1].defaultStage).toBe("concept");
+
+    const consultants = STEPS.findIndex((s) => s.id === "admin__CONSULTANTS");
+    const precon = ["bca", "scdf", "pub", "lta", "nparks"].map((a) => `${a}__PRECON`);
+    const after = STEPS.slice(consultants + 1, consultants + 1 + precon.length);
+    expect(after.map((s) => s.id)).toEqual(precon);
+    after.forEach((s) => expect(s.defaultStage).toBe("dev"));
+    expect(STEPS[consultants + 1 + precon.length].id).toBe("admin__DEV");
+
+    [STEPS[op + 1], ...after].forEach((s) => {
       expect(s.submission.conditional).toBe(true);
-      expect(s.items[0].text).toMatch(/^Decided with the client whether to consult/);
+      expect(s.items[0].text).toMatch(/^Checked whether anything needs pre-consulting with/);
     });
+  });
+
+  it("slots the moved pre-consultation steps in after Consultant Appointment in a saved order that predates them", () => {
+    const saved = defaultStepOrder().filter((id) => !id.endsWith("__PRECON"));
+    const order = reconcileOrder(saved, defaultStepOrder());
+    const i = order.indexOf("admin__CONSULTANTS");
+    expect(order.slice(i + 1, i + 6)).toEqual(["bca", "scdf", "pub", "lta", "nparks"].map((a) => `${a}__PRECON`));
+  });
+
+  it("the site visit records the discharge point and neighbours' levels, appended to keep existing sub-checks", () => {
+    const visit = STEP_BY_ID["admin__SITEVISIT"].items[0].checklist!;
+    expect(visit).toHaveLength(16);
+    expect(visit[13]).toMatch(/^Site access/);
+    expect(visit[14]).toMatch(/^Drainage discharge point .* photographed/);
+    expect(visit[15]).toMatch(/^Boundary walls .* higher or lower/);
   });
 
   it("places Lift PTO and the SLA subdivision step in TOP Preparation, before BCA TOP", () => {
@@ -202,9 +224,10 @@ describe("template integrity", () => {
     expect(STEPS[i].items.map((it) => it.id)).toEqual(["admin__DESIGN__0", "admin__DESIGN__1"]);
   });
 
-  it("opens Design Development with the DD sign-off step and closes Detailed Design with the tender set", () => {
+  it("opens Design Development with the pre-consultations then the DD sign-off step, and closes Detailed Design with the tender set", () => {
     const dev = STEPS.findIndex((s) => s.id === "admin__DEV");
-    expect(STEPS[dev - 1].defaultStage).toBe("concept");
+    expect(STEPS[dev - 1].id).toBe("nparks__PRECON");
+    expect(STEPS[dev - 6].defaultStage).toBe("concept");
     expect(STEPS[dev].defaultStage).toBe("dev");
     expect(STEPS[dev].designLog).toBe("dev");
     expect(STEPS[dev].items).toHaveLength(8);

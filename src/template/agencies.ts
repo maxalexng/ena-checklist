@@ -10,7 +10,7 @@ function preconsultation(agencyCode: string, topics: string): Submission {
     conditional: true,
     when: `Optional — only where a point is uncertain enough that ${agencyCode}'s view is worth having before lodging the main submission, e.g. ${topics}.`,
     items: [
-      `Decided with the client whether to consult ${agencyCode} first — if not, mark this step N/A`,
+      `Checked whether anything needs pre-consulting with ${agencyCode}, and decided with the client whether to consult them first — if not, mark this step N/A`,
       `Pre-consultation lodged (CORENET correspondence or a meeting request), with the specific points and sketch plans`,
       `${agencyCode}'s reply or the meeting notes filed, and the outcome carried into the submission drawings`,
     ],
@@ -438,6 +438,8 @@ export const AGENCIES: Agency[] = [
               "Existing boundary markers / survey pegs, cross-checked against the SLA cadastral plan",
               "Overhead cables or lines crossing the site, and nearby SP Group / PUB installations",
               "Site access — gate/driveway width, road frontage condition, and obstructions affecting future hoarding or site setup",
+              "Drainage discharge point — where the site's surface water discharges to the roadside or public drain, photographed and marked on the site plan",
+              "Boundary walls — on every boundary, whether the neighbour's floor level is higher or lower than ours, with the approximate difference",
             ],
           },
         ],

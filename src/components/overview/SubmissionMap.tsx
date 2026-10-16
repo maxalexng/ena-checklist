@@ -254,7 +254,7 @@ export function SubmissionMap({
         </div>
       </div>
       <p className="ov-hint smap-foot">
-        * Only some projects need these (Outline, Demolition, Amendment: a final amendment set, so check whether the drawings need amending before TOP). Every agency&apos;s TOP and CSC clearances feed BCA&apos;s overall TOP and CSC.
+        * Only some projects need these (Outline; Pre-consult, so check whether anything needs consulting the agency on first; Demolition; Amendment, a final amendment set, so check whether the drawings need amending before TOP). Every agency&apos;s TOP and CSC clearances feed BCA&apos;s overall TOP and CSC.
         A stage turns late once a target date set on the Timeline tab has passed.
       </p>
 
