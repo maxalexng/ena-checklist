@@ -2,6 +2,7 @@
 
 import { OV_SECTION_DEFS } from "@/template";
 import type { ProjectChecklistData } from "@/hooks/useProjectData";
+import { ContractProgressBar } from "./ContractProgressBar";
 import { ProjectDatesCard } from "./ProjectDatesCard";
 import { ProjectInfoBar } from "./ProjectInfoBar";
 import { OverviewSection } from "./OverviewSection";
@@ -19,6 +20,10 @@ export function OverviewTab({
   return (
     <div className="overview-app">
       <ProjectInfoBar data={data} />
+      {/* Straight under the project info, so where the contract stands reads at a glance. */}
+      <div className="project-info-bar contract-progress-card">
+        <ContractProgressBar dates={data.project.projectDates} />
+      </div>
       <SubmissionMap projectId={projectId} data={data} onOpenStep={onOpenStep} />
       <ProjectDatesCard data={data} />
       {OV_SECTION_DEFS.map((section) => (

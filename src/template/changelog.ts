@@ -10,7 +10,7 @@
 // bump n and drop any letter suffix. "R<n><letter>" for a smaller revision within that
 // cycle (a wording tweak, a logo swap, a bug fix) — keep n, advance the letter.
 // Never renumber a revision once published.
-export const TEMPLATE_VERSION = "R24a";
+export const TEMPLATE_VERSION = "R24b";
 
 export interface ChangelogEntry {
   rev: string;
@@ -23,6 +23,12 @@ export interface ChangelogEntry {
 // from the HTML prototype (submissions-register-MASTER.html); entries from here on
 // describe changes made in this app.
 export const TEMPLATE_CHANGELOG: ChangelogEntry[] = [
+  {
+    rev: "R24b",
+    date: "2026-10-19",
+    summary:
+      "On the Overview tab the Contract Progress bar now sits straight under the project info at the top, above the Submission Map, so where the contract stands reads at a glance. It was at the bottom of the project dates card.",
+  },
   {
     rev: "R24a",
     date: "2026-10-19",

@@ -375,6 +375,17 @@ test.describe("Overview contract progress bar", () => {
     await deleteProjectByReference(reference);
   });
 
+  test("sits straight under the project info, above the submission map", async ({ page }) => {
+    const order = await page
+      .locator(".overview-app > *")
+      .evaluateAll((els) => els.slice(0, 3).map((el) => el.className));
+    expect(order[0]).toContain("project-info-bar");
+    expect(order[1]).toContain("contract-progress-card");
+    expect(order[2]).not.toContain("project-dates-bar");
+    await expect(page.locator(".contract-progress-card").locator(".ov-label")).toHaveText("Contract Progress");
+    await expect(page.locator(".project-dates-bar .contract-progress")).toHaveCount(0);
+  });
+
   test("shows elapsed time against the contract period plus EOTs, and an overrun once late", async ({ page }) => {
     const row = overviewRow(page, "Contract Progress");
     await expect(row).toContainText("Set the Actual Contract Start and Target Practical Completion");
