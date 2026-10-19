@@ -48,10 +48,11 @@ export default async function DashboardPage() {
             >
               <div style={{ display: "flex", alignItems: "baseline", gap: "12px", flexWrap: "wrap" }}>
                 <span className="code-badge">{p.reference}</span>
-                <h3 style={{ fontSize: "16px" }}>{p.title || "(untitled)"}</h3>
+                {/* The address leads, since that's how the office knows each house; the title sits under it. */}
+                <h3 style={{ fontSize: "16px" }}>{p.address || p.title || "(untitled)"}</h3>
               </div>
-              {p.address && (
-                <p style={{ color: "var(--ink-soft)", fontSize: "13px", marginTop: "4px" }}>{p.address}</p>
+              {p.address && p.title && (
+                <p style={{ color: "var(--ink-soft)", fontSize: "13px", marginTop: "4px" }}>{p.title}</p>
               )}
             </Link>
           ))}
