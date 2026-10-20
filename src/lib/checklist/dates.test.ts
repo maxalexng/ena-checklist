@@ -3,6 +3,8 @@ import {
   adjustedCompletionDate,
   completionDelay,
   contractProgress,
+  isCompleteDateInput,
+  localTodayIso,
   eotTotalDays,
   formatDateDMY,
   loaSuggestedStart,
@@ -330,5 +332,31 @@ describe("contractProgress", () => {
     expect(p.notStarted).toBe(true);
     expect(p.percent).toBe(0);
     expect(p.marker).toBe(0);
+  });
+});
+
+describe("isCompleteDateInput", () => {
+  it("waits while the year is still being typed", () => {
+    expect(isCompleteDateInput("0002-07-21")).toBe(false);
+    expect(isCompleteDateInput("0020-07-21")).toBe(false);
+    expect(isCompleteDateInput("0202-07-21")).toBe(false);
+    expect(isCompleteDateInput("")).toBe(false);
+  });
+
+  it("accepts a four-digit year from 2010 on", () => {
+    expect(isCompleteDateInput("2025-07-21")).toBe(true);
+    expect(isCompleteDateInput("2010-01-01")).toBe(true);
+  });
+
+  it("leaves out years before 2010, which no project goes back to", () => {
+    expect(isCompleteDateInput("2009-12-31")).toBe(false);
+    expect(isCompleteDateInput("1999-12-31")).toBe(false);
+  });
+});
+
+describe("localTodayIso", () => {
+  it("uses the local calendar date, zero-padded", () => {
+    expect(localTodayIso(new Date(2026, 0, 5, 7, 30))).toBe("2026-01-05");
+    expect(localTodayIso(new Date(2026, 10, 20, 23, 59))).toBe("2026-11-20");
   });
 });

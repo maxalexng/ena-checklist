@@ -10,6 +10,7 @@ import { projectSpan, pxForDate, stageBands, timelineStart, todayPx, type Projec
 import { formatDateDMY } from "@/lib/checklist/dates";
 import { mapInputsFor, planEndText, submissionMapState, type MapNodeState } from "@/lib/checklist/submissionMap";
 import { MAP_STATUS_LABEL } from "@/components/overview/SubmissionMap";
+import { DateInput } from "@/components/DateInput";
 
 /** The track column starts after the 260px label column and its 10px gap (.tl-row). */
 const TRACK_OFFSET_PX = 270;
@@ -113,12 +114,7 @@ function StageEditor({
             <option value="date">On a date…</option>
           </select>
           {startMode === "date" && (
-            <input
-              type="date"
-              aria-label="Start date"
-              value={own.start ?? ""}
-              onChange={(e) => onChange({ start: e.target.value || null })}
-            />
+            <DateInput aria-label="Start date" value={own.start ?? ""} onCommit={(date) => onChange({ start: date || null })} />
           )}
           {startMode && startMode !== "date" && n.plan.start && (
             <span className="tl-editor-hint">{formatDateDMY(n.plan.start)}</span>
@@ -126,11 +122,10 @@ function StageEditor({
         </div>
         <div className="tl-editor-field">
           <label htmlFor={`tl-end-${n.def.id}`}>Target / confirm by</label>
-          <input
+          <DateInput
             id={`tl-end-${n.def.id}`}
-            type="date"
             value={own.end ?? ""}
-            onChange={(e) => onChange({ end: e.target.value || null })}
+            onCommit={(date) => onChange({ end: date || null })}
           />
           <span className="tl-editor-hint">
             {own.end
@@ -171,11 +166,10 @@ export function TimelineTab({ projectId, data }: { projectId: string; data: Proj
   const projectStartInput = (
     <label className="tl-project-start">
       Project start
-      <input
-        type="date"
+      <DateInput
         value={dates.projectStart ?? ""}
         // "" clears it: the patch is merged into project_dates, so a missing key would keep the old date.
-        onChange={(e) => updateProjectDates.mutate({ projectStart: e.target.value })}
+        onCommit={(date) => updateProjectDates.mutate({ projectStart: date })}
       />
     </label>
   );

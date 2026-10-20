@@ -1,8 +1,10 @@
 "use client";
 
+import { SUBMISSION_MAP, amendmentLogKey } from "@/template";
 import type { OverviewSectionDef } from "@/template";
 import type { ProjectChecklistData } from "@/hooks/useProjectData";
 import { formatDateDMY, ppWpExpiryInfo } from "@/lib/checklist/dates";
+import { AmendmentLog } from "./AmendmentLog";
 import { MilestoneLog } from "./MilestoneLog";
 
 export function OverviewSection({
@@ -17,11 +19,19 @@ export function OverviewSection({
   const isUra = section.id === "ura";
   const ppEntries = isUra ? data.milestonesByStep["ura__PP"] ?? [] : [];
   const expiry = isUra ? ppWpExpiryInfo(ppEntries) : null;
+  const amendKey = amendmentLogKey(section.id);
+  const amendments = data.milestonesByStep[amendKey] ?? [];
+  const agencyLabel = SUBMISSION_MAP.find((r) => r.agencyId === section.id)?.label ?? section.id.toUpperCase();
 
   return (
     <div className="ov-section">
       <div className="ov-section-head">
         <h3>{section.heading}</h3>
+        {amendments.length > 0 && (
+          <span className="ms-expiry soon amend-badge">
+            ⚠ {amendments.length} amendment{amendments.length === 1 ? "" : "s"} required
+          </span>
+        )}
       </div>
 
       {section.logs.map((log) => (
@@ -63,6 +73,8 @@ export function OverviewSection({
           )}
         </div>
       )}
+
+      <AmendmentLog projectId={projectId} agencyLabel={agencyLabel} logKey={amendKey} entries={amendments} />
     </div>
   );
 }

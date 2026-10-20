@@ -213,7 +213,7 @@ test.describe("Overview tab", () => {
     const bubble = uraSection.locator(".ms-expiry");
     await expect(bubble).toContainText("PP Expiry");
     await expect(bubble).toContainText("15 12 2024");
-    await expect(uraSection.locator(".ov-hint")).toContainText("15 10 2024"); // extension deadline
+    await expect(uraSection.locator(".ov-row .ov-hint")).toContainText("15 10 2024"); // extension deadline
 
     // No manual validity input anymore — the standard periods are fixed.
     await expect(page.getByText("PP validity (months)")).toHaveCount(0);
@@ -284,7 +284,9 @@ test.describe("Overview tab", () => {
     await expect(overviewInput).toHaveValue("2026-11-20");
 
     // Editing it on the Overview carries back to the step, and persists.
+    const saved = page.waitForResponse((r) => r.url().includes("merge_project_dates") && r.ok());
     await overviewInput.fill("2026-12-04");
+    await saved;
     await page.reload();
     await expect(overviewRow(page, label).locator("input[type=date]")).toHaveValue("2026-12-04");
     await page.getByRole("button", { name: "Checklist" }).click();

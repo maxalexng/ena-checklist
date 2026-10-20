@@ -8,6 +8,7 @@ import {
   useMoveConsultant,
   useUpdateConsultant,
 } from "@/hooks/useConsultantMutations";
+import { DateInput } from "@/components/DateInput";
 
 // Each row owns its own local text state (seeded once from props) rather than a plain
 // defaultValue on an inline input — a sibling row's mutation (role/date change, add/remove)
@@ -82,12 +83,11 @@ function ConsultantRow({
           if (company !== consultant.company) updateConsultant.mutate({ id: consultant.id, company });
         }}
       />
-      <input
-        type="date"
+      <DateInput
         className="ov-amend-date-input"
         value={consultant.dateSigned ?? ""}
         disabled={locked}
-        onChange={(e) => updateConsultant.mutate({ id: consultant.id, dateSigned: e.target.value || null })}
+        onCommit={(date) => updateConsultant.mutate({ id: consultant.id, dateSigned: date || null })}
       />
       {!locked && (
         <button type="button" className="ov-del" onClick={() => deleteConsultant.mutate({ id: consultant.id })}>

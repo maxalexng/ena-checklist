@@ -1043,6 +1043,26 @@
     background:var(--paper); border:1px solid var(--line); border-radius:5px; padding:4px 6px;
   }
   .ov-amend-date-input:focus-visible, .ov-amend-note-input:focus-visible{ outline:2px solid var(--accent); outline-offset:1px; }
+  /* "Amendment required" notes at the foot of each agency's Overview section. */
+  .amend-log{ margin-top:12px; padding-top:10px; border-top:1px dashed var(--line); }
+  .amend-log-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:6px; }
+  .amend-log-head .ov-amend-label{ margin-bottom:0; }
+  .amend-required-btn{
+    flex:none; font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600; cursor:pointer;
+    background:var(--st-progress-soft); color:var(--st-progress); border:1px solid var(--st-progress);
+    border-radius:6px; padding:5px 10px;
+  }
+  .amend-required-btn:hover{ background:var(--st-progress); color:var(--surface); }
+  .amend-required-btn:disabled{ opacity:0.6; cursor:default; }
+  .amend-list{ display:flex; flex-direction:column; gap:6px; }
+  .sl-row.amend-row{ background:var(--st-progress-soft); border:1px solid var(--st-progress); }
+  .amend-flag{ flex:none; color:var(--st-progress); font-size:13px; }
+  .amend-name{ flex:none; font-size:12.3px; font-weight:600; min-width:92px; }
+  .amend-logged{
+    display:flex; align-items:center; gap:6px; flex:none;
+    font-family:'IBM Plex Mono',monospace; font-size:9.5px; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-soft);
+  }
+  .amend-badge{ flex:none; font-size:11.5px; font-weight:600; padding:3px 8px; }
 
   .eot-title-input{
     font-family:'IBM Plex Sans', sans-serif; font-size:12.3px; color:var(--ink); flex:1 1 200px; min-width:100px;

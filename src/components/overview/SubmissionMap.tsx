@@ -68,6 +68,8 @@ function sourceText(n: MapNodeState): string {
         ? `Set by hand. The checklist says ${MAP_STATUS_LABEL[n.autoStatus].toLowerCase()}.`
         : "Set by hand.";
     case "checklist":
+      if (n.def.amendmentLog && n.def.links.length === 0)
+        return "An amendment is logged as required on the Overview. Set it to Done once it's submitted.";
       return n.applicable > 0
         ? `From the checklist: ${n.cleared} of ${n.applicable} items cleared.`
         : "From the checklist: every item is N/A.";

@@ -10,6 +10,7 @@ import {
   type DesignReviewRow,
 } from "@/lib/checklist/designReviews";
 import type { DesignLogConfig } from "@/template/designLogs";
+import { DateInput } from "@/components/DateInput";
 
 // A step's dated design log (see template/designLogs.ts): a fixed first row, any number of
 // numbered rounds, then a fixed last row. The two fixed rows exist before they have
@@ -53,13 +54,12 @@ function ReviewRow({
   return (
     <div className={`design-review-row design-review-${row.kind}`}>
       <span className="design-review-label">{row.label}</span>
-      <input
-        type="date"
+      <DateInput
         className="ov-amend-date-input"
         aria-label={`${row.label} date`}
         value={entry?.date ?? ""}
         disabled={locked || creating}
-        onChange={(e) => save({ date: e.target.value || null })}
+        onCommit={(date) => save({ date: date || null })}
       />
       {row.daysSincePrevious !== null && (
         <span className="design-review-gap" title="Time since the previous dated row">

@@ -10,7 +10,7 @@
 // bump n and drop any letter suffix. "R<n><letter>" for a smaller revision within that
 // cycle (a wording tweak, a logo swap, a bug fix) — keep n, advance the letter.
 // Never renumber a revision once published.
-export const TEMPLATE_VERSION = "R24b";
+export const TEMPLATE_VERSION = "R25";
 
 export interface ChangelogEntry {
   rev: string;
@@ -23,6 +23,18 @@ export interface ChangelogEntry {
 // from the HTML prototype (submissions-register-MASTER.html); entries from here on
 // describe changes made in this app.
 export const TEMPLATE_CHANGELOG: ChangelogEntry[] = [
+  {
+    rev: "R25",
+    date: "2026-10-20",
+    summary:
+      "Each agency section on the Overview (URA, BCA, NParks, LTA, PUB, SCDF) ends with a + Amendment required button. Click it the moment you know an amendment is needed: it logs today's date (which can be changed) and a note on what needs amending, as a heads up to the submissions team. The section heading then shows how many are logged, and the agency's Amendment stage on the Submission Map turns In Progress until it is set to Done. Date fields also no longer offer years before 2010.",
+  },
+  {
+    rev: "R24c",
+    date: "2026-10-20",
+    summary:
+      "Typing a date in by hand (such as on the number pad) no longer jumps to the year 0002 as soon as the year is started. Every date field now saves once the year has all four digits, or when you leave the field, instead of on every key.",
+  },
   {
     rev: "R24b",
     date: "2026-10-19",

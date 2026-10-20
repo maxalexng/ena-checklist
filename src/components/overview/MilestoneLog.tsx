@@ -11,6 +11,8 @@ import {
   useUpdateListPresets,
   useUpdateMilestone,
 } from "@/hooks/useOverviewMutations";
+import { DateInput } from "@/components/DateInput";
+import { MIN_DATE_INPUT } from "@/lib/checklist/dates";
 
 export function MilestoneLog({
   projectId,
@@ -161,12 +163,11 @@ export function MilestoneLog({
                 </span>
               )}
               <span className="sl-label">{rowLabel}</span>
-              <input
-                type="date"
+              <DateInput
                 className="ov-amend-date-input"
                 aria-label={`${rowLabel} date`}
                 value={entry.date ?? ""}
-                onChange={(e) => updateMilestone.mutate({ id: entry.id, date: e.target.value || null })}
+                onCommit={(date) => updateMilestone.mutate({ id: entry.id, date: date || null })}
               />
               <input
                 className="ov-amend-note-input"
@@ -205,12 +206,11 @@ export function MilestoneLog({
               ◆
             </span>
             <span className="sl-label">{checkpoint.label}</span>
-            <input
-              type="date"
+            <DateInput
               className="ov-amend-date-input"
               aria-label={`${checkpoint.label} date`}
               value=""
-              onChange={(e) => e.target.value && placeCheckpoint(checkpoint, { date: e.target.value })}
+              onCommit={(date) => date && placeCheckpoint(checkpoint, { date })}
             />
             <input
               className="ov-amend-note-input"
@@ -236,7 +236,7 @@ export function MilestoneLog({
             <option key={s} value={s} />
           ))}
         </datalist>
-        <input data-field="date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+        <input data-field="date" type="date" min={MIN_DATE_INPUT} value={date} onChange={(e) => setDate(e.target.value)} />
         <input data-field="note" placeholder="Note (optional)" value={note} onChange={(e) => setNote(e.target.value)} />
         <button
           type="button"

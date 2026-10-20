@@ -21,6 +21,16 @@ export interface OverviewSectionDef {
   sectionBlurb?: string;
 }
 
+/** Stored milestone `type` of an "Amendment required" note. Never change it once shipped. */
+export const AMENDMENT_REQUIRED_TYPE = "Amendment required";
+
+/** Where an agency's "Amendment required" notes are kept: milestones under this key, which
+ * no checklist step uses. Logged from the bottom of the agency's Overview section, as a heads
+ * up to the submissions team, and they mark the agency's Amendment stage on the map under way. */
+export function amendmentLogKey(agencyId: string): string {
+  return `${agencyId}__AMENDMENTS`;
+}
+
 export const OV_SECTION_DEFS: OverviewSectionDef[] = [
   {
     id: "ura",

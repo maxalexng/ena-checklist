@@ -9,6 +9,7 @@
 // projects.submission_map (migration 0012), so never rename or reuse one.
 
 import type { StageId } from "./types";
+import { amendmentLogKey } from "./overviewSections";
 
 /** Left-to-right positions on the map. Each agency only has nodes in some of them. */
 export const MAP_COLUMNS = ["survey", "opp", "pp", "wp", "demo", "dc", "st", "bp", "permit", "amend", "top", "csc"] as const;
@@ -73,6 +74,9 @@ export interface MapNodeDef {
    * are bracketed together on the map. */
   by?: string;
   links: MapNodeLink[];
+  /** Milestone key of the agency's "Amendment required" notes (template/overviewSections.ts):
+   * once one is logged, this hand-tracked stage reads as under way until it's set by hand. */
+  amendmentLog?: string;
   /** Read the linked step's submission log too, for nodes that share one step: done once
    * a log entry matches `done` (and not `notDone`), under way once one matches `started`. */
   log?: { done: RegExp; started?: RegExp; notDone?: RegExp };
@@ -139,6 +143,7 @@ export const SUBMISSION_MAP: MapRowDef[] = [
         name: "URA Final Amendment Set",
         optional: true,
         links: [],
+        amendmentLog: amendmentLogKey("ura"),
       },
       { id: "ura-top", column: "top", label: "TOP", name: "URA Clearance for TOP", links: [] },
       { id: "ura-csc", column: "csc", label: "CSC", name: "URA Clearance for CSC", links: [] },
@@ -198,6 +203,7 @@ export const SUBMISSION_MAP: MapRowDef[] = [
         name: "BCA Final Amendment Set",
         optional: true,
         links: [],
+        amendmentLog: amendmentLogKey("bca"),
       },
       { id: "bca-top", column: "top", label: "Overall TOP", name: "Temporary Occupation Permit", links: [{ step: "bca__TOP" }] },
       {
@@ -249,6 +255,7 @@ export const SUBMISSION_MAP: MapRowDef[] = [
         name: "LTA Final Amendment Set",
         optional: true,
         links: [],
+        amendmentLog: amendmentLogKey("lta"),
       },
       { id: "lta-csc", column: "csc", label: "CSC", name: "LTA Clearance for CSC", links: [] },
     ],
@@ -281,6 +288,7 @@ export const SUBMISSION_MAP: MapRowDef[] = [
         name: "PUB Final Amendment Set",
         optional: true,
         links: [],
+        amendmentLog: amendmentLogKey("pub"),
       },
       {
         id: "pub-top",
@@ -322,6 +330,7 @@ export const SUBMISSION_MAP: MapRowDef[] = [
         name: "NParks Final Amendment Set",
         optional: true,
         links: [],
+        amendmentLog: amendmentLogKey("nparks"),
       },
       { id: "nparks-csc", column: "csc", label: "CSC", name: "NParks Clearance for CSC", route: "Self-Declaration", links: [] },
     ],
@@ -347,6 +356,7 @@ export const SUBMISSION_MAP: MapRowDef[] = [
         name: "SCDF Final Amendment Set",
         optional: true,
         links: [],
+        amendmentLog: amendmentLogKey("scdf"),
       },
       {
         id: "scdf-top",

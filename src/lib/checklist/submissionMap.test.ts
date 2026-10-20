@@ -158,6 +158,22 @@ describe("autoNodeStatus", () => {
     expect(nodeStage(def("bca-amend"))).toBe("construction");
   });
 
+  it("marks an agency's Amendment stage under way once an amendment is logged as required", () => {
+    SUBMISSION_MAP.forEach((r) =>
+      r.nodes
+        .filter((n) => n.column === "amend")
+        .forEach((n) => expect(n.amendmentLog).toBe(`${r.agencyId}__AMENDMENTS`))
+    );
+    const inputs = freshInputs();
+    inputs.milestonesByStep["pub__AMENDMENTS"] = [{ type: "Amendment required", date: "2026-10-20" }];
+    expect(node(inputs, "pub-amend")).toMatchObject({ status: "progress", source: "checklist" });
+    // Only that agency's stage moves.
+    expect(node(inputs, "bca-amend")).toMatchObject({ status: "pending", source: "untracked" });
+    // Set by hand (Done once submitted), the hand-set status wins.
+    inputs.overrides = { "pub-amend": { status: "done" } };
+    expect(node(inputs, "pub-amend")).toMatchObject({ status: "done", source: "manual" });
+  });
+
   it("tags the C&S engineer's stages", () => {
     const by = SUBMISSION_MAP.flatMap((r) => r.nodes).filter((n) => n.by === "C&S Engineer").map((n) => n.id);
     expect(by).toEqual(["bca-demo", "bca-st-piling", "bca-st"]);

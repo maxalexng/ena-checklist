@@ -257,3 +257,22 @@ export function ppWpExpiryInfo(entries: { type: string; date: string | null }[])
     extensionDeadline: toIsoDate(extensionDeadline),
   };
 }
+
+/** The earliest date a date field offers: every project the office runs is from 2010 on. */
+export const MIN_DATE_INPUT = "2010-01-01";
+
+/** Whether a date input's value is a whole date worth saving while the user is still in the
+ * field. Chrome reports a full date as soon as the first year digit is typed ("2" → year
+ * 0002), and saving that redraws the input mid-typing and throws away what was keyed in, so
+ * only a four-digit year from MIN_DATE_INPUT's on counts. Anything else waits until the
+ * field loses focus. */
+export function isCompleteDateInput(value: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) && value >= MIN_DATE_INPUT;
+}
+
+/** Today's date where the user is (not UTC), for stamping when something is logged: before
+ * 8am in Singapore, UTC is still on yesterday. */
+export function localTodayIso(now: Date = new Date()): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}

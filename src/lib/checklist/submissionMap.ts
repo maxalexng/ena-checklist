@@ -153,7 +153,11 @@ function checkpointDone(node: MapNodeDef, inputs: MapInputs): boolean {
 export function autoNodeStatus(node: MapNodeDef, inputs: MapInputs): MapStatus | null {
   // Before the no-link check: a hand-tracked stage (PUB's BP) can still be cleared by checkpoints.
   if (checkpointDone(node, inputs)) return "done";
-  if (node.links.length === 0) return null;
+  if (node.links.length === 0) {
+    // An "Amendment required" note logged on the Overview means the amendment is under way.
+    const notes = node.amendmentLog ? inputs.milestonesByStep[node.amendmentLog] ?? [] : [];
+    return notes.length > 0 ? "progress" : null;
+  }
   const records = itemKeysFor(node)
     .map((key) => inputs.itemsByKey[key])
     .filter((r): r is { status: string; na: boolean } => !!r);

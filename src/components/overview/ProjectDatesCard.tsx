@@ -13,6 +13,7 @@ import {
   type CompletionDelay,
 } from "@/lib/checklist/dates";
 import { KEY_DATES } from "@/template";
+import { DateInput } from "@/components/DateInput";
 
 function days(n: number): string {
   return `${n} day${n === 1 ? "" : "s"}`;
@@ -47,31 +48,22 @@ export function ProjectDatesCard({ data }: { data: ProjectChecklistData }) {
           <span className="mono" style={{ fontSize: "11px", color: "var(--ink-soft)" }}>
             Contract Signed
           </span>
-          <input
-            type="date"
-            value={dates.contractSigned}
-            onChange={(e) => updateDates.mutate({ contractSigned: e.target.value })}
-          />
+          <DateInput value={dates.contractSigned} onCommit={(date) => updateDates.mutate({ contractSigned: date })} />
         </label>
         <label className="pd-field">
           <span className="mono" style={{ fontSize: "11px", color: "var(--ink-soft)" }}>
             LOA Signed
           </span>
-          <input
-            type="date"
-            value={dates.loaSigned}
-            onChange={(e) => updateDates.mutate({ loaSigned: e.target.value })}
-          />
+          <DateInput value={dates.loaSigned} onCommit={(date) => updateDates.mutate({ loaSigned: date })} />
         </label>
       </div>
 
       <div className="ov-row">
         <span className="ov-label">Actual Contract Start</span>
-        <input
-          type="date"
+        <DateInput
           className="ov-amend-date-input"
           value={dates.contractStart}
-          onChange={(e) => updateDates.mutate({ contractStart: e.target.value })}
+          onCommit={(date) => updateDates.mutate({ contractStart: date })}
         />
         {loaSuggestion.date && dates.contractStart !== loaSuggestion.date && (
           <>
@@ -101,11 +93,10 @@ export function ProjectDatesCard({ data }: { data: ProjectChecklistData }) {
 
       <div className="ov-row">
         <span className="ov-label">Target Practical Completion</span>
-        <input
-          type="date"
+        <DateInput
           className="ov-amend-date-input"
           value={dates.practicalCompletion}
-          onChange={(e) => updateDates.mutate({ practicalCompletion: e.target.value })}
+          onCommit={(date) => updateDates.mutate({ practicalCompletion: date })}
         />
         {tpcSuggestion && dates.practicalCompletion !== tpcSuggestion && (
           <>
@@ -128,12 +119,11 @@ export function ProjectDatesCard({ data }: { data: ProjectChecklistData }) {
       </div>
       <div className="ov-row">
         <span className="ov-label">{KEY_DATES.spTesting.label}</span>
-        <input
-          type="date"
+        <DateInput
           aria-label={KEY_DATES.spTesting.label}
           className="ov-amend-date-input"
           value={dates.spTestingDate ?? ""}
-          onChange={(e) => updateDates.mutate({ spTestingDate: e.target.value })}
+          onCommit={(date) => updateDates.mutate({ spTestingDate: date })}
         />
         <span className="ov-calc-note">Holds up the turn-on and TOP — also on the Checklist step.</span>
       </div>
@@ -228,11 +218,10 @@ export function ProjectDatesCard({ data }: { data: ProjectChecklistData }) {
 
       <div className="ov-row">
         <span className="ov-label">Actual Completion</span>
-        <input
-          type="date"
+        <DateInput
           className="ov-amend-date-input"
           value={dates.actualCompletion ?? ""}
-          onChange={(e) => updateDates.mutate({ actualCompletion: e.target.value })}
+          onCommit={(date) => updateDates.mutate({ actualCompletion: date })}
         />
         {delay ? (
           <>

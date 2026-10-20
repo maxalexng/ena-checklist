@@ -3,6 +3,7 @@
 import { KEY_DATES, type KeyDateId } from "@/template";
 import type { ProjectChecklistData } from "@/hooks/useProjectData";
 import { useUpdateProjectDates } from "@/hooks/useOverviewMutations";
+import { DateInput } from "@/components/DateInput";
 
 /** A step's key date (template/keyDates.ts), shown after its items. The Overview tab edits
  * the same project_dates field, so the date shows in both places. */
@@ -25,13 +26,12 @@ export function KeyDateField({
     <div className="pc-step-link key-date-field">
       <label className="pd-field">
         <span className="ov-label">{label}</span>
-        <input
-          type="date"
+        <DateInput
           aria-label={label}
           className="ov-amend-date-input"
           value={value}
           disabled={locked}
-          onChange={(e) => updateDates.mutate({ [field]: e.target.value })}
+          onCommit={(date) => updateDates.mutate({ [field]: date })}
         />
       </label>
       <span className="ov-calc-note">Also shown on the Overview tab.</span>
