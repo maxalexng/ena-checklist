@@ -10,7 +10,7 @@
 // bump n and drop any letter suffix. "R<n><letter>" for a smaller revision within that
 // cycle (a wording tweak, a logo swap, a bug fix) — keep n, advance the letter.
 // Never renumber a revision once published.
-export const TEMPLATE_VERSION = "R25";
+export const TEMPLATE_VERSION = "R26";
 
 export interface ChangelogEntry {
   rev: string;
@@ -23,6 +23,12 @@ export interface ChangelogEntry {
 // from the HTML prototype (submissions-register-MASTER.html); entries from here on
 // describe changes made in this app.
 export const TEMPLATE_CHANGELOG: ChangelogEntry[] = [
+  {
+    rev: "R26",
+    date: "2026-10-20",
+    summary:
+      "New PUB step at the end of Construction: Sewer Connection Works, with PUB's sewer forms. Form B (Application to Work in Public Sewerage System, lodged by the QP through CORENET) and PUB's approval of it come first; then Form B1 Part 1 (notice before the connection works start) and Form B1 Part 2 (notice before each connection is completed and covered up, so PUB can inspect), both on PUB's B&P Portal. BCA's TOP and CSC steps no longer call their application items Form B and Form B1, which are PUB's forms; they now read as the QP's declaration and TOP or CSC application.",
+  },
   {
     rev: "R25",
     date: "2026-10-20",

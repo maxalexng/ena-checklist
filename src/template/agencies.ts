@@ -186,7 +186,7 @@ export const AGENCIES: Agency[] = [
           "Accessibility compliance inspection sign-off",
           "Payment of TOP application fee",
           "Household Shelter (HS) inspection sign-off",
-          "Form B — QP's notice of completion and TOP application form",
+          "QP's declaration and TOP application, lodged through CORENET",
         ],
       },
       {
@@ -197,7 +197,7 @@ export const AGENCIES: Agency[] = [
           "Final as-built plans endorsed by the QP",
           "All outstanding agency clearances closed out",
           "Payment of CSC application fee",
-          "Form B1 (Parts 1 & 2) — QP/PE's notice of completion and CSC application form",
+          "QP's declaration and CSC application, lodged through CORENET",
         ],
       },
       {
@@ -296,6 +296,17 @@ export const AGENCIES: Agency[] = [
           "Sewerage and sanitary works inspection passed",
           "Drainage works inspection passed",
           "Outstanding PUB queries closed",
+        ],
+      },
+      {
+        code: "SEWERCONN",
+        name: "Sewer Connection Works (Form B / Form B1)",
+        when: "During Construction, before any work on the public sewer. PUB has to approve Form B first; Form B1 Part 1 goes in before the connection works start, and Part 2 before the connection is completed and covered up, so PUB can inspect it. One Part 1 entry per connection, with a Part 2 for each. (PUB dropped the old Form A commencement notice in 2014, so Form B1 is the only start-of-works notice.)",
+        items: [
+          "Form B — Application to Work in Public Sewerage System, lodged by the QP (the PE for sewerage works) through CORENET: the sewerage plan showing where the work is, the particulars of the licensed plumber, main contractor and CCTV contractor (from the contractor), the contractor's risk assessment, and the QP's declaration",
+          "PUB's approval of Form B received — no sewer connection work starts before it",
+          "Form B1 Part 1 — Notification to Carry Out Sewer Connection Works, lodged on PUB's B&P Portal by the QP or contractor before the connection works start, with the start details from the contractor (one entry per connection)",
+          "Form B1 Part 2 — Notification Prior to Completion of Sewer Connection, lodged on the B&P Portal before each connection is completed and covered up, so PUB can inspect it",
         ],
       },
       preconsultation("PUB", "the drainage or sewer connection, the platform level, or a detention tank"),

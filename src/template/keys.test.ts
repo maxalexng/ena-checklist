@@ -137,11 +137,11 @@ describe("defaultStepOrder", () => {
 // against the legacy prototype's real data (see scripts/migrate-html-import.ts's run for
 // "2 Astrid Hill": 183 items imported vs 183 in source).
 describe("template integrity", () => {
-  it("has exactly 57 steps", () => {
-    expect(STEPS.length).toBe(57);
+  it("has exactly 58 steps", () => {
+    expect(STEPS.length).toBe(58);
   });
 
-  it("has exactly 231 checklist items across all steps", () => {
+  it("has exactly 265 checklist items across all steps", () => {
     // 183 from the original prototype port, +1 for the Consultant Appointments step's own
     // clearable item, +2 for the new Asbestos Survey & Removal step, +2 for the design-lock
     // and construction-drawings checkpoints added to PP/BP, -1 for the NEA grease trap item
@@ -151,9 +151,26 @@ describe("template integrity", () => {
     // Development (8) and Tender Drawing Set (9) steps added in R15, +8 for Tender Calling &
     // Evaluation added in R16, +4 for the PC Sum Schedule step added in R17, +3 for the Green Mark
     // Certification step added in R18, +18 for the six optional Pre-consultation steps, +7 for the
-    // Lift PTO step and +5 for the SLA subdivision step added in R23.
+    // Lift PTO step and +5 for the SLA subdivision step added in R23, +4 for PUB's Sewer
+    // Connection Works step added in R26.
     const total = STEPS.reduce((sum, s) => sum + s.items.length, 0);
-    expect(total).toBe(261);
+    expect(total).toBe(265);
+  });
+
+  it("puts PUB's sewer connection forms in their own step at the end of Construction", () => {
+    const i = STEPS.findIndex((s) => s.id === "pub__SEWERCONN");
+    expect(STEPS[i].defaultStage).toBe("construction");
+    expect(STEPS[i - 1].id).toBe("tp__TTM");
+    expect(STEPS[i + 1].defaultStage).toBe("top");
+    expect(STEPS[i].items.map((it) => it.text.split(" — ")[0])).toEqual([
+      "Form B",
+      "PUB's approval of Form B received",
+      "Form B1 Part 1",
+      "Form B1 Part 2",
+    ]);
+    // Form B and B1 are PUB's sewer forms, not BCA's completion forms.
+    const bca = STEPS.filter((s) => s.realId === "bca").flatMap((s) => s.items.map((it) => it.text));
+    expect(bca.filter((t) => /Form B1?/.test(t))).toEqual([]);
   });
 
   it("places URA's pre-consultation after Outline Permission, and the others at the start of Design Development", () => {

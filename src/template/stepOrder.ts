@@ -54,6 +54,7 @@ export const STEP_ORDER: StepOrderTriple[] = [
   ["construction", "utilities", "GAS"],
   ["construction", "tfcc", "FIBRE"],
   ["construction", "tp", "TTM"],
+  ["construction", "pub", "SEWERCONN"],
   ["top", "pub", "WS"],
   ["top", "pub", "CLR"],
   ["top", "scdf", "FSC/TFP"],

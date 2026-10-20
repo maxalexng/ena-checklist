@@ -23,7 +23,7 @@ test.describe("smoke: login, dashboard, project creation", () => {
     await page.getByRole("button", { name: "Create project" }).click();
 
     await expect(page.getByText(reference)).toBeVisible();
-    await expect(page.getByText("261", { exact: true })).toBeVisible();
+    await expect(page.getByText("265", { exact: true })).toBeVisible();
     await expect(page.locator(".summary-stats").getByText("NOT STARTED")).toBeVisible();
 
     const supabase = adminClient();
@@ -34,7 +34,7 @@ test.describe("smoke: login, dashboard, project creation", () => {
       .from("checklist_items")
       .select("id", { count: "exact", head: true })
       .eq("project_id", project!.id);
-    expect(count).toBe(261);
+    expect(count).toBe(265);
 
     const { count: roleCount } = await supabase
       .from("project_roles")
