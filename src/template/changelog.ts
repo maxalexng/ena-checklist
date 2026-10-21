@@ -10,7 +10,7 @@
 // bump n and drop any letter suffix. "R<n><letter>" for a smaller revision within that
 // cycle (a wording tweak, a logo swap, a bug fix) — keep n, advance the letter.
 // Never renumber a revision once published.
-export const TEMPLATE_VERSION = "R26";
+export const TEMPLATE_VERSION = "R27";
 
 export interface ChangelogEntry {
   rev: string;
@@ -23,6 +23,12 @@ export interface ChangelogEntry {
 // from the HTML prototype (submissions-register-MASTER.html); entries from here on
 // describe changes made in this app.
 export const TEMPLATE_CHANGELOG: ChangelogEntry[] = [
+  {
+    rev: "R27",
+    date: "2026-10-21",
+    summary:
+      "New step straight after BCA TOP: Handover Document Set, for the architect in charge to collect from the main contractor. 21 items grouped A to F: as-built and single-line drawings, the TOP certificate and other statutory documents, keys, key schedule, remotes and attic stock, manuals, guarantees, warranties and maintenance schedules, emergency and defects contacts, and the transmittal form and signed handover record. In Progress means requested, Submitted means received, Cleared means reviewed and accepted. The as-builts (A1 to A4) and the manuals and warranties (D13 to D16) are flagged for the closest check.",
+  },
   {
     rev: "R26",
     date: "2026-10-20",

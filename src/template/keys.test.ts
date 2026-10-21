@@ -137,11 +137,11 @@ describe("defaultStepOrder", () => {
 // against the legacy prototype's real data (see scripts/migrate-html-import.ts's run for
 // "2 Astrid Hill": 183 items imported vs 183 in source).
 describe("template integrity", () => {
-  it("has exactly 58 steps", () => {
-    expect(STEPS.length).toBe(58);
+  it("has exactly 59 steps", () => {
+    expect(STEPS.length).toBe(59);
   });
 
-  it("has exactly 265 checklist items across all steps", () => {
+  it("has exactly 286 checklist items across all steps", () => {
     // 183 from the original prototype port, +1 for the Consultant Appointments step's own
     // clearable item, +2 for the new Asbestos Survey & Removal step, +2 for the design-lock
     // and construction-drawings checkpoints added to PP/BP, -1 for the NEA grease trap item
@@ -152,9 +152,21 @@ describe("template integrity", () => {
     // Evaluation added in R16, +4 for the PC Sum Schedule step added in R17, +3 for the Green Mark
     // Certification step added in R18, +18 for the six optional Pre-consultation steps, +7 for the
     // Lift PTO step and +5 for the SLA subdivision step added in R23, +4 for PUB's Sewer
-    // Connection Works step added in R26.
+    // Connection Works step added in R26, +21 for the Handover Document Set added in R27.
     const total = STEPS.reduce((sum, s) => sum + s.items.length, 0);
-    expect(total).toBe(265);
+    expect(total).toBe(286);
+  });
+
+  it("puts the Handover Document Set straight after BCA TOP, A1 to F21", () => {
+    const i = STEPS.findIndex((s) => s.id === "admin__HANDOVER");
+    expect(STEPS[i - 1].id).toBe("bca__TOP");
+    expect(STEPS[i].defaultStage).toBe("top");
+    expect(STEPS[i].code).toBe("HANDOVER");
+    const labels = STEPS[i].items.map((it) => it.text.split(".")[0]);
+    expect(labels).toEqual([
+      "A1", "A2", "A3", "A4", "A5", "B6", "B7", "B8", "C9", "C10", "C11",
+      "C12", "D13", "D14", "D15", "D16", "E17", "E18", "F19", "F20", "F21",
+    ]);
   });
 
   it("puts PUB's sewer connection forms in their own step at the end of Construction", () => {

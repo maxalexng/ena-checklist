@@ -21,9 +21,12 @@ test.describe("Typing a date by hand", () => {
 
   test("keeps every digit of the year in a submission log checkpoint", async ({ page }) => {
     const field = page.getByLabel("NParks DC Clearance date");
+    // The checkpoint saves as a new milestone row once the year is whole.
+    const saved = page.waitForResponse((r) => r.url().includes("/rest/v1/milestones") && r.request().method() === "POST" && r.ok());
     await field.focus();
     await page.keyboard.type("21072025", { delay: 120 });
     await expect(page.getByLabel("NParks DC Clearance date")).toHaveValue("2025-07-21");
+    await saved;
 
     await page.reload();
     await expect(page.getByLabel("NParks DC Clearance date")).toHaveValue("2025-07-21");
